@@ -1,6 +1,6 @@
 # WebRTC API
 WebRTC SDK base M67 release, will update&record code from time to time.
-#Note:
+Note:
 1. Video will add later;
 2. Sorry for my NONE C++  skill, the code also need more test.
 3. Also will improve the SDK API according my VoIP.
@@ -8,8 +8,8 @@ WebRTC SDK base M67 release, will update&record code from time to time.
 Use mothod
 Linux platform:
 1. Get the WebRTC source code, please refer webrtc.org, or 
-    https://webrtc.org/native-code/android/
-    https://webrtc.org/native-code/ios/
+    https://webrtc.org/native-code/android/ for add Android build tools, and
+    https://webrtc.org/native-code/ios/ for add iOS build tools.
     NOTE: For Linux platform loopback test, need gen project like: gn gen out/Linux --args='is_debug=false'
 2. Compile the source code according the web site above.
 3. Add this api code dircotry to WebRTC src/ dictory.
@@ -18,6 +18,9 @@ Linux platform:
 6. Have fun.
 
 iOS platform:
+
 TBD
+
 Android platform:
+
 TBD
