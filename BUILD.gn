@@ -1,0 +1,31 @@
+import("//webrtc.gni")
+
+#rtc_static_library("wtk_rct_api") {
+rtc_executable("wtk_rct_api") {
+  sources = [
+    "wtk_rtc_api.cc",
+    "wtk_rtc_api.h",
+  ]
+  deps = [
+    "//modules/audio_coding:audio_coding",
+    "//modules/audio_device:audio_device",
+    "//modules/audio_processing:audio_processing",
+    "//modules/audio_mixer:audio_mixer_impl",
+    "//system_wrappers:metrics_default",
+    "//system_wrappers:field_trial_default", 
+    "//api/audio_codecs:builtin_audio_decoder_factory",
+    "//call:call",
+    "//call:bitrate_allocator",
+    "//api/audio_codecs:builtin_audio_decoder_factory",
+    "//system_wrappers:runtime_enabled_features_default",
+    "//logging:rtc_event_log_impl_base"
+  ]
+
+  if (is_clang) {
+    # Suppress warnings from the Chromium Clang plugin (bugs.webrtc.org/163).
+    suppressed_configs += [
+        "//build/config/clang:extra_warnings",
+        "//build/config/clang:find_bad_constructs",
+    ]
+  }
+}
