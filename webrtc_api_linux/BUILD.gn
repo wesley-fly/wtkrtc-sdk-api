@@ -1,7 +1,7 @@
 import("//webrtc.gni")
 
 #rtc_static_library("wtk_rct_api") {
-rtc_executable("wtk_rct_api") {
+rtc_executable("wtk_rtc_api") {
   sources = [
     "wtk_rtc_api.cc",
     "wtk_rtc_api.h",
