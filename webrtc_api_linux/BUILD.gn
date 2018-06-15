@@ -1,16 +1,19 @@
 import("//webrtc.gni")
 
-#rtc_static_library("wtk_rct_api") {
+#rtc_static_library("wtk_rtc_api") {
 rtc_executable("wtk_rtc_api") {
   sources = [
     "wtk_rtc_api.cc",
     "wtk_rtc_api.h",
   ]
+  testonly = true
   deps = [
     "//modules/audio_coding:audio_coding",
     "//modules/audio_device:audio_device",
     "//modules/audio_processing:audio_processing",
     "//modules/audio_mixer:audio_mixer_impl",
+    "//modules/video_capture:video_capture",
+    "//modules/video_capture:video_capture_internal_impl",
     "//system_wrappers:metrics_default",
     "//system_wrappers:field_trial_default", 
     "//api/audio_codecs:builtin_audio_decoder_factory",
@@ -18,9 +21,26 @@ rtc_executable("wtk_rtc_api") {
     "//call:bitrate_allocator",
     "//api/audio_codecs:builtin_audio_decoder_factory",
     "//system_wrappers:runtime_enabled_features_default",
-    "//logging:rtc_event_log_impl_base"
-  ]
+    "//logging:rtc_event_log_impl_base",
+    "//api/video_codecs:video_codecs_api",
+    "//media:rtc_internal_video_codecs",
 
+    "//test:test_renderer",
+  ]
+  ldflags = []
+  if (is_linux || is_mac) {
+    ldflags += [
+      "-lpthread",
+      "-lm",
+    ]
+  }
+  if (is_linux) {
+    ldflags += [
+      "-lrt",
+      "-lXext",
+      "-lX11",
+    ]
+  }
   if (is_clang) {
     # Suppress warnings from the Chromium Clang plugin (bugs.webrtc.org/163).
     suppressed_configs += [
