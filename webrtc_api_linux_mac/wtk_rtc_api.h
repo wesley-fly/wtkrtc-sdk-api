@@ -17,9 +17,13 @@
 #include "modules/audio_mixer/audio_mixer_impl.h"
 #include "modules/video_capture/video_capture.h"
 #include "modules/video_capture/video_capture_factory.h"
-
+//Create video factory
 #include "api/video_codecs/sdp_video_format.h"
+#include "api/video_codecs/video_decoder_factory.h"
+#include "api/video_codecs/video_encoder_factory.h"
+#include "modules/video_coding/codecs/vp8/include/vp8.h"
 
+//Create audio factory
 #include "api/audio_codecs/audio_encoder_factory_template.h"
 #include "api/audio_codecs/audio_decoder_factory_template.h"
 #if WTK_USE_BUILTIN_OPUS
@@ -31,10 +35,14 @@
 #include "api/audio_codecs/ilbc/audio_decoder_ilbc.h"
 #endif
 #include "media/engine/internalencoderfactory.h"
+#include "media/engine/webrtcvideoengine.h"
 
-// call api mode
 #include "call/call.h"
 #include "system_wrappers/include/clock.h"
+
+//Test For video renderer.
 #include "test/video_renderer.h"
+#include "test/video_capturer.h"
+#include "test/vcm_capturer.h"
 
 #endif

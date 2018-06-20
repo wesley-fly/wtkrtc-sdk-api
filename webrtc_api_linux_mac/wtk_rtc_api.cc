@@ -6,12 +6,13 @@
 #define USED_VIDEO_WIDTH 640
 #define USED_VIDEO_HEIGHT 480
 #define USED_VIDEO_FPS 30
+#define USED_VIDEO_QP 30
 
 rtc::scoped_refptr<webrtc::AudioDeviceModule> g_Adm = nullptr;
 std::unique_ptr<webrtc::RtcEventLog> g_Event_log = nullptr;
 
 webrtc::Call* g_Call = nullptr;
-
+rtc::scoped_refptr<webrtc::VideoCaptureModule> g_capture_module = nullptr;
 webrtc::AudioSendStream *g_AudioSendStream = nullptr;
 webrtc::AudioReceiveStream *g_AudioReceiveStream = nullptr;
 webrtc::VideoSendStream *g_VideoSendStream = nullptr;
@@ -19,6 +20,7 @@ webrtc::VideoReceiveStream *g_VideoReceiveStream = nullptr;
 
 std::unique_ptr<webrtc::test::VideoRenderer> local_render = nullptr;
 std::unique_ptr<webrtc::test::VideoRenderer> remote_render = nullptr;
+std::unique_ptr<webrtc::test::VideoCapturer> g_Video_capturers = nullptr;
 
 enum classPayloadTypes{
     kPayloadTypeIlbc = 102,
@@ -64,15 +66,54 @@ public:
         return true;
     }
 };
-class TestVideoEncoderFactory:public webrtc::VideoEncoderFactory {
-    std::vector<webrtc::SdpVideoFormat> GetSupportedFormats() const override;
+class CreateVideoEncoderFactory final : public webrtc::VideoEncoderFactory {
+ public:
+  explicit CreateVideoEncoderFactory(
+      std::function<std::unique_ptr<webrtc::VideoEncoder>()> create)
+      : create_(std::move(create)) {
+    codec_info_.is_hardware_accelerated = false;
+    codec_info_.has_internal_source = false;
+  }
 
-    CodecInfo QueryVideoEncoder(const webrtc::SdpVideoFormat& format) const override;
+  // Unused by tests.
+  std::vector<webrtc::SdpVideoFormat> GetSupportedFormats() const override {
+    RTC_NOTREACHED();
+    return {};
+  }
 
-    std::unique_ptr<webrtc::VideoEncoder> CreateVideoEncoder(
-        const webrtc::SdpVideoFormat& format) override;
-private:
-    webrtc::InternalEncoderFactory internal_encoder_factory_;
+  webrtc::VideoEncoderFactory::CodecInfo QueryVideoEncoder(
+      const webrtc::SdpVideoFormat& /* format */) const override {
+    return codec_info_;
+  }
+
+  std::unique_ptr<webrtc::VideoEncoder> CreateVideoEncoder(
+      const webrtc::SdpVideoFormat& /* format */) override {
+    return create_();
+  }
+
+ private:
+  const std::function<std::unique_ptr<webrtc::VideoEncoder>()> create_;
+  webrtc::VideoEncoderFactory::CodecInfo codec_info_;
+};
+class CreateVideoDecoderFactory final : public webrtc::VideoDecoderFactory {
+ public:
+  explicit CreateVideoDecoderFactory(
+      std::function<std::unique_ptr<webrtc::VideoDecoder>()> create)
+      : create_(std::move(create)) {}
+
+  // Unused by tests.
+  std::vector<webrtc::SdpVideoFormat> GetSupportedFormats() const override {
+    RTC_NOTREACHED();
+    return {};
+  }
+
+  std::unique_ptr<webrtc::VideoDecoder> CreateVideoDecoder(
+      const webrtc::SdpVideoFormat& /* format */) override {
+    return create_();
+  }
+
+ private:
+  const std::function<std::unique_ptr<webrtc::VideoDecoder>()> create_;
 };
 
 AudioLoopTransport* g_AudioSendTransport = nullptr;
@@ -97,6 +138,35 @@ rtc::scoped_refptr<webrtc::AudioDecoderFactory> CreateWtkAudioDecoderFactory() {
       webrtc::AudioDecoderIlbc
 #endif
 >();
+}
+
+void StartCapture(void)
+{
+	/*std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> device_info(webrtc::VideoCaptureFactory::CreateDeviceInfo());
+
+	char device_name[256]={0};
+    char unique_name[256]={0};
+	//int number_of_devices = device_info->NumberOfDevices();
+
+	device_info->GetDeviceName(USED_VIDEO_DEVICE_ID, device_name, sizeof(device_name), unique_name, sizeof(unique_name));
+	
+	if(!g_capture_module)
+		g_capture_module = webrtc::VideoCaptureFactory::Create(unique_name);
+	
+	webrtc::VideoCaptureCapability capability;
+	capability.width = USED_VIDEO_WIDTH;
+	capability.height = USED_VIDEO_HEIGHT;
+	capability.maxFPS = USED_VIDEO_FPS;
+	capability.videoType = webrtc::VideoType::kI420;
+
+	g_capture_module->StartCapture(capability);
+	g_capture_module->RegisterCaptureDataCallback(local_render.get());*/
+
+	g_Video_capturers.reset(webrtc::test::VcmCapturer::Create(
+            USED_VIDEO_WIDTH, USED_VIDEO_HEIGHT,
+            USED_VIDEO_FPS,
+            USED_VIDEO_DEVICE_ID));
+	g_Video_capturers->Start();
 }
 
 void CreateAudioSendStream(void)
@@ -124,37 +194,41 @@ void CreateVideoSendStream(void)
 {
 	g_VideoSendTransport = new VideoLoopTransport();
     webrtc::VideoSendStream::Config send_config(g_VideoSendTransport);
-	/*webrtc::VideoEncoderFactory* encoder_factory;
-	webrtc::SdpVideoFormat video_format;
-	video_format.name = "VP8";
-	encoder_factory->CreateVideoEncoder(video_format);
-	for (webrtc::SdpVideoFormat& format : encoder_factory->GetSupportedFormats()) {
-		RTC_LOG(INFO) << __FUNCTION__ << ", format name = " << format.name;
-	}*/
-	TestVideoEncoderFactory g_video_encoder_factory;
-	//g_video_encoder_factory = new TestVideoEncoderFactory();
+
+	CreateVideoEncoderFactory g_video_encoder_factory([]() { return webrtc::VP8Encoder::Create(); });
 	send_config.encoder_settings.encoder_factory = &g_video_encoder_factory;
+	send_config.rtp.ssrcs.push_back(100);
 	send_config.rtp.payload_name = "VP8";
 	send_config.rtp.payload_type = kPayloadTypeVP8;
+	send_config.pre_encode_callback = local_render.get();
+	send_config.encoder_settings.encoder = webrtc::VP8Encoder::Create().release();
 	
 	webrtc::VideoEncoderConfig encoder_config;
 	encoder_config.codec_type = webrtc::kVideoCodecVP8;
 	encoder_config.number_of_streams = 1;
-	encoder_config.max_bitrate_bps = 100000;
+	encoder_config.max_bitrate_bps = 1000000;
+	encoder_config.min_transmit_bitrate_bps = 7500;
 	encoder_config.simulcast_layers = std::vector<webrtc::VideoStream>(1);
+	webrtc::VideoCodecVP8 vp8 = webrtc::VideoEncoder::GetDefaultVp8Settings();
+	encoder_config.encoder_specific_settings = new rtc::RefCountedObject<webrtc::VideoEncoderConfig::Vp8EncoderSpecificSettings>(vp8);
+	encoder_config.video_stream_factory = new rtc::RefCountedObject<cricket::EncoderStreamFactory>("VP8", USED_VIDEO_QP, USED_VIDEO_FPS, false, false);
 	encoder_config.content_type = webrtc::VideoEncoderConfig::ContentType::kRealtimeVideo;
 
-    g_VideoSendStream = g_Call->CreateVideoSendStream(std::move(send_config), std::move(encoder_config));
+	g_VideoSendStream = g_Call->CreateVideoSendStream(std::move(send_config), std::move(encoder_config));
+	g_VideoSendStream->SetSource(g_Video_capturers.get(), webrtc::VideoSendStream::DegradationPreference::kDegradationDisabled);
 }
 void CreateVideoReceiveStream(void)
 {
     webrtc::VideoReceiveStream::Config config(g_VideoSendTransport);
 	config.renderer = remote_render.get();
     config.sync_group = "AudioVideoLoopbackTest";
+	config.rtp.remote_ssrc = 100;
+	config.rtp.local_ssrc = 200;
 
 	webrtc::VideoReceiveStream::Decoder decoder;
 	decoder.payload_name = "VP8";
 	decoder.payload_type = kPayloadTypeVP8;
+	decoder.decoder = webrtc::VP8Decoder::Create().release();
 	config.decoders.push_back(decoder);
 
     g_VideoReceiveStream = g_Call->CreateVideoReceiveStream(std::move(config));
@@ -170,32 +244,11 @@ void SetupRomoteRender(void)
 	remote_render.reset(webrtc::test::VideoRenderer::Create("Video Remote Render", USED_VIDEO_WIDTH, USED_VIDEO_HEIGHT));
 }
 
-void StartCapture(void)
-{
-	std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> device_info(webrtc::VideoCaptureFactory::CreateDeviceInfo());
-
-	char device_name[256]={0};
-    char unique_name[256]={0};
-	//int number_of_devices = device_info->NumberOfDevices();
-
-	device_info->GetDeviceName(USED_VIDEO_DEVICE_ID, device_name, sizeof(device_name), unique_name, sizeof(unique_name));
-
-	rtc::scoped_refptr<webrtc::VideoCaptureModule> device_module(webrtc::VideoCaptureFactory::Create(unique_name));
-	
-	webrtc::VideoCaptureCapability capability;
-	capability.width = USED_VIDEO_WIDTH;
-	capability.height = USED_VIDEO_HEIGHT;
-	capability.maxFPS = USED_VIDEO_FPS;
-	capability.videoType = webrtc::VideoType::kUnknown;
-
-	device_module->StartCapture(capability);
-}
-
 void StartCallTest(void)
 {
 	g_Call->SignalChannelNetworkState(webrtc::MediaType::AUDIO, webrtc::kNetworkUp);
 	g_Call->SignalChannelNetworkState(webrtc::MediaType::VIDEO, webrtc::kNetworkUp);
-
+	
     g_AudioSendStream->Start();
     g_AudioReceiveStream->Start();
 	g_VideoSendStream->Start();
@@ -246,16 +299,18 @@ int main(void)
 
 	CreateAudioSendStream();
 	CreateAudioReceiveStream();
-
+	
 	SetupLocalRender();
-	SetupLocalRender();
+	SetupRomoteRender();
+	
 	StartCapture();	
 	
 	CreateVideoSendStream();
 	CreateVideoReceiveStream();
 	
 	StartCallTest();
-	
+
+	RTC_LOG(LS_INFO) << "StartCallTest started";
 	while(1);
 
 	return 0;

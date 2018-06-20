@@ -23,9 +23,9 @@ rtc_executable("wtk_rtc_api") {
     "//system_wrappers:runtime_enabled_features_default",
     "//logging:rtc_event_log_impl_base",
     "//api/video_codecs:video_codecs_api",
-    "//media:rtc_internal_video_codecs",
-
+    "//media:media",
     "//test:test_renderer",
+    "//test:video_test_common",
   ]
   ldflags = []
   if (is_linux || is_mac) {
