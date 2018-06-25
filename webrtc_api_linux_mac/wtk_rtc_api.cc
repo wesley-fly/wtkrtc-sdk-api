@@ -20,15 +20,15 @@
 #define VIDEO_MIN_BPS	50 * 1000
 #define VIDEO_MAX_BPS	800 * 1000
 
-#define CALL_MIN_BPS	800 * 1000
-#define CALL_START_BPS	600 * 1000
+#define CALL_MIN_BPS	60 * 1000
+#define CALL_START_BPS	300 * 1000
 #define CALL_MAX_BPS	800 * 1000
 
-#define USE_AUDIO_EXTENSION_CONFIG 0
-bool g_Audio_send_side_bwe = false;
+#define USE_AUDIO_EXTENSION_CONFIG 1
+bool g_Audio_send_side_bwe = USE_AUDIO_EXTENSION_CONFIG;
 
 #define USE_VIDEO_EXTENSION_CONFIG 1
-bool g_Video_send_side_bwe = true;
+bool g_Video_send_side_bwe = USE_VIDEO_EXTENSION_CONFIG;
 
 rtc::scoped_refptr<webrtc::AudioDeviceModule> g_Adm = nullptr;
 std::unique_ptr<webrtc::RtcEventLog> g_Event_log = nullptr;
@@ -67,14 +67,16 @@ public:
     bool SendRtp(const uint8_t* packet,size_t length,const webrtc::PacketOptions& options) override
     {		
         int64_t send_time = webrtc::Clock::GetRealTimeClock()->TimeInMicroseconds();
+		rtc::SentPacket sent_packet(options.packet_id,send_time);
+    	g_Call->OnSentPacket(sent_packet);
 		g_Call->Receiver()->DeliverPacket(webrtc::MediaType::AUDIO, rtc::CopyOnWriteBuffer(packet, length), webrtc::PacketTime(send_time, -1));
-		
         return true;
     }
 
     bool SendRtcp(const uint8_t* packet, size_t length) override
     {
 		int64_t send_time = webrtc::Clock::GetRealTimeClock()->TimeInMicroseconds();
+
         g_Call->Receiver()->DeliverPacket(webrtc::MediaType::AUDIO, rtc::CopyOnWriteBuffer(packet, length), webrtc::PacketTime(send_time, -1));
 
         return true;
@@ -86,6 +88,8 @@ public:
     bool SendRtp(const uint8_t* packet,size_t length,const webrtc::PacketOptions& options) override
     {//RTC_LOG(LS_INFO) << "SendRtp started";
         int64_t send_time = webrtc::Clock::GetRealTimeClock()->TimeInMicroseconds();
+		rtc::SentPacket sent_packet(options.packet_id,send_time);
+    	g_Call->OnSentPacket(sent_packet);
 		g_Call->Receiver()->DeliverPacket(webrtc::MediaType::VIDEO, rtc::CopyOnWriteBuffer(packet, length), webrtc::PacketTime(send_time, -1));
         return true;
     }
@@ -114,10 +118,11 @@ void StartCapture(void)
 void CreateAudioSendStream(void)
 {
     webrtc::AudioSendStream::Config audio_send_config(g_AudioSendTransport);
-	audio_send_config.send_codec_spec = webrtc::AudioSendStream::Config::SendCodecSpec(kPayloadTypeOpus, {"OPUS", 48000, 2});
+	audio_send_config.send_codec_spec = webrtc::AudioSendStream::Config::SendCodecSpec(kPayloadTypeOpus, {"OPUS", 48000, 2,{{"usedtx", "0"},{"stereo", "1"}}});
 	audio_send_config.encoder_factory = webrtc::CreateAudioEncoderFactory<webrtc::AudioEncoderOpus>();
 	audio_send_config.rtp.ssrc = SEND_SSRC + 1;
 	audio_send_config.rtp.extensions.clear();
+
 #if USE_AUDIO_EXTENSION_CONFIG
 	if(g_Audio_send_side_bwe)
 	{
@@ -328,17 +333,17 @@ void RunLoopTest(void)
 	AudioDeviceModule_Setup();
 	
 	CreateCall();
-
+	
 	CreateAudioSendStream();
 	CreateAudioReceiveStream();
-	
+
 	SetupLocalRender();
 	SetupRomoteRender();
 	StartCapture(); 
 	
 	CreateVideoSendStream();
 	CreateVideoReceiveStream();
-	
+		
 	StartAudioCallTest();
 	StartVideoCallTest();
 
