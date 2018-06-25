@@ -38,5 +38,6 @@
 #include "test/video_renderer.h"
 #include "test/video_capturer.h"
 #include "test/vcm_capturer.h"
+#include "test/run_test.h"
 
 #endif

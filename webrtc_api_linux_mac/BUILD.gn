@@ -19,28 +19,16 @@ rtc_executable("wtk_rtc_api") {
     "//api/audio_codecs:builtin_audio_decoder_factory",
     "//call:call",
     "//call:bitrate_allocator",
-    "//api/audio_codecs:builtin_audio_decoder_factory",
     "//system_wrappers:runtime_enabled_features_default",
     "//logging:rtc_event_log_impl_base",
     "//api/video_codecs:video_codecs_api",
     "//media:media",
+    
     "//test:test_renderer",
     "//test:video_test_common",
+    "//test:run_test",
   ]
-  ldflags = []
-  if (is_linux || is_mac) {
-    ldflags += [
-      "-lpthread",
-      "-lm",
-    ]
-  }
-  if (is_linux) {
-    ldflags += [
-      "-lrt",
-      "-lXext",
-      "-lX11",
-    ]
-  }
+
   if (is_clang) {
     # Suppress warnings from the Chromium Clang plugin (bugs.webrtc.org/163).
     suppressed_configs += [

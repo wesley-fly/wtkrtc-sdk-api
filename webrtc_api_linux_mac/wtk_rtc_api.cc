@@ -323,7 +323,7 @@ void AudioDeviceModule_Setup(void)
 	g_Adm->InitRecording();
 }
 
-int main(void)
+void RunLoopTest(void)
 {
 	AudioDeviceModule_Setup();
 	
@@ -334,7 +334,7 @@ int main(void)
 	
 	SetupLocalRender();
 	SetupRomoteRender();
-	StartCapture();	
+	StartCapture(); 
 	
 	CreateVideoSendStream();
 	CreateVideoReceiveStream();
@@ -350,6 +350,10 @@ int main(void)
 		RTC_LOG(LS_INFO) << "GetVideoSendStats =====> " << send_stats.ToString(111111);
 		sleep(30);
 	}*/
-
+}
+	
+int main(void)
+{
+	webrtc::test::RunTest(RunLoopTest);
 	return 0;
 }
