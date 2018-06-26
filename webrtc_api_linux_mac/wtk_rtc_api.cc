@@ -24,11 +24,7 @@
 #define CALL_START_BPS	300 * 1000
 #define CALL_MAX_BPS	800 * 1000
 
-#define USE_AUDIO_EXTENSION_CONFIG 1
-bool g_Audio_send_side_bwe = USE_AUDIO_EXTENSION_CONFIG;
-
-#define USE_VIDEO_EXTENSION_CONFIG 1
-bool g_Video_send_side_bwe = USE_VIDEO_EXTENSION_CONFIG;
+bool g_Send_side_bwe = false;
 
 rtc::scoped_refptr<webrtc::AudioDeviceModule> g_Adm = nullptr;
 std::unique_ptr<webrtc::RtcEventLog> g_Event_log = nullptr;
@@ -123,8 +119,7 @@ void CreateAudioSendStream(void)
 	audio_send_config.rtp.ssrc = SEND_SSRC + 1;
 	audio_send_config.rtp.extensions.clear();
 
-#if USE_AUDIO_EXTENSION_CONFIG
-	if(g_Audio_send_side_bwe)
+	if(g_Send_side_bwe)
 	{
 		audio_send_config.min_bitrate_bps = AUDIO_MIN_BPS;
 		audio_send_config.max_bitrate_bps = AUDIO_MAX_BPS;	
@@ -133,7 +128,6 @@ void CreateAudioSendStream(void)
 	        webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri,
 	        			kTransportSequenceNumberExtensionId));
 	}
-#endif
     g_AudioSendStream = g_Call->CreateAudioSendStream(audio_send_config);
 }
 void CreateAudioReceiveStream(void)
@@ -146,15 +140,14 @@ void CreateAudioReceiveStream(void)
 	audio_rev_config.decoder_map = {{kPayloadTypeOpus, {"OPUS", 48000, 2}}};
 	audio_rev_config.rtp.remote_ssrc = SEND_SSRC + 1;
 	audio_rev_config.rtp.local_ssrc = RECV_SSRC + 1;
-	audio_rev_config.rtp.transport_cc = g_Audio_send_side_bwe;
+	audio_rev_config.rtp.transport_cc = g_Send_side_bwe;
 	audio_rev_config.rtp.extensions.clear();
-#if USE_AUDIO_EXTENSION_CONFIG
-	if(g_Audio_send_side_bwe){
+
+	if(g_Send_side_bwe){
 		audio_rev_config.rtp.extensions.push_back(
 	        webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri,
 	        			kTransportSequenceNumberExtensionId));
 	}
-#endif
     g_AudioReceiveStream = g_Call->CreateAudioReceiveStream(audio_rev_config);
 }
 
@@ -172,8 +165,7 @@ void CreateVideoSendStream(void)
 	video_send_config.rtp.rtx.payload_type = kPayloadTypeRtx;
 
 	video_send_config.rtp.extensions.clear();
-#if USE_VIDEO_EXTENSION_CONFIG
-	if(g_Video_send_side_bwe){
+	if(g_Send_side_bwe){
 		video_send_config.rtp.extensions.push_back(
 			webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri,
                        	kTransportSequenceNumberExtensionId));
@@ -188,7 +180,6 @@ void CreateVideoSendStream(void)
     video_send_config.rtp.extensions.push_back(
 		webrtc::RtpExtension(webrtc::RtpExtension::kVideoTimingUri, 
 						kVideoTimingExtensionId));
-#endif
 	webrtc::VideoEncoderConfig encoder_config;
 	
 	encoder_config.codec_type = webrtc::kVideoCodecVP8;
@@ -231,12 +222,11 @@ void CreateVideoReceiveStream(void)
 	video_rev_config.rtp.rtx_associated_payload_types[kPayloadTypeRtx] = kPayloadTypeVP8;
 	video_rev_config.rtp.rtcp_xr.receiver_reference_time_report = true;
 	video_rev_config.rtp.nack.rtp_history_ms = 1000; 
-	video_rev_config.rtp.transport_cc = g_Video_send_side_bwe;
-	video_rev_config.rtp.remb = !g_Video_send_side_bwe;
+	video_rev_config.rtp.transport_cc = g_Send_side_bwe;
+	video_rev_config.rtp.remb = !g_Send_side_bwe;
 	
 	video_rev_config.rtp.extensions.clear();
-#if USE_VIDEO_EXTENSION_CONFIG
-	if(g_Video_send_side_bwe){
+	if(g_Send_side_bwe){
 		video_rev_config.rtp.extensions.push_back(
 			webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri,
                        	kTransportSequenceNumberExtensionId));
@@ -251,7 +241,6 @@ void CreateVideoReceiveStream(void)
     video_rev_config.rtp.extensions.push_back(
 		webrtc::RtpExtension(webrtc::RtpExtension::kVideoTimingUri, 
 						kVideoTimingExtensionId));
-#endif
 	webrtc::VideoReceiveStream::Decoder decoder_config;
 	decoder_config.payload_name = "VP8";
 	decoder_config.payload_type = kPayloadTypeVP8;
