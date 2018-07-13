@@ -1,0 +1,171 @@
+import("//webrtc.gni")
+
+if (is_android) {
+  import("//build/config/android/config.gni")
+  import("//build/config/android/rules.gni")
+}
+
+config("iax2_warning"){
+  if (is_clang) {
+    cflags = [
+      "-Wno-absolute-value",
+      "-Wno-strict-prototypes",
+      "-Wno-undef",
+      "-Wno-sizeof-pointer-memaccess",
+      "-Wno-undefined-bool-conversion",
+      "-Wno-format-security",
+      "-Wno-unused-function",
+      "-Wno-implicit-function-declaration",
+      "-Wno-unused-variable",
+      "-Wno-int-conversion",
+      "-Wno-incompatible-pointer-types",
+      "-Wno-#warnings"
+    ]
+  }
+}
+
+rtc_source_set("wtk_rtc_api") {
+  #testonly = true
+  sources = [
+    "wtk_rtc_api/wtk_rtc_api.cc",
+    "wtk_rtc_api/wtk_rtc_api.h",
+  ]
+
+  deps = [
+    "//modules/audio_coding:audio_coding",
+    "//modules/audio_device:audio_device",
+    "//modules/audio_processing:audio_processing",
+    "//modules/audio_mixer:audio_mixer_impl",
+    "//modules/video_capture:video_capture",
+    "//modules/video_capture:video_capture_internal_impl",
+    "//system_wrappers:metrics_default",
+    "//system_wrappers:field_trial_default", 
+    "//api/audio_codecs:builtin_audio_decoder_factory",
+    "//call:call",
+    "//call:bitrate_allocator",
+    "//system_wrappers:runtime_enabled_features_default",
+    "//logging:rtc_event_log_impl_base",
+    "//api/video_codecs:video_codecs_api",
+    "//media:media",
+  ]
+
+  if (is_clang) {
+    # Suppress warnings from the Chromium Clang plugin (bugs.webrtc.org/163).
+    suppressed_configs += [
+        "//build/config/clang:extra_warnings",
+        "//build/config/clang:find_bad_constructs",
+    ]
+  }
+}
+
+#source_set("ptt_interfaces") {
+#  sources = [
+#    "ptt_client/ptt.c",
+#    "ptt_client/ptt.h",
+#    "ptt_client/pttclient.c",
+#    "ptt_client/pttclient.h",
+#    "ptt_client/tbcp.c",
+#    "ptt_client/tbcp.h",
+#    "ptt_client/util.c",
+#    "ptt_client/util.h",
+#  ]
+#  deps = [
+#    ":iax_interfaces",
+#  ]
+#}
+
+source_set("iax2_interfaces") {
+  sources = [
+    "wtk_service_client/iax2-client/frame.h",
+    "wtk_service_client/iax2-client/iax-client.h",
+    "wtk_service_client/iax2-client/iax.c",
+    "wtk_service_client/iax2-client/iax2-parser.c",
+    "wtk_service_client/iax2-client/iax2-parser.h",
+    "wtk_service_client/iax2-client/iax2.h",
+    "wtk_service_client/iax2-client/iaxclient.h",   
+    "wtk_service_client/iax2-client/iaxclient_lib.c",
+    "wtk_service_client/iax2-client/iaxclient_lib.h",
+    "wtk_service_client/iax2-client/md5.c",
+    "wtk_service_client/iax2-client/md5.h",
+    "wtk_service_client/iax2-client/unixfuncs.c",    
+  ]
+  defines = [ 
+    "HAVE_GETTIMEOFDAY",
+    "_POSIX_SOURCE",
+    "_GNU_SOURCE",
+  ]
+  if (is_android) {
+    defines += [
+      "ANDROID",
+      "IAX_DEBUG",
+    ]
+  }
+  configs -= [ "//build/config/compiler:chromium_code" ]
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    "//build/config/compiler:no_incompatible_pointer_warnings",#must after no_chromium_code
+    ":iax2_warning",
+  ]
+
+  deps = [
+    "//wtk_voip_sdk_jni:wtk_rtc_api",
+  ]
+}
+source_set("wtk_service_api") {
+  #testonly = true
+  sources = [
+    "wtk_service_client/wtkcall_lib.c",
+    "wtk_service_client/wtkcall_lib.h",
+  ]
+  defines = [ 
+    "HAVE_GETTIMEOFDAY",
+    "_POSIX_SOURCE",
+    "_GNU_SOURCE",
+  ]
+  if (is_android) {
+    defines += [
+      "ANDROID",
+      "IAX_DEBUG",
+    ]
+  }
+  configs -= [ "//build/config/compiler:chromium_code" ]
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    "//build/config/compiler:no_incompatible_pointer_warnings",#must after no_chromium_code
+    ":iax2_warning",
+  ]
+
+  #configs += [
+  #  ":iax2_warning",
+  #]
+  deps = [
+    "//wtk_voip_sdk_jni:wtk_rtc_api",
+    "//wtk_voip_sdk_jni:iax2_interfaces",
+  ]
+}
+
+rtc_shared_library("WtkMediaEngineJni") {
+  #testonly = true
+  sources = [
+    "wtk_voip_sdk/wtk_mediaengine_jni.cc",
+    "wtk_voip_sdk/wtk_mediaengine_jni.h",
+  ]
+  suppressed_configs += [ "//build/config/android:hide_all_but_jni_onload" ]
+  configs += [ "//build/config/android:hide_all_but_jni" ]
+  if (is_clang) {
+    # Suppress warnings from the Chromium Clang plugin (bugs.webrtc.org/163).
+    suppressed_configs += [
+      "//build/config/clang:extra_warnings",
+      "//build/config/clang:find_bad_constructs",
+    ]
+  }
+
+  deps = [
+    "//wtk_voip_sdk_jni:wtk_rtc_api",
+    "//wtk_voip_sdk_jni:wtk_service_api",
+    #"//sdk/android:native_api_base",
+  ]
+  libs = [
+    "log",
+  ]
+}
