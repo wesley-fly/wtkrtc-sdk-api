@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -26,9 +27,11 @@ import java.util.Enumeration;
 
 public class MainActivity extends AppCompatActivity implements OnClickListener {
     private String TAG="LoginActivity";
-    private Button mJoinButton,mDialButton,mAnswerButton,mHangupButton;
+    private Button mDialButton,mAnswerButton,mHangupButton;
+    private Button mIsSpeakerButton,mIsHoldButton,mIsMuteButton;
     private SharedPreferences m_sp = null;
     private int regID = 0;
+    private int isCaller = 0;
     private String host = null;
     private String port = null;
     private String userid = null;
@@ -37,6 +40,9 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
 
     private String mStateInfo = "空闲中";
     private TextView txtLocalIp,txtState;
+    private int mCurrentSpeaker = 0;
+    private int mCurrentMute = 0;
+    private int mCurrentHold = 0;
 
     private CallReceiver receiver = null;
     @Override
@@ -48,19 +54,23 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
 
         editDest = findViewById(R.id.edit_number);
 
-        mJoinButton = findViewById(R.id.btn_join);
         mDialButton = findViewById(R.id.btn_dial);
         mAnswerButton = findViewById(R.id.btn_answer);
         mHangupButton = findViewById(R.id.btn_hangup);
 
+        mIsSpeakerButton = findViewById(R.id.btn_is_speaker);
+        mIsHoldButton = findViewById(R.id.btn_is_hold);
+        mIsMuteButton = findViewById(R.id.btn_is_mute);
 
-
-        mJoinButton.setOnClickListener(this);
         mDialButton.setOnClickListener(this);
         mAnswerButton.setOnClickListener(this);
         mHangupButton.setOnClickListener(this);
 
-        txtLocalIp = findViewById(R.id.localip);
+        mIsSpeakerButton.setOnClickListener(this);
+        mIsHoldButton.setOnClickListener(this);
+        mIsMuteButton.setOnClickListener(this);
+
+        txtLocalIp = findViewById(R.id.txtNetInfo);
         txtState = findViewById(R.id.txtState);
 
         txtLocalIp.setText(GetLocalIpAddress());
@@ -70,39 +80,16 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         //WtkMediaJNIKit.getInstance().MediaInitialize();
         WtkMediaJNIKit.getInstance().SetBroadCast(MainActivity.this);
     }
-    public String GetLocalIpAddress() {
-        String localIPs = "";
-        try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface
-                    .getNetworkInterfaces(); en.hasMoreElements();) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf
-                        .getInetAddresses(); enumIpAddr.hasMoreElements();) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress()) {
-                        localIPs += inetAddress.getHostAddress().toString() + " ";
-                        //set the remote ip address the same as
-                        // the local ip address of the last netif
-                        //localIp = inetAddress.getHostAddress().toString();
-                    }
-                }
-            }
-        } catch (SocketException ex) {
-            Log.e(TAG, ex.toString());
-        }
-        return localIPs;
-    }
+
     @Override
     public void onClick(View paramView){
         switch (paramView.getId())
         {
-            case R.id.btn_join:
-                //WtkMediaJNIKit.getInstance().MediaInitialize();
-                break;
             case R.id.btn_dial:
                 String calleeId = editDest.getText().toString();
                 String userIdPass = userid + ":" + password;
                 String cmd;
+                isCaller = 1;
                 if(calleeId.contains("80")||calleeId.equals("8888")) {
                     cmd = "/nortp/forward";
                 } else {
@@ -123,6 +110,33 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 WtkMediaJNIKit.getInstance().IaxHangup();
                 mStateInfo = "空闲中";
                 setActivityMode(CommonParams.STATEIDEL);
+                break;
+            case R.id.btn_is_speaker:
+                mCurrentSpeaker = (mCurrentSpeaker+1)%2;
+                if (mCurrentSpeaker == 0) {
+                    mIsSpeakerButton.setText("Speaker");
+//                WtkMediaJNIKit.getInstance().setspeaker(mCurrentSpeaker);
+                } else {
+                    mIsSpeakerButton.setText("Headphone");
+                }
+                break;
+            case R.id.btn_is_hold:
+                mCurrentHold = (mCurrentHold+1)%2;
+                if(mCurrentHold == 0) {
+                    mIsHoldButton.setText("Hold");
+//                WtkMediaJNIKit.getInstance().IaxHold();
+                } else {
+                    mIsHoldButton.setText("UnHold");
+                }
+                break;
+            case R.id.btn_is_mute:
+                mCurrentMute = (mCurrentMute+1)%2;
+                if(mCurrentMute == 0) {
+                    mIsMuteButton.setText("Mute");
+//                WtkMediaJNIKit.getInstance().IaxMute();
+                } else {
+                    mIsMuteButton.setText("UnMute");
+                }
                 break;
         }
     }
@@ -166,20 +180,38 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 mDialButton.setEnabled(true);
                 mAnswerButton.setEnabled(false);
                 mHangupButton.setEnabled(false);
+                mIsHoldButton.setEnabled(false);
+                mIsSpeakerButton.setEnabled(false);
+                mIsMuteButton.setEnabled(false);
                 txtState.setText(mStateInfo);
+                //Init some init params
+                isCaller = 0;
+                mCurrentHold = 0;
+                mIsHoldButton.setText("Hold");
+                mCurrentMute = 0;
+                mIsMuteButton.setText("Mute");
+                mCurrentSpeaker = 0;
+                mIsSpeakerButton.setText("Speaker");
                 break;
             case CommonParams.STATERINGIN:
                 mDialButton.setEnabled(false);
-                mAnswerButton.setEnabled(true);
+                if(isCaller == 1)
+                    mAnswerButton.setEnabled(false);
+                else
+                    mAnswerButton.setEnabled(true);
                 mHangupButton.setEnabled(true);
-
+                mIsHoldButton.setEnabled(false);
+                mIsSpeakerButton.setEnabled(false);
+                mIsMuteButton.setEnabled(false);
                 txtState.setText(mStateInfo);
                 break;
             case CommonParams.STATETALKING:
                 mDialButton.setEnabled(false);
                 mAnswerButton.setEnabled(false);
                 mHangupButton.setEnabled(true);
-
+                mIsHoldButton.setEnabled(true);
+                mIsSpeakerButton.setEnabled(true);
+                mIsMuteButton.setEnabled(true);
                 txtState.setText(mStateInfo);
                 break;
         }
@@ -208,5 +240,24 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 setActivityMode(CommonParams.STATEIDEL);
             }
         }
+    }
+    public String GetLocalIpAddress() {
+        String localIPs = "";
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface
+                    .getNetworkInterfaces(); en.hasMoreElements();) {
+                NetworkInterface intf = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = intf
+                        .getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress()) {
+                        localIPs += inetAddress.getHostAddress().toString() + " ";
+                    }
+                }
+            }
+        } catch (SocketException ex) {
+            Log.e(TAG, ex.toString());
+        }
+        return localIPs;
     }
 }

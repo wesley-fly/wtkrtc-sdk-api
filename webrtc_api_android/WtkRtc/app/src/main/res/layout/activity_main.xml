@@ -13,9 +13,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Dest No.:"
-            android:textColor="#000000"
-            />
+            android:text="Dest No:"
+            android:textColor="#000000"/>
         <EditText
             android:id="@+id/edit_number"
             android:layout_width="wrap_content"
@@ -23,7 +22,7 @@
             android:layout_weight="1"
             android:text="10001"
             android:hint="Call Number"
-            android:inputType="phone" />
+            android:inputType="number" />
 
     </LinearLayout>
     <LinearLayout
@@ -45,6 +44,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:textAllCaps="false"
             android:text="Dial" />
         <Button
             android:id="@+id/btn_hangup"
@@ -52,157 +52,87 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Hungup"
+            android:textAllCaps="false"
             android:enabled="false" />
-        <Button
-            android:id="@+id/btn_join"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Join"
-            android:enabled="false"/>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
-        <Button
-            android:id="@+id/btn_ptt_con"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="PTT Con"
-            android:enabled="false"/>
-        <Button
-            android:id="@+id/btn_ptt_req"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="PTT Req"
-            android:enabled="false"/>
-        <Button
-            android:id="@+id/btn_ptt_rel"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="PTT Rel"
-            android:enabled="false"/>
-        <Button
-            android:id="@+id/btn_ptt_close"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="PTT Close"
-            android:enabled="false"/>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="20dip">
-        <TextView
-            android:id="@+id/txtState"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Idel"
-            android:textColor="#ff0000"/>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="20dip">
-        <TextView
-            android:layout_width="200px"
-            android:layout_height="wrap_content"
-            android:text="Status："
-            android:textColor="#000000"/>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
         <Button
             android:id="@+id/btn_answer"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Answer"
-            android:enabled="false"/>
-        <Button
-            android:id="@+id/btn_Reject"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Reject"
-            android:enabled="false" />
-    </LinearLayout>
-    <LinearLayout  android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
-        <Button android:id="@+id/btn_hold"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Hold"
-            android:enabled="false" />
-        <Button android:id="@+id/btn_startVideoCall"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="StartVideo"
-            android:enabled="false"/>
-    </LinearLayout>
-    <LinearLayout  android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
-        <Button
-            android:id="@+id/btn_accept"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Accept"
-            android:visibility="gone"/>
+            android:textAllCaps="false"
+            android:enabled="false"
+            android:text="Answer" />
 
-        <Button android:id="@+id/btn_reject"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Reject"
-            android:visibility="gone" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal" >
+    </LinearLayout>
+
+    <LinearLayout  android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+        <Button android:id="@+id/btn_is_speaker"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Speaker"
+            android:textAllCaps="false"
+            android:enabled="false" />
+        <Button android:id="@+id/btn_is_hold"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAllCaps="false"
+            android:text="Hold"
+            android:enabled="false" />
+        <Button android:id="@+id/btn_is_mute"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAllCaps="false"
+            android:text="Mute"
+            android:enabled="false" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="20dip">
+
         <TextView
-            android:layout_width="200px"
+            android:id="@+id/txtState"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="空闲中"
+            android:textColor="#ff0000" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+        <TextView
+            android:layout_width="500px"
             android:layout_height="wrap_content"
             android:text="Network Info："
             android:textColor="#000000"/>
     </LinearLayout>
+
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_marginTop="10dp" >
-        <Button
-            android:id="@+id/btn_stopfile"
-            android:text="Stop play file"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"/>
-        <Button
-            android:id="@+id/btn_setting"
-            android:text="Setting"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"/>
         <TextView
-            android:id="@+id/localip"
+            android:id="@+id/txtNetInfo"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:text="local ip"
+            android:text="No Local IP Info"
             android:textColor="#000000"/>
     </LinearLayout>
 </LinearLayout>
