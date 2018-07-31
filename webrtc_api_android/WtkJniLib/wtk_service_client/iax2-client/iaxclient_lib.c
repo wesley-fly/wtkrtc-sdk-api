@@ -92,11 +92,9 @@ static iaxc_event *event_queue = NULL;
 #define	DEFSTRVAL(x,y)	((x)?(x):(y))
 void wtkState_clear_state(struct wtkState* call)
 {
-	//call->id = -1;
 	call->activity = CALL_FREE;
-	//call->last_state = IAXC_CALL_STATE_FREE;
-
 	call->type = OUTGOING_CALL;
+	
 	memset(&call->tm_start, 0, sizeof(struct timeval));
 	memset(&call->tm_answer, 0, sizeof(struct timeval));
 	memset(&call->tm_transfer, 0, sizeof(struct timeval));
@@ -105,6 +103,67 @@ void wtkState_clear_state(struct wtkState* call)
 	call->hangup = 0; // not self, no timeout out
 	call->reason = 0;
 	strcpy(call->local_codecs, "");
+}
+struct string_array
+{
+	char* text;
+	short  data;  // reserved
+	struct string_array* next;
+};
+
+static void release_string_array(struct string_array* strs)
+{
+	struct string_array* head = strs;
+	struct string_array* node;
+	while(head!=NULL)
+	{
+		node = head;
+		head = head->next;
+		
+		free(node->text);
+		free(node);
+	}
+}
+
+static struct string_array* parse_string_array(const char*str, char delim)
+{
+	char text[IAXC_EVENT_BUFSIZ];
+	int len, i, index, data;
+	
+	struct string_array* head = NULL;
+	struct string_array* node = NULL;
+	struct string_array* tail = NULL;
+
+	index = 0;
+	data = 0;
+
+	len = (int)strlen(str);
+	for(i=0; i<len; i++)
+	{
+		if(str[i]!=delim) 
+		{
+			text[index++] = str[i];
+			text[index] = '\0';
+			
+			if(i<len-1) continue;
+		}
+		
+		// create a text node
+        node = (struct string_array*)malloc(sizeof(struct string_array));
+		node->text = (char*)malloc(index+1);
+		memcpy(node->text, text, index+1);
+		node->data = data++;  // for priority
+		node->next = NULL;
+		if(head==NULL)	
+			head = node;
+		else
+			tail->next = node;
+		
+		// move to next
+		tail = node;
+		index = 0;
+	}
+	return head;
 }
 
 // Lock the library
@@ -374,10 +433,14 @@ EXPORT void iaxc_clear_call(int toDump)
 	calls[toDump].state = IAXC_CALL_STATE_FREE;
 	calls[toDump].format = 0;
 	calls[toDump].vformat = 0;
-	calls[toDump].session = NULL;
-	calls[toDump].mstate = IAXC_MEDIA_STATE_NONE;
+	//calls[toDump].session = NULL;
+	if (calls[toDump].session)
+	{
+		iax_destroy(calls[toDump].session);
+		calls[toDump].session = NULL;
+	}
 	iaxci_do_state_callback(toDump);
-
+	
 	wtkState_clear_state(&calls[toDump].sm);
 }
 
@@ -385,16 +448,12 @@ EXPORT void iaxc_clear_call(int toDump)
 /* XXX Locking??  Start/stop audio?? */
 EXPORT int iaxc_select_call(int callNo)
 {
-	// continue if already selected?
-	//if ( callNo == selected_call ) return;
-
 	if ( callNo >= max_calls )
 	{
 		iaxci_usermsg(IAXC_ERROR, "Error: tried to select out_of_range call %d", callNo);
 		return -1;
 	}
 
-	// callNo < 0 means no call selected (i.e. all on hold)
 	if ( callNo < 0 )
 	{
 		if ( selected_call >= 0 )
@@ -424,7 +483,7 @@ EXPORT int iaxc_select_call(int callNo)
 		iaxc_answer_call(selected_call);
 	} else
 	{
-		// otherwise just update state (answer does this for us)
+		calls[selected_call].state |= IAXC_CALL_STATE_SELECTED;
 		iaxci_do_state_callback(selected_call);
 	}
 
@@ -812,10 +871,10 @@ static int wtkcall_recv_audio_event(struct iaxc_call *call, struct iax_event *e,
 	
 	outbuf = raw;
 	outlen = rawlen;
+	//iaxci_usermsg(IAXC_ERROR, "Audio Frame libwtk_decode_audio\n");
 	// decode audio packet and play
-    {
-		libwtk_decode_audio(outbuf, outlen);
-    }
+	libwtk_decode_audio(outbuf, outlen);
+	
 	return retlen;
 }
 
@@ -827,23 +886,12 @@ static void handle_audio_event(struct iax_event *e, int callNo)
 	if( callNo <0 ) 
 		return; /* drop audio for non-existed call? */
 	
-	/*if(!(calls[callNo].media & IAXC_DATA_AUDIO))
-		return; */
-	
 	if( callNo != selected_call )
 	{	
-		/*if( !((calls[selected_call].mstate & IAXC_MEDIA_STATE_MIXED) && 
-			 (calls[callNo].mstate & IAXC_MEDIA_STATE_MIXED)) ) */
-			return; 
+		return; 
 	}
-	
-	/*if((calls[callNo].mstate & IAXC_MEDIA_STATE_MUTEMULTIPARTY) ||
-	   (calls[callNo].mstate & IAXC_MEDIA_STATE_HOLD))
-		return; */
 
-#if 1
-	iaxci_usermsg(IAXC_ERROR, "Audio Frame (%d) received: length=%d \n", e->ts, e->datalen);
-#endif
+	//iaxci_usermsg(IAXC_ERROR, "Audio Frame (%d) received: length=%d \n", e->ts, e->datalen);
 
 	for( ofs = 0; ofs < e->datalen; ofs += cur )
 	{
@@ -919,9 +967,7 @@ static void iaxc_handle_network_event(struct iax_event *e, int callNo)
 		format2 = e->ies.format & IAXC_AUDIO_FORMAT2_MASK;
 		calls[callNo].format = format1 | format2;
 		calls[callNo].vformat = e->ies.format & IAXC_VIDEO_FORMAT_MASK;
-		if(e->ies.force_nortp==1) {
-            calls[callNo].mstate |= IAXC_MEDIA_STATE_NORTP;
-        }
+
 		if ( !(e->ies.format & IAXC_VIDEO_FORMAT_MASK) )
 		{
 			iaxci_usermsg(IAXC_NOTICE,
@@ -1100,7 +1146,7 @@ EXPORT void iaxc_dump_one_call(int callNo)
 		return;
 
 	iax_hangup(calls[callNo].session,"Dumped Call");
-	iaxci_usermsg(IAXC_STATUS, "Hanging up call %d", callNo);
+	iaxci_usermsg(IAXC_ERROR, "Hanging up call %d", callNo);
 	iaxc_clear_call(callNo);
 }
 
@@ -1383,9 +1429,6 @@ static void iaxc_handle_connect(struct iax_event * e)
 		strncpy(calls[callno].remote_name, "unknown",
 				IAXC_EVENT_BUFSIZ);
 
-	if(e->ies.force_nortp==1) {
-        calls[callno].mstate |= IAXC_MEDIA_STATE_NORTP;
-    }
 	if( strncmp( calls[callno].remote_name, "[msg@", 5 ) ==0 )
 	{
 		iax_reject(calls[callno].session, "Call rejected manually.");
@@ -1490,77 +1533,13 @@ EXPORT int iaxc_push_audio(void *data, unsigned int size, unsigned int samples)
 
 	call = &calls[selected_call];
 
-	//fprintf(stderr, "iaxc_push_audio: sending audio size %d\n", size);
-
 	if ( iax_send_voice(call->session, call->format, data, size, samples) == -1 )
 	{
-		fprintf(stderr, "iaxc_push_audio: failed to send audio frame of size %d on call %d\n", size, selected_call);
+		iaxci_usermsg(IAXC_STATUS, "iaxc_push_audio: failed to send audio frame of size %d on call %d\n", size, selected_call);
 		return -1;
 	}
 
 	return 0;
-}
-
-struct string_array
-{
-	char* text;
-	short  data;  // reserved
-	struct string_array* next;
-};
-
-static void release_string_array(struct string_array* strs)
-{
-	struct string_array* head = strs;
-	struct string_array* node;
-	while(head!=NULL)
-	{
-		node = head;
-		head = head->next;
-		
-		free(node->text);
-		free(node);
-	}
-}
-
-static struct string_array* parse_string_array(const char*str, char delim)
-{
-	char text[IAXC_EVENT_BUFSIZ];
-	int len, i, index, data;
-	
-	struct string_array* head = NULL;
-	struct string_array* node = NULL;
-	struct string_array* tail = NULL;
-
-	index = 0;
-	data = 0;
-
-	len = (int)strlen(str);
-	for(i=0; i<len; i++)
-	{
-		if(str[i]!=delim) 
-		{
-			text[index++] = str[i];
-			text[index] = '\0';
-			
-			if(i<len-1) continue;
-		}
-		
-		// create a text node
-        node = (struct string_array*)malloc(sizeof(struct string_array));
-		node->text = (char*)malloc(index+1);
-		memcpy(node->text, text, index+1);
-		node->data = data++;  // for priority
-		node->next = NULL;
-		if(head==NULL)	
-			head = node;
-		else
-			tail->next = node;
-		
-		// move to next
-		tail = node;
-		index = 0;
-	}
-	return head;
 }
 
 wtkcall_jni_event_callback_t wtkcall_send_jni_event = NULL;
@@ -1589,7 +1568,7 @@ EXPORT void  wtkcall_perform_registration_callback(int id, int reply)
 			break;
 	}
 	info.id = id;
-	iaxci_usermsg(IAXC_STATUS, "wtkcall_send_jni_event(EVENT_REGISTRATION, regid=%d, reply=%d)", info.id, info.reply);
+	//iaxci_usermsg(IAXC_STATUS, "wtkcall_send_jni_event(EVENT_REGISTRATION, regid=%d, reply=%d)", info.id, info.reply);
 
 	if(wtkcall_send_jni_event)
 		wtkcall_send_jni_event(EVENT_REGISTRATION, (void*)&info);
@@ -1617,7 +1596,7 @@ EXPORT void  wtkcall_perform_state_callback(struct wtkState* call, int callNo, i
 			}
 			call->tm_start = iax_tvnow();
 		}
-		else if(new_state & IAXC_CALL_STATE_COMPLETE)
+		else if((new_state & IAXC_CALL_STATE_COMPLETE)&&(new_state & IAXC_CALL_STATE_SELECTED))
 		{
 			/*-- an incoming/outgoing call is answered now */
 			call->tm_answer = iax_tvnow();
@@ -1694,12 +1673,6 @@ EXPORT void  wtkcall_perform_message_callback(struct wtkState* call, char *messa
 }
 EXPORT void  wtkcall_perform_text_callback(char* text)
 {
-	//iaxci_usermsg(IAXC_STATUS, "wtkcall_send_jni_event(EVENT_LOG, text=%s)",text);
-
 	if(wtkcall_send_jni_event!=NULL)
 		wtkcall_send_jni_event(EVENT_LOG, text);
 }
- 
-//EXPORT int get_new_callid()  {  return ++new_callid; }
-
-

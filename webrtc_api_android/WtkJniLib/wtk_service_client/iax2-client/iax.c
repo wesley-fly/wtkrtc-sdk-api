@@ -209,8 +209,6 @@ struct iax_session {
 
 	/* For linking if there are multiple connections */
 	struct iax_session *next;
-
-	int devicecaps; /* device capability */
 };
 
 char iax_errstr[256];
@@ -225,6 +223,7 @@ char iax_errstr[256];
 #if defined(WIN32)  ||  defined(_WIN32_WCE)
 static int __debug(const char *file, int lineno, const char *fmt, ...)
 {
+#ifdef IAX_DEBUG
     char error[256];
     va_list args;
 	va_start(args, fmt);
@@ -233,11 +232,13 @@ static int __debug(const char *file, int lineno, const char *fmt, ...)
     
 	va_end(args);
     iaxci_usermsg(3, "%s line %d: %s", file, lineno, error);
+#endif
     return 0;
 }
 #else
 static int __debug(const char *file, int lineno, const char *func, const char *fmt, ...)
 {
+#ifdef IAX_DEBUG
     char error[256];
 	va_list args;
 	va_start(args, fmt);
@@ -246,6 +247,7 @@ static int __debug(const char *file, int lineno, const char *func, const char *f
     
 	va_end(args);
     iaxci_usermsg(3, "%s line %d: %s", file, lineno, error);
+#endif
 	return 0;
 }
 #endif
@@ -410,6 +412,7 @@ struct iax_session *iax_session_new(void)
 		s->voiceformat = -1;
 		s->svoiceformat = -1;
 		s->videoformat = -1;
+		s->svideoformat = -1;
 		/* Default pingtime to 100 ms -- should cover most decent net connections */
 		s->pingtime = 100;
 		/* XXX Not quite right -- make sure it's not in use, but that won't matter
@@ -423,7 +426,7 @@ struct iax_session *iax_session_new(void)
 		s->next = sessions;
 		s->sendto = iax_sendto;
 		s->pingid = -1;
-		s->devicecaps = 0x0f;
+		s->sindex = -1;
 
 #ifdef USE_VOICE_TS_PREDICTION
 		s->nextpred = 0;
@@ -754,8 +757,10 @@ static int iax_xmit_frame(struct iax_frame *f)
 {
 	int res;
 #ifdef IAX_DEBUG
-	struct SOCKADDR_ST* addr = NULL;
-	addr = &f->session->peeraddr;
+	struct SOCKADDR_ST* addr = NULL;//&f->session->peeraddr
+	addr = f->transfer ?
+			(struct sockaddr *)&(f->session->transfer) :
+			(struct sockaddr *)&(f->session->peeraddr);
 
 	struct ast_iax2_full_hdr *h = (struct ast_iax2_full_hdr *)f->data;
 	iax_showframe(f, NULL, 0, addr, 
@@ -831,6 +836,7 @@ int iax_init(int preferredportno)
 			DEBU(G "Unable to allocate UDP socket\n");
 			return -1;
 		}
+		iax_seed_random();
 
 		if (preferredportno == 0)
 			preferredportno = IAX_DEFAULT_PORTNO + iax_random() % 16384;//IAX_DEFAULT_PORTNO;
@@ -938,7 +944,7 @@ static unsigned char compress_subclass(uint64_t subclass)
 		return subclass;
 	/* Otherwise find its power */
 	for (x = 0; x < IAX_MAX_SHIFT; x++) {
-		if (subclass & (1 << x)) {
+		if (subclass & (1LL << x)) {
 			if (power > -1) {
 				DEBU(G "Can't compress subclass %d\n", subclass);
 				return 0;
@@ -1136,7 +1142,7 @@ static int iax_send(struct iax_session *pvt, struct ast_frame *f, unsigned int t
 	return res;
 }
 
-static int __send_command(struct iax_session *i, char type, int command,
+static int __send_command(struct iax_session *i, char type, uint64_t command,
 		unsigned int ts, unsigned char *data, int datalen, int seqno,
 		int now, int transfer, int final, int fullframe, int samples)
 {
@@ -1156,17 +1162,17 @@ static int __send_command(struct iax_session *i, char type, int command,
 	return iax_send(i, &f, ts, seqno, now, transfer, final, fullframe);
 }
 
-static int send_command(struct iax_session *i, char type, int command, unsigned int ts, unsigned char *data, int datalen, int seqno)
+static int send_command(struct iax_session *i, char type, uint64_t command, unsigned int ts, unsigned char *data, int datalen, int seqno)
 {
 	return __send_command(i, type, command, ts, data, datalen, seqno, 0, 0, 0, 0, 0);
 }
 
-static int send_command_video(struct iax_session *i, char type, int command, unsigned int ts, unsigned char *data, int datalen, int seqno, int fullframe)
+static int send_command_video(struct iax_session *i, char type, uint64_t command, unsigned int ts, unsigned char *data, int datalen, int seqno, int fullframe)
 {
 	return __send_command(i, type, command, ts, data, datalen, seqno, 1, 0, 0, fullframe, 0);
 }
 
-static int send_command_final(struct iax_session *i, char type, int command, unsigned int ts, unsigned char *data, int datalen, int seqno)
+static int send_command_final(struct iax_session *i, char type, uint64_t command, unsigned int ts, unsigned char *data, int datalen, int seqno)
 {
 #if 0
 	/* It is assumed that the callno has already been locked */
@@ -1178,17 +1184,17 @@ static int send_command_final(struct iax_session *i, char type, int command, uns
 	return r;
 }
 
-static int send_command_immediate(struct iax_session *i, char type, int command, unsigned int ts, unsigned char *data, int datalen, int seqno)
+static int send_command_immediate(struct iax_session *i, char type, uint64_t command, unsigned int ts, unsigned char *data, int datalen, int seqno)
 {
 	return __send_command(i, type, command, ts, data, datalen, seqno, 1, 0, 0, 0, 0);
 }
 
-static int send_command_transfer(struct iax_session *i, char type, int command, unsigned int ts, unsigned char *data, int datalen)
+static int send_command_transfer(struct iax_session *i, char type, uint64_t command, unsigned int ts, unsigned char *data, int datalen)
 {
 	return __send_command(i, type, command, ts, data, datalen, 0, 0, 1, 0, 0, 0);
 }
 
-static int send_command_samples(struct iax_session *i, char type, int command, unsigned int ts, unsigned char *data, int datalen, int seqno, int samples)
+static int send_command_samples(struct iax_session *i, char type, uint64_t command, unsigned int ts, unsigned char *data, int datalen, int seqno, int samples)
 {
 	return __send_command(i, type, command, ts, data, datalen, seqno, 0, 0, 0, 0, samples);
 }
@@ -1237,6 +1243,7 @@ static void complete_transfer(struct iax_session *session, int peercallno, int x
 		/* Force retransmission of a real voice packet, and reset all timing */
 		session->svoiceformat = -1;
 		session->voiceformat = 0;
+		DEBU(G "complete_transfer session->voiceformat=%llx\n",session->voiceformat);
 		session->svideoformat = -1;
 		session->videoformat = 0;
 	}
@@ -1717,7 +1724,6 @@ int iax_accept(struct iax_session *session, uint64_t format)
 	memset(&ied, 0, sizeof(ied));
 	iax_ie_append_int(&ied, IAX_IE_FORMAT, format);
 	iax_ie_append_versioned_uint64(&ied, IAX_IE_FORMAT2, 0, format);
-	iax_ie_append_local_addr(&ied);
 	return send_command(session, AST_FRAME_IAX, IAX_COMMAND_ACCEPT, 0, ied.buf, ied.pos, -1);
 }
 
@@ -1800,7 +1806,8 @@ static int iax_send_txrej(struct iax_session *session)
 	struct iax_ie_data ied;
 	memset(&ied, 0, sizeof(ied));
 	iax_ie_append_int(&ied, IAX_IE_TRANSFERID, session->transferid);
-	return send_command_transfer(session, AST_FRAME_IAX, IAX_COMMAND_TXREJ, 0, ied.buf, ied.pos);
+	//return send_command_transfer(session, AST_FRAME_IAX, IAX_COMMAND_TXREJ, 0, ied.buf, ied.pos);
+	return send_command(session, AST_FRAME_IAX, IAX_COMMAND_TXREJ, 0, ied.buf, ied.pos, -1);
 }
 
 static int iax_send_txaccept(struct iax_session *session)
@@ -1954,357 +1961,9 @@ int iax_pref_codec_get(struct iax_session *session, unsigned int *array, int len
 
 	return x;
 }
-#ifdef MACOSX /* iOS */
-
-#define	BUFFERSIZE  4000
-#define	min(a,b)    ((a) < (b) ? (a) : (b))
-#define max(a,b)    ((a) > (b) ? (a) : (b))
-
-/* 20161226: 枚举Socket上绑定的IPv4地址 */
-int iax_get_local_addr(struct sockaddr_in* sin)
-{
-    struct ifconf ifc;
-    struct ifreq *ifr, ifrcopy;
-    char buffer[BUFFERSIZE], *ptr, lastname[IFNAMSIZ], *cptr;
-	int len, flags;
-	struct sockaddr_in sinport;
-	socklen_t sinlen;
-	
-    ifc.ifc_len = BUFFERSIZE;
-    ifc.ifc_buf = buffer;
-	
-    if (ioctl(netfd, SIOCGIFCONF, &ifc) < 0)
-        return -1;
-	
-	// retrieve port number
-	sinlen = sizeof(struct sockaddr_in);
-	getsockname(netfd, (struct sockaddr *)&sinport, &sinlen);
-	
-    lastname[0] = 0;
-
-	// enumerate ipv4 address
-    for (ptr = buffer; ptr < buffer + ifc.ifc_len; )
-    {
-        ifr = (struct ifreq *)ptr;
-        len = max(sizeof(struct sockaddr), ifr->ifr_addr.sa_len);
-        ptr += sizeof(ifr->ifr_name) + len;// for next one in buffer
-		
-        if (ifr->ifr_addr.sa_family != AF_INET )
-            continue;
-        
-        if ((cptr = (char *)strchr(ifr->ifr_name, ':')) != NULL)
-            *cptr = 0;        // replace colon will null
-        
-        if (strncmp(lastname, ifr->ifr_name, IFNAMSIZ) == 0)
-            continue;    /* already processed this interface */
-        
-        memcpy(lastname, ifr->ifr_name, IFNAMSIZ);
-        
-        ifrcopy = *ifr;
-        ioctl(netfd, SIOCGIFFLAGS, &ifrcopy);
-        flags = ifrcopy.ifr_flags;
-        
-        if ((flags & IFF_UP) == 0)
-            continue;    // ignore if interface not up
-        
-        // IPv4 address of LAN (ethernet) found
-        if(strstr(lastname, "en")==lastname)
-        {
-            memcpy(sin, (struct sockaddr_in *)&ifr->ifr_addr, sizeof(struct sockaddr_in));
-            sin->sin_port = sinport.sin_port;
-            // mark.zhang: to compatible with Android&WP8
-            sin->sin_len = AF_INET;  // low byte
-            sin->sin_family = 0;     // high byte
-            return 0;
-        }
-    }
-    
-    return -2;
-}
-
-
-#ifdef USE_IPV6
-/* 20161226:枚举Socket上绑定的IPv6地址 */
-int iax_get_local_addr6(struct sockaddr_in6* sin6)
-{
-    struct ifaddrs *interfaces = NULL;
-    struct ifaddrs *temp_addr = NULL;
-   
-    socklen_t sinlen;
-    struct sockaddr_in6 sinport;
-    
-    // retrieve port number
-    sinlen = sizeof(struct sockaddr_in6);
-    getsockname(netfd6, (struct sockaddr *)&sinport, &sinlen);
-    
-    // retrieve the current interfaces - returns 0 on success
-    if(!getifaddrs(&interfaces))
-    {
-        // Loop through linked list of interfaces
-        temp_addr = interfaces;
-        while(temp_addr != NULL)
-        {
-            sa_family_t sa_type = temp_addr->ifa_addr->sa_family;
-            
-            if(sa_type == AF_INET6 &&
-               ((temp_addr->ifa_flags &IFF_UP) && !(temp_addr->ifa_flags & IFF_LOOPBACK)) )
-            {
-                if(strcmp(temp_addr->ifa_name, "en0")==0 || // Interface is the wifi connection on the iPhone
-                   strcmp(temp_addr->ifa_name, "pdp_ip0")==0 ) // Interface is the cell connection on the iPhone
-                {
-                    memcpy(sin6, (struct sockaddr_in6*)temp_addr->ifa_addr, sizeof(struct sockaddr_in6));
-
-                    if(sin6->sin6_addr.__u6_addr.__u6_addr8[0]!=0xFE &&
-                       sin6->sin6_addr.__u6_addr.__u6_addr8[1]!=0x80 )
-                    {
-                        sin6->sin6_port = sinport.sin6_port;
-                        sin6->sin6_family = 0;
-                        sin6->sin6_len = AF_INET6;
-                        // Free memory
-                        freeifaddrs(interfaces);
-                        return 0;
-                    }
-                }
-            }
-            temp_addr = temp_addr->ifa_next;
-        }
-        // Free memory
-        freeifaddrs(interfaces);
-    }
-    return -2;
-}
-
-#endif /*USE_IPV6*/
-
-#elif defined(ANDROID)
-
-//jerry.gao add 2011-8-3
-int iax_get_local_addr(struct sockaddr_in* sin)
-{
-	int s;
-	struct ifconf conf;
-	struct ifreq *ifr;
-	char buff[BUFSIZ];
-	int num;
-	int i;
-	struct sockaddr_in sinport;
-	socklen_t sinlen;
-
-	int lnaddr = 0;
-
-	s = socket(PF_INET, SOCK_DGRAM, 0);
-	conf.ifc_len = BUFSIZ;
-	conf.ifc_buf = buff;
-
-	ioctl(s, SIOCGIFCONF, &conf);
-	num = conf.ifc_len / sizeof(struct ifreq);
-	ifr = conf.ifc_req;
-
-	// retrieve port number
-	sinlen = sizeof(struct sockaddr_in);
-	getsockname(netfd, (struct sockaddr *)&sinport, &sinlen);
-
-	for(i=0;i < num;i++)
-	{
-		//struct sockaddr_in *s_sin = (struct sockaddr_in *)(&ifr->ifr_addr);
-		ioctl(s, SIOCGIFFLAGS, ifr);
-		if(((ifr->ifr_flags & IFF_LOOPBACK) == 0) && (ifr->ifr_flags & IFF_UP) && (ifr->ifr_addr.sa_family==PF_INET))
-		{
-			memcpy(sin, (struct sockaddr_in *)&ifr->ifr_addr, sizeof(struct sockaddr_in));
-			sin->sin_port = sinport.sin_port;
-            sin->sin_family = AF_INET;
-			return 0;
-		}
-		ifr++;
-	}
-	return -1;
-}
-
-int iax_get_local_addr6(struct sockaddr_in6* sin6)
-{
-    return -2;
-}
-
-#else /* Windows*/
-
-int iax_get_local_addr(struct sockaddr_in* sin)
-{
-	socklen_t sinlen;
-    struct hostent* hp;
-    struct sockaddr_in sinport;
-    char name[255];
-	
-	// retrieve port number
-	sinlen = sizeof(struct sockaddr_in);
-	getsockname(netfd, (struct sockaddr *)&sinport, &sinlen);
-    
-	/* retrieve host address by name
-	 note: we do not know which ip address is actually using, if there is multiple adapters. 
-	 */
-	if(gethostname (name, sizeof(name)) == 0)
-	{
-		hp = gethostbyname(name);
-		if(hp)
-		{
-			memcpy(&sin->sin_addr, hp->h_addr, sizeof(IN_ADDR));
-            sin->sin_port = sinport.sin_port;
-            sin->sin_family = AF_INET;
-			return 0;
-		}
-	}
-	return -2;
-}
-
-#ifdef USE_IPV6
-int iax_get_local_addr6(struct sockaddr_in6* sin6)
-{
-    socklen_t sinlen;
-    struct hostent* hp;
-    struct sockaddr_in6 sin6port;
-    char name[255] = {0};
-    
-    // retrieve port number
-    sinlen = sizeof(struct sockaddr_in6);
-    getsockname(netfd6, (struct sockaddr *)&sin6port, &sinlen);
-    
-    /* retrieve host address by name
-     note: we do not know which ip address is actually using, if there is multiple adapters.
-     */
-    if(gethostname (name, sizeof(name)) == 0)
-    {
-#ifndef WIN32
-        hp = gethostbyname2(name, AF_INET6);
-        if(hp)
-        {
-            memcpy(&sin6->sin6_addr, hp->h_addr, sizeof(struct in6_addr));
-            sin6->sin6_port = sin6port.sin6_port;
-            sin6->sin6_family = AF_INET6;
-            return 0;
-        }
-#else
-		// TODO: resolve IPv6 address of Win32
-#endif
-    }
-    return -2;
-}
-#endif /*USE_IPV6*/
-
-#endif /*Windows*/
-
-
-int	 iax_ie_append_local_addr(struct iax_ie_data* ied)
-{
-	struct SOCKADDR_ST sin;
-
-    int count = 0;
-    
-	if( netfd<0 )  /* invalid socket identifier*/
-		return -1;
-	
-	if(iax_get_local_addr((struct sockaddr_in*)&sin) == 0)
-	{
-        // append local address(ipv4) ie to ie_data field
-        iax_ie_append_addr(ied, IAX_IE_LOCAL_ADDR, &sin);
-        
-#ifdef MACOSX
-        DEBU(G "Append local address IP=%s; Port=%d; Family=%d; Len=%d\n",
-             inet_ntoa(((struct sockaddr_in*)&sin)->sin_addr),
-             ntohs(((struct sockaddr_in*)&sin)->sin_port),
-             ntohs(((struct sockaddr_in*)&sin)->sin_family),
-             ntohs(((struct sockaddr_in*)&sin)->sin_len));
-        
-#else
-        DEBU(G "Append local address IP=%s; Port=%d, Family=%d\n",
-             inet_ntoa(((struct sockaddr_in*)&sin)->sin_addr),
-             ntohs(((struct sockaddr_in*)&sin)->sin_port),
-             ntohs(((struct sockaddr_in*)&sin)->sin_family));
-#endif
-        count++;
-    }
- 
-#ifdef USE_IPV6 // 20161226: IPv6 Supports
-    if(iax_get_local_addr6((struct sockaddr_in6*)&sin) == 0)
-    {
-        char ipaddr[INET6_ADDRSTRLEN];
-        inet_ntop(AF_INET6, &((struct sockaddr_in6*)&sin)->sin6_addr, ipaddr, sizeof(ipaddr));
-        
-        // append local address(ipv6) ie to ie_data field
-        iax_ie_append_addr(ied, IAX_IE_LOCAL_ADDR6, &sin);
-        
-#ifdef MACOSX
-        DEBU(G "Append local address IPv6=[%s]; Port=%d; Family=%d; Len=%d\n",
-             ipaddr,
-             ntohs(((struct sockaddr_in6*)&sin)->sin6_port),
-             ntohs(((struct sockaddr_in6*)&sin)->sin6_family),
-             ntohs(((struct sockaddr_in6*)&sin)->sin6_len));
-#else
-        DEBU(G "Append local address IPv6=[%s]; Port=%d, Family=%d\n",
-             ipaddr,
-             ntohs(((struct sockaddr_in6*)&sin)->sin6_port),
-             ntohs(((struct sockaddr_in6*)&sin)->sin6_family));
-#endif
-        count++;
-    }
-#endif /*USE_IPV6*/
-    
-    return (count>0) ? 0 : -2;
-}
-
-//Add for support ipv6, maybe used it later@Xiaofan
-static int iax_resolve_hostname(char* hostname, int portno, struct SOCKADDR_ST* addrst)
-{
-    struct hostent *hp;
-
-#ifdef USE_IPV6
-    addrst->ss_family = 0;
-#endif
-    
-    hp = gethostbyname(hostname);  // IPv4
-    if (hp)
-    {
-#ifndef USE_IPV6
-        memcpy(&addrst->sin_addr, hp->h_addr, sizeof(struct in_addr));
-        addrst->sin_port = htons(portno);
-        addrst->sin_family = AF_INET;
-#else
-        memcpy(&((struct sockaddr_in*)addrst)->sin_addr, hp->h_addr, sizeof(struct in_addr));
-        ((struct sockaddr_in*)addrst)->sin_port = htons(portno);
-        ((struct sockaddr_in*)addrst)->sin_family = AF_INET;
-#endif
-    }
-#ifndef USE_IPV6
-    else
-    {
-        snprintf(iax_errstr, sizeof(iax_errstr), "gethostbyname() Invalid hostname: %s", hostname);
-        return -1;
-    }
-#else
-    
-#ifndef WIN32
-    // Connect preferred IPv6 address if existed
-    hp = gethostbyname2(hostname, AF_INET6);
-    if (hp)
-    {
-        memcpy(&((struct sockaddr_in6*)addrst)->sin6_addr, hp->h_addr, sizeof(struct in6_addr));
-        ((struct sockaddr_in6*)addrst)->sin6_port = htons(portno);
-        ((struct sockaddr_in6*)addrst)->sin6_family = AF_INET6;
-    }
-#else
-	// TODO: resolve IPv6 address of Win32
-#endif
-
-    if(addrst->ss_family==0)
-    {
-        snprintf(iax_errstr, sizeof(iax_errstr), "Invalid hostname: %s", hostname);
-        return -1;
-    }
-#endif /* USE_IPV6 */
-
-    return 0;
-}
 
 int iax_call(struct iax_session *session, const char *cidnum, const char *cidname, const char *user, const char *host, 
-	const char *dest, const char *lang, int wait, uint64_t formats, uint64_t capabilities, char* ext)
+	const char *dest, uint64_t formats, uint64_t capabilities, char* ext)
 {
 	int res;
 	int portno;
@@ -2375,13 +2034,7 @@ int iax_call(struct iax_session *session, const char *cidnum, const char *cidnam
     
     if (exten && strlen(exten))
 		iax_ie_append_str(&ied, IAX_IE_CALLED_NUMBER, exten);
-	
-	/* Provide local address for direct connection */
-	iax_ie_append_local_addr(&ied);
     
-    /* Provide device capability */
-	iax_ie_append_short(&ied, IAX_IE_DEVICECAP, session->devicecaps);
-
     if( ext!=NULL && strcmp(ext, "")!=0 ){
         strncpy(session->ticket, ext, strlen(ext));
     }
@@ -2399,10 +2052,7 @@ int iax_call(struct iax_session *session, const char *cidnum, const char *cidnam
 	res = send_command(session, AST_FRAME_IAX, IAX_COMMAND_NEW, 0, ied.buf, ied.pos, -1);
 	if (res < 0)
 		return res;
-	if (wait) {
-		DEBU(G "Waiting not yet implemented\n");
-		return -1;
-	}
+
 	return res;
 }
 
@@ -2575,7 +2225,7 @@ static int uncompress_subclass(unsigned char csub)
 {
 	/* If the SC_LOG flag is set, return 2^csub otherwise csub */
 	if (csub & IAX_FLAG_SC_LOG)
-		return 1 << (csub & ~IAX_FLAG_SC_LOG & IAX_MAX_SHIFT);
+		return 1LL << (csub & ~IAX_FLAG_SC_LOG & IAX_MAX_SHIFT);
 	else
 		return csub;
 }
@@ -3129,7 +2779,6 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 	return e;
 }
 
-/* Some parts taken from iax_miniheader_to_event and from from chan_iax2.c. We must inform Mark Spencer? */
 static struct iax_event *iax_videoheader_to_event(struct iax_session *session,
 		struct ast_iax2_video_hdr *vh, int datalen)
 {
@@ -3165,9 +2814,9 @@ static struct iax_event *iax_miniheader_to_event(struct iax_session *session,
 {
 	struct iax_event * e;
 
-	if ( session->voiceformat <= 0 )
+	if ( session->voiceformat < 0 /*session->voiceformat <= 0*/ )
 	{
-		DEBU(G "No last format received on session %d\n", session->callno);
+		DEBU(G "No last format received on session %d,session->voiceformat = %llx\n", session->callno,session->voiceformat);
 		return 0;
 	}
 

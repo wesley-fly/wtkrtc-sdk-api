@@ -102,8 +102,8 @@
 #define IAX_IE_TRANSFERID			27		/* Transfer Request Identifier -- int */
 #define IAX_IE_RDNIS				28		/* Referring DNIS -- string */
 #define IAX_IE_PROVISIONING			29		/* Provisioning info */
-#define IAX_IE_AESPROVISIONING			30		/* AES Provisioning info */
-#define IAX_IE_DATETIME				31		/* Date/Time */
+#define IAX_IE_AESPROVISIONING					30		/* AES Provisioning info */
+#define IAX_IE_DATETIME							31		/* Date/Time */
 #define IAX_IE_DEVICETYPE                       32              /* Device Type -- string */
 #define IAX_IE_SERVICEIDENT                     33              /* Service Identifier -- string */
 #define IAX_IE_FIRMWAREVER                      34              /* Firmware revision -- u16 */
@@ -117,8 +117,7 @@
 #define IAX_IE_CAUSECODE                        42              /* Hangup cause (u8) */
 #define IAX_IE_ENCRYPTION                       43              /* Encryption format (u16) */
 #define IAX_IE_ENCKEY                           44              /* Encryption key (raw) */
-#define IAX_IE_CODEC_PREFS          45      /* Codec Negotiation */
-
+#define IAX_IE_CODEC_PREFS          			45      		/* Codec Negotiation */
 #define IAX_IE_RR_JITTER                        46              /* Received jitter (as in RFC1889) u32 */
 #define IAX_IE_RR_LOSS                          47              /* Received loss (high byte loss pct, low 24 bits loss count, as in rfc1889 */
 #define IAX_IE_RR_PKTS                          48              /* Received frames (total frames received) u32 */
@@ -126,34 +125,11 @@
 #define IAX_IE_RR_DROPPED                       50              /* Dropped frames (presumably by jitterbuf) u32 */
 #define IAX_IE_RR_OOO                           51              /* Frames received Out of Order u32 */
 //Add by Xiaofan
-#define IAX_IE_CAPABILITY2          55      /*!< Actual codec capability - u8 version + integer array */
-#define IAX_IE_FORMAT2              56      /*!< Desired codec format - u8 version + integer array */
-#define IAX_IE_CALLCENTER_TICKET    195    	/*!< 0xc3 ticket for call center auth */
-#define IAX_IE_LOCAL_ADDR6			199  	/* IPv6 address of local host (struct sockaddr_in6) */
-
-#define IAX_IE_PTTURL				200  	/* Domain name of PTT server(string) */
-#define IAX_IE_RELAY_UR				201  	/* Domain name of iax relay server(string) */
-#define IAX_IE_RTPURL				202  	/* Domain name of rtp relay server(string) */
-#define IAX_IE_SECRET_INDEX			203  	/* Index of current secret */
-#define IAX_IE_NORTP				204  	/* Force Client to remove RTP Header */
-#define IAX_IE_PHONE_NUMBER			205  	/* Caller's Address Book Number */
-#define IAX_IE_PTTSESSION			207  	/* PTT Session Identifier (like relaytoken) */
-#define IAX_IE_PTTSERVER			208  	/* PTT Media server and port */
-#define IAX_IE_DEVICECAP			209  	/* Capability of Device : Bit0=camera, Bit1=screen, Bit2=microphone, Bit3=speaker, Bit4=Encryption  */
-#define IAX_IE_RTPREQ				210  	/* Request RTP Address */
-#define IAX_IE_RTPADDR				211  	/* RTP Address for Media Gateway or Mixer */
-#define IAX_IE_INITKEY				212  	/* initial key for generating actual key*/
-#define IAX_IE_NETCHANGEID			216  	/* session identifier for network address change process */
-#define IAX_IE_TXREASON				217  	/* transfer Reason: Bit0=HeartBeat; Bit1=Network Changed */
-#define IAX_IE_NETQ					218  	/* network quality of receiver report*/
-#define IAX_IE_TIMESTAMP			219  	/* timestamp of echo */
-#define IAX_IE_EXTENSION2			220  	/* Second Extension*/
-#define IAX_IE_EXTENSION1			221  	/* First Extension */
-// IEs for optimization of iax2
-#define IAX_IE_RELAY_TOKEN			222		/* 0xDE, Relay Node Address */
-#define IAX_IE_RELAY_ADDR			223		/* 0xDF, Relay Node Address */
-#define IAX_IE_LOCAL_ADDR			224		/* 0xE0, Local address and port of UA */
-#define IAX_IE_TRANSFERTYPE			225		/* Supporting of seperation of signaling and media*/
+#define IAX_IE_CALLTOKEN	          			54      		/*!< Call Token - u8 version + integer array */
+#define IAX_IE_CAPABILITY2          			55      		/*!< Actual codec capability - u8 version + integer array */
+#define IAX_IE_FORMAT2              			56      		/*!< Desired codec format - u8 version + integer array */
+#define IAX_IE_CALLCENTER_TICKET    			195    			/*!< 0xc3 ticket for call center auth */
+#define IAX_IE_SECRET_INDEX						203  			/* Index of current secret */
 //Add by Xiaofan end
 
 #define IAX_AUTH_PLAINTEXT			(1 << 0)

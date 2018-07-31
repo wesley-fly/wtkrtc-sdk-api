@@ -317,6 +317,7 @@ static struct iax2_ie ies[] = {
 	{ IAX_IE_CALLED_CONTEXT, "CALLED CONTEXT", dump_string },
 	{ IAX_IE_USERNAME, "USERNAME", dump_string },
 	{ IAX_IE_PASSWORD, "PASSWORD", dump_string },
+	{ IAX_IE_CALLTOKEN, "CALL TOKEN", dump_string },
 	{ IAX_IE_CAPABILITY, "CAPABILITY", dump_int },
 	{ IAX_IE_CAPABILITY2, "CAPABILITY2", dump_versioned_codec },
 	{ IAX_IE_FORMAT, "FORMAT", dump_int },
@@ -360,30 +361,7 @@ static struct iax2_ie ies[] = {
 	{ IAX_IE_RR_DELAY, "RR_DELAY", dump_short },
 	{ IAX_IE_RR_DROPPED, "RR_DROPPED", dump_int },
 	{ IAX_IE_RR_OOO, "RR_OOO", dump_int },
-	{ IAX_IE_LOCAL_ADDR, "LOCAL IPV4", dump_addr },
-    { IAX_IE_RELAY_ADDR, "RELAY ADDRESS", dump_addr },
-    { IAX_IE_RELAY_TOKEN, "RELAY TOKEN", dump_string },
-	{ IAX_IE_TRANSFERTYPE, "TRANSFER TYPE", dump_byte },
-	{ IAX_IE_EXTENSION1, "EXTENSION 1", dump_string },
 
-    { IAX_IE_TIMESTAMP, "TRANSFER TIMESTAMP", dump_int },
-    { IAX_IE_NETQ, "NETWORK QUALITY RR", dump_byte },
-    { IAX_IE_TXREASON, "TRANSFER REASON", dump_byte},
-    { IAX_IE_NETCHANGEID, "NETCHANGE IDENTIFIER", dump_byte},
-    { IAX_IE_INITKEY, "ININTIAL KEY", dump_string},
-    { IAX_IE_RTPADDR, "RTPRELAY ADDRESS", dump_addr},
-    { IAX_IE_RTPREQ, "RTPRELAY REQ", dump_int},
-    { IAX_IE_DEVICECAP, "DEVICE CAPABILITY", dump_short},
-    { IAX_IE_PTTSERVER, "PTT MEDIA SERVER", dump_addr},
-    { IAX_IE_PTTSESSION, "PTT SESSION", dump_string},
-    { IAX_IE_NORTP, "FORCE NORTP", dump_byte},
-
-#ifdef USE_IPV6
-    { IAX_IE_PTTURL, "PTT MEDIA SERVER URL", dump_string},
-    { IAX_IE_RELAY_URL, "RELAY URL ADDRESS", dump_string },
-    { IAX_IE_LOCAL_ADDR6, "LOCAL IPv6", dump_addr },
-    { IAX_IE_RTPURL, "RTPRELAY URL ADDRESS", dump_string},
-#endif /* USE_IPV6 */
     { 0, NULL, NULL },
 };
 
@@ -502,10 +480,6 @@ void iax_showframe(struct iax_frame *f, struct ast_iax2_full_hdr *fhi, int rx, s
 	const char *clas;
 	const char *subclass;
 	char tmp[256];
-#ifdef USE_IPV6
-	char  ipaddr[INET6_ADDRSTRLEN];
-	short port;
-#endif
 	
 	if (f) {
 		fh = (struct ast_iax2_full_hdr *)f->data;
@@ -554,32 +528,11 @@ void iax_showframe(struct iax_frame *f, struct ast_iax2_full_hdr *fhi, int rx, s
 		retries, fh->oseqno, fh->iseqno, clas, subclass);
 	outputf(tmp);
 
-#ifndef USE_IPV6
 	snprintf(tmp, (int)sizeof(tmp),
 		"	Timestamp: %05lums	SCall: %5.5d  DCall: %5.5d [%s:%d]\n",
 		(unsigned long)ntohl(fh->ts),
 		ntohs(fh->scallno) & ~IAX_FLAG_FULL, ntohs(fh->dcallno) & ~IAX_FLAG_RETRANS,
 		inet_ntoa(sin->sin_addr), ntohs(sin->sin_port));
-#else
-	if(sin->ss_family==AF_INET) {
-		inet_ntop(AF_INET, &((struct sockaddr_in*)sin)->sin_addr, ipaddr, sizeof(ipaddr));
-		port = ntohs(((struct sockaddr_in*)sin)->sin_port);
-		snprintf(tmp, (int)sizeof(tmp),
-				 "	 Timestamp: %05lums  SCall: %5.5d  DCall: %5.5d [%s:%d]\n",
-				 (unsigned long)ntohl(fh->ts),
-				 ntohs(fh->scallno) & ~IAX_FLAG_FULL, ntohs(fh->dcallno) & ~IAX_FLAG_RETRANS,
-				 ipaddr, port);
-	}
-	else {
-		inet_ntop(AF_INET6, &((struct sockaddr_in6*)sin)->sin6_addr, ipaddr, sizeof(ipaddr));
-		port = ntohs(((struct sockaddr_in6*)sin)->sin6_port);
-		snprintf(tmp, (int)sizeof(tmp),
-				 "	 Timestamp: %05lums  SCall: %5.5d  DCall: %5.5d [[%s]:%d]\n",
-				 (unsigned long)ntohl(fh->ts),
-				 ntohs(fh->scallno) & ~IAX_FLAG_FULL, ntohs(fh->dcallno) & ~IAX_FLAG_RETRANS,
-				 ipaddr, port);
-	}
-#endif
 	outputf(tmp);
 
 	if ( fh->type == AST_FRAME_IAX ||
@@ -755,7 +708,6 @@ int iax_parse_ies(struct iax_ies *ies, unsigned char *data, int datalen)
 	ies->calling_tns = -1;
 	ies->calling_pres = -1;
 	ies->samprate = IAX_RATE_8KHZ;
-	//ies->devicecaps = -1;
 
 	while(datalen >= 2) {
 		ie = data[0];
@@ -1058,113 +1010,14 @@ int iax_parse_ies(struct iax_ies *ies, unsigned char *data, int datalen)
 			}
 			break;
 		case IAX_IE_PROVISIONING:
-			/*if (len > 2)
-				parse_prov( ies, (char *)(data+2), len );*/
 			snprintf(tmp, (int)sizeof(tmp), "ToDo IAX_IE_PROVISIONING\n");
 			errorf(tmp);
 			break;
-				
-		case IAX_IE_LOCAL_ADDR:
-			ies->local_addr = ((struct sockaddr_in *)(data + 2));
-			break;
-				
-		case IAX_IE_RELAY_ADDR:
-			if(ies->relay_index <= MAX_RELAY_NUM)
-			{
-				/* Insert the address on the head of the relay array */
-				if(ies->relay_index>0)
-				{
-					for(i=ies->relay_index-1; i>=0; i--)
-						ies->relay_addr[i+1] = ies->relay_addr[i];
-				}
-				ies->relay_addr[0] = ((struct sockaddr_in *)(data + 2));
-				ies->relay_index++;  // next relay address
-			}
-			break;
-				
-		case IAX_IE_RELAY_TOKEN: /* mark: relay token for association */
-			ies->relay_token = (char *) data + 2;
-			break;
-				
-		case IAX_IE_EXTENSION1: /* mark: extension 1 */
-			ies->ext1 = (char *) data + 2;
+		case IAX_IE_CALLTOKEN:
+			//snprintf(tmp, (int)sizeof(tmp), "ToDo IAX_IE_CALLTOKEN\n");
+			//errorf(tmp);
 			break;
 
-		case IAX_IE_TXREASON: /* Reason for sending TXCNT */
-			ies->txreason = data[2];
-			break;
-		case IAX_IE_NETCHANGEID: /* Identifier of Network Changes */
-			ies->netchangeid = data[2];
-			break;
-		case IAX_IE_NETQ: /* Network Quality RR */
-			ies->rr_netq = data[2];
-			break;
-		case IAX_IE_TIMESTAMP: /* Timestamp of TXCNT */
-			if (len != (int)sizeof(unsigned int)) {
-				snprintf(tmp, (int)sizeof(tmp), "Expecting timestamp of TXCNT to be %d bytes long but was %d\n", (int)sizeof(unsigned int), len);
-				errorf(tmp);
-			} else
-				ies->timestamp = ntohl(get_uint32(data + 2));
-			break;
-		
-		case IAX_IE_INITKEY: /* Initial Encryption Key */
-			ies->key_init = (char *)data + 2;
-			break;
-			
-		case IAX_IE_RTPADDR:
-			ies->rtp_addr = ((struct SOCKADDR_ST *)(data + 2));
-			break;
-				
-		case IAX_IE_DEVICECAP:
-			if (len != (int)sizeof(unsigned short)) {
-				snprintf(tmp, (int)sizeof(tmp), "Expected device capabilities to be %d bytes long but was %d\n", (int)sizeof(unsigned short), len);
-				errorf(tmp);
-			} else {
-				ies->devicecaps = ntohs(get_uint16(data + 2));
-			}
-			break;
-		
-		case IAX_IE_PTTSERVER: /* Push To Talk Media Server */
-			ies->ptt_addr = ((struct SOCKADDR_ST *)(data + 2));
-			break;
-				
-		case IAX_IE_PTTSESSION: /* Push To Talk Token */
-			ies->ptt_token = (char *) data + 2;
-			break;
-
-		case IAX_IE_NORTP: /* Push To Talk Token */
-			ies->force_nortp = data[2];
-			break;
-		  
-#ifdef USE_IPV6 /* gszhang:20161226:RTP Relay URL IE */
-		case IAX_IE_RTPURL:
-			ies->rtp_url = (char *)data + 2;
-			break;
-			
-		case IAX_IE_PTTURL: /* Push To Talk Media Server URL*/
-			ies->ptt_url = (char *)data + 2;
-			break;
-				
-		case IAX_IE_LOCAL_ADDR6: /* 20161226: IPv6 local address of peer UA*/
-			ies->local_addr6 = ((struct sockaddr_in6 *)(data + 2));
-			break;
-				
-		case IAX_IE_RELAY_URL: /* mark: relay address of peer UA*/
-			if(ies->relay_url_index<=MAX_RELAY_NUM)
-			{
-				/* 20140218: Since the previous versions take the last relay address as the preferred codec, here we must adjust our priority for compatibility */
-				/* Insert the address on the head of the relay array */
-				if(ies->relay_url_index>0)
-				{
-					for(i=ies->relay_url_index-1; i>=0; i--)
-						ies->relay_url[i+1] = ies->relay_url[i];
-				}
-				ies->relay_url[0] = (char *)data + 2;
-				ies->relay_url_index++;  // next relay url address
-			}
-			break;
-#endif /* USE_IPV6 */
-				
 		default:
 			snprintf(tmp, (int)sizeof(tmp), "Ignoring unknown information element '%s' (%d) of length %d\n", iax_ie2str(ie), ie, len);
 			outputf(tmp);

@@ -18,6 +18,23 @@ android {
     }
     productFlavors {
     }
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            def date = new Date()
+            def formattedDate = date.format("yyyyMMdd")
+
+            def newName = "WtkRtc-"
+
+            if (variant.buildType.debuggable){ //buildType: release or debug
+                newName += variant.buildType.name + "-"
+            }
+            newName += "${variant.versionName}-"
+            newName += formattedDate
+            newName += ".apk"
+
+            outputFileName = newName
+        }
+    }
 }
 
 dependencies {

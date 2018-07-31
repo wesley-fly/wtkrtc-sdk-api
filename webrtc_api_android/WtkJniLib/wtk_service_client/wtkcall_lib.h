@@ -108,17 +108,18 @@ extern "C" {
 #endif
 extern void 	wtkcall_set_jni_event_callback( wtkcall_jni_event_callback_t func );
 extern int 		wtkcall_initialize_iax(void);
-extern int 		wtkcall_initialize_media(void);
 extern void 	wtkcall_shutdown_iax(void);
-extern void 	wtkcall_shutdown_media(void);
+extern void 	wtkcall_start_audio(void);
+extern void 	wtkcall_stop_audio(void);
+extern void 	wtkcall_start_video(void);
+extern void 	wtkcall_stop_video(void);
 extern int 		wtkcall_register(const char* name,const char *number,const char *pass,const char *host,const char *port);
 extern void 	wtkcall_unregister( int id );
 extern int 		wtkcall_dial(const char* dest,const char* host,const char* user,const char *cmd,const char* ext);
 extern void 	wtkcall_answer( int callNo );
 extern void 	wtkcall_select(int callNo);
 extern int 		wtkcall_hangup( int callNo);
-extern int 		wtkcall_hold(int callNo, bool hold);
-extern int 		wtkcall_mute(int callNo, bool mute);
+extern int 		wtkcall_set_hold(int callNo, bool hold);
 extern int 		wtkcall_set_format( int callNo, int rtp_format);
 #ifdef __cplusplus
 }

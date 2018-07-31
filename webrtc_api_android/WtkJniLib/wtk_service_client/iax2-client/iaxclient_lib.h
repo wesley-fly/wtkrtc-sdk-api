@@ -97,8 +97,8 @@ pthread_create(&thread, NULL, func, args)
 #include <sys/sysctl.h>
 #endif
 //Xiaofan start
-#define	WTKCALL_AUDIO_CODECS         	( IAXC_FORMAT_G729A | IAXC_FORMAT_OPUS)
-#define WTKCALL_AUDIO_PREFERED       	( IAXC_FORMAT_G729A )
+#define	WTKCALL_AUDIO_CODECS         	( IAXC_FORMAT_OPUS)
+#define WTKCALL_AUDIO_PREFERED       	( IAXC_FORMAT_OPUS )
 #define	WTKCALL_VIDEO_CODECS	   		( IAXC_FORMAT_H264 )
 #define WTKCALL_VIDEO_PREFERED  		( IAXC_FORMAT_H264 )
 #define RTP_HEADER_VERSION 				2
@@ -206,7 +206,6 @@ struct iaxc_call {
 	struct iax_session *session;
 	
 	//WTK
-	int  mstate;
 	struct wtkState sm;
 };
 

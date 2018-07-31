@@ -1,21 +1,25 @@
 #include <string.h>
 #include <stdio.h>
 #include "wtk_mediaengine_jni.h"
+#include "rtc_base/trace_event.h"
+#include <android/log.h>
+#include "wtk_voip_sdk_jni/wtk_service_client/wtkcall_lib.h"
+#include "modules/utility/include/jvm_android.h"
 
 struct WtkStateEvent	g_WtkStateEvent;
-JavaVM* g_WtkJvmContext;
+static JavaVM* g_WtkJvmContext;
 
 jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved) {
+  	g_WtkJvmContext = jvm;
 	webrtc::JVM::Initialize(jvm);
 	
-	g_WtkJvmContext = jvm; 
-	WEBRTC_TRACE(1, 1, -1, "JNI_OnLoad Success!");
+	JNILOGI("JNI_OnLoad Success!");
 	return JNI_VERSION_1_6;
 }
 void JNICALL JNI_OnUnLoad(JavaVM* jvm, void* reserved) {
 	webrtc::JVM::Uninitialize();
 	g_WtkJvmContext = NULL; 
-	WEBRTC_TRACE(1, 1, -1, "JNI_OnUnLoad !");
+	JNILOGI("JNI_OnUnLoad !");
 }
 
 int AppAllEventCallback(int type, void* info)
@@ -24,7 +28,7 @@ int AppAllEventCallback(int type, void* info)
 	int isAttached = 0;
 	if (type == EVENT_LOG)
 	{
-		WEBRTC_TRACE(1, 1, -1, "=========>WEBRTC JNI Log: %s",(char*)info);
+		JNILOGI("IAX2 Callback Log: %s\n",(char*)info);
 	}
 	else
 	{
@@ -121,42 +125,49 @@ jint Java_com_wtk_mobile_jni_WtkMediaJNI_IaxInitialize(JNIEnv* env,jobject obj,j
 	g_WtkStateEvent.onWtkCallEventId = env->GetMethodID(listenClass, "onWtkCallEvent", "(ILjava/lang/String;)V");
 	
 	if (!g_WtkStateEvent.onWtkCallEventId){
-		WEBRTC_TRACE(1, 1, -1, "%s,%d, can not find onWtkCallEvent", __FUNCTION__,__LINE__);
+		JNILOGE("%s,%d, can not find onWtkCallEvent", __FUNCTION__,__LINE__);
 		return false; 
 	}
 	
 	wtkcall_set_jni_event_callback(AppAllEventCallback);
-	WEBRTC_TRACE(1, 1, -1, "%s,%d", __FUNCTION__,__LINE__);
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
 
 	ret = wtkcall_initialize_iax();
 	
 	return ret;
 }
-jint Java_com_wtk_mobile_jni_WtkMediaJNI_MediaInitialize(JNIEnv* env,jobject obj)
-{
-	jint ret = -1;
-	
-	WEBRTC_TRACE(1, 1, -1, "%s,%d", __FUNCTION__,__LINE__);
-	ret = wtkcall_initialize_media();
-	
-	return ret;
-}
-
 void Java_com_wtk_mobile_jni_WtkMediaJNI_IaxShutdown(JNIEnv* env,jobject obj)
 {	
-	WEBRTC_TRACE(1, 1, -1, "%s,%d", __FUNCTION__,__LINE__);
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
 	wtkcall_shutdown_iax();
 }
-void Java_com_wtk_mobile_jni_WtkMediaJNI_MediaShutdown(JNIEnv* env,jobject obj)
+void Java_com_wtk_mobile_jni_WtkMediaJNI_StartAudioPlayout(JNIEnv* env,jobject obj)
 {	
-	WEBRTC_TRACE(1, 1, -1, "%s,%d", __FUNCTION__,__LINE__);
-	wtkcall_shutdown_media();
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
+	wtkcall_start_audio();
+}
+
+void Java_com_wtk_mobile_jni_WtkMediaJNI_StopAudioPlayout(JNIEnv* env,jobject obj)
+{	
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
+	wtkcall_stop_audio();
+}
+void Java_com_wtk_mobile_jni_WtkMediaJNI_StartVideoPlayout(JNIEnv* env,jobject obj)
+{	
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
+	wtkcall_start_video();
+}
+
+void Java_com_wtk_mobile_jni_WtkMediaJNI_StopVideoPlayout(JNIEnv* env,jobject obj)
+{	
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
+	wtkcall_stop_video();
 }
 
 jint Java_com_wtk_mobile_jni_WtkMediaJNI_IaxRegister(JNIEnv* env,jobject obj,jstring name, jstring number, jstring pass, jstring host, jstring port)
 {
 	jint ret = -1;
-	WEBRTC_TRACE(1, 1, -1, "%s,%d", __FUNCTION__,__LINE__);
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
 	const char *pName = NULL;
 	const char *pNumber = NULL;
 	const char *pPass = NULL;
@@ -179,13 +190,13 @@ jint Java_com_wtk_mobile_jni_WtkMediaJNI_IaxRegister(JNIEnv* env,jobject obj,jst
 }
 void Java_com_wtk_mobile_jni_WtkMediaJNI_IaxUnRegister(JNIEnv *env, jobject obj,jint regId)
 {
-	WEBRTC_TRACE(1, 1, -1, "%s,%d", __FUNCTION__,__LINE__);
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
 
 	wtkcall_unregister(regId); 
 }
 jint Java_com_wtk_mobile_jni_WtkMediaJNI_IaxDial(JNIEnv *env, jobject obj,jstring dest, jstring host, jstring user, jstring cmd, jstring ext)
 {
-	WEBRTC_TRACE(1, 1, -1, "%s,%d", __FUNCTION__,__LINE__);
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
 	jint callNo = -1;
 	const char *pdest = NULL;
 	const char *pHost = NULL;
@@ -198,7 +209,7 @@ jint Java_com_wtk_mobile_jni_WtkMediaJNI_IaxDial(JNIEnv *env, jobject obj,jstrin
 	pCmd = (env)->GetStringUTFChars( cmd , NULL );
 	pExt = (env)->GetStringUTFChars( ext , NULL );
 	
-	WEBRTC_TRACE(1, 1, -1, "%s,dest = %s,phost=%s,puser=%s,pcmd=%s,pext=%s", __FUNCTION__,pdest,pHost,pUser,pCmd,pExt);
+	JNILOGI("%s,dest = %s,phost=%s,puser=%s,pcmd=%s,pext=%s", __FUNCTION__,pdest,pHost,pUser,pCmd,pExt);
 	callNo = wtkcall_dial(pdest,pHost,pUser,pCmd,pExt);
 
 	(env)->ReleaseStringUTFChars( dest, pdest );
@@ -211,27 +222,24 @@ jint Java_com_wtk_mobile_jni_WtkMediaJNI_IaxDial(JNIEnv *env, jobject obj,jstrin
 }
 void Java_com_wtk_mobile_jni_WtkMediaJNI_IaxAnswer(JNIEnv *env, jobject obj,jint callNo)
 {
-	WEBRTC_TRACE(1, 1, -1, "%s,%d", __FUNCTION__,__LINE__);
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
 	wtkcall_answer(callNo); 
 	wtkcall_select(callNo);
 }
-void Java_com_wtk_mobile_jni_WtkMediaJNI_IaxHangup(JNIEnv *env, jobject obj,jint callNo)
+jint Java_com_wtk_mobile_jni_WtkMediaJNI_IaxHangup(JNIEnv *env, jobject obj,jint callNo)
 {
-	WEBRTC_TRACE(1, 1, -1, "%s,%d", __FUNCTION__,__LINE__);
-	wtkcall_hangup(callNo); 
+	jint ret = -1;
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
+	ret = wtkcall_hangup(callNo); 
+	return ret;
 }
-void Java_com_wtk_mobile_jni_WtkMediaJNI_IaxHold(JNIEnv *env, jobject obj,jint callNo,jint hold)
+void Java_com_wtk_mobile_jni_WtkMediaJNI_IaxSetHold(JNIEnv *env, jobject obj,jint callNo,jint hold)
 {
-	WEBRTC_TRACE(1, 1, -1, "%s,%d", __FUNCTION__,__LINE__);
-	wtkcall_hold(callNo,hold); 
-}
-void Java_com_wtk_mobile_jni_WtkMediaJNI_IaxMute(JNIEnv *env, jobject obj,jint callNo,jint mute)
-{
-	WEBRTC_TRACE(1, 1, -1, "%s,%d", __FUNCTION__,__LINE__);
-	wtkcall_mute(callNo,mute); 
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
+	wtkcall_set_hold(callNo,hold); 
 }
 void Java_com_wtk_mobile_jni_WtkMediaJNI_IaxSetFormat(JNIEnv *env, jobject obj,jint callNo,int rtp_format)
 {
-	WEBRTC_TRACE(1, 1, -1, "%s,%d", __FUNCTION__,__LINE__);
+	JNILOGI("%s,%d", __FUNCTION__,__LINE__);
 	wtkcall_set_format(callNo,rtp_format); 
 }

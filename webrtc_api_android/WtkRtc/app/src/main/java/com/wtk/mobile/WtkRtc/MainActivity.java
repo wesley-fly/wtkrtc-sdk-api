@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -19,6 +20,9 @@ import com.wtk.mobile.jni.CommonParams;
 import com.wtk.mobile.jni.WtkMediaJNIKit;
 
 import org.webrtc.ContextUtils;
+import org.webrtc.voiceengine.WebRtcAudioManager;
+import org.webrtc.voiceengine.WebRtcAudioRecord;
+import org.webrtc.voiceengine.WebRtcAudioTrack;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -45,6 +49,10 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
     private int mCurrentHold = 0;
 
     private CallReceiver receiver = null;
+
+    //Android
+    private AudioManager audioManager;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,9 +84,14 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         txtLocalIp.setText(GetLocalIpAddress());
         txtState.setText(mStateInfo);
 
+        setActivityMode(CommonParams.STATEIDEL);
+
         ContextUtils.initialize(MainActivity.this);
-        //WtkMediaJNIKit.getInstance().MediaInitialize();
+
         WtkMediaJNIKit.getInstance().SetBroadCast(MainActivity.this);
+
+        audioManager =
+                (AudioManager) ContextUtils.getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
     }
 
     @Override
@@ -115,27 +128,30 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 mCurrentSpeaker = (mCurrentSpeaker+1)%2;
                 if (mCurrentSpeaker == 0) {
                     mIsSpeakerButton.setText("Speaker");
-//                WtkMediaJNIKit.getInstance().setspeaker(mCurrentSpeaker);
+                    audioManager.setSpeakerphoneOn(false);
                 } else {
                     mIsSpeakerButton.setText("Headphone");
+                    audioManager.setSpeakerphoneOn(true);
                 }
                 break;
             case R.id.btn_is_hold:
                 mCurrentHold = (mCurrentHold+1)%2;
                 if(mCurrentHold == 0) {
                     mIsHoldButton.setText("Hold");
-//                WtkMediaJNIKit.getInstance().IaxHold();
+                    WtkMediaJNIKit.getInstance().IaxSetHold(mCurrentHold);
                 } else {
                     mIsHoldButton.setText("UnHold");
+                    WtkMediaJNIKit.getInstance().IaxSetHold(mCurrentHold);
                 }
                 break;
             case R.id.btn_is_mute:
                 mCurrentMute = (mCurrentMute+1)%2;
                 if(mCurrentMute == 0) {
                     mIsMuteButton.setText("Mute");
-//                WtkMediaJNIKit.getInstance().IaxMute();
+                    WebRtcAudioRecord.setMicrophoneMute(false);
                 } else {
                     mIsMuteButton.setText("UnMute");
+                    WebRtcAudioRecord.setMicrophoneMute(true);
                 }
                 break;
         }
@@ -168,6 +184,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
 
     @Override
     protected void onDestroy() {
+        unregisterReceiver(receiver);
         Log.d(TAG, "IaxUnRegister, ret = " + regID);
         WtkMediaJNIKit.getInstance().IaxUnRegister(regID);
         super.onDestroy();
@@ -224,6 +241,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
             if("iax.hangup".equals(action)) {
                 mStateInfo = "空闲中";
                 setActivityMode(CommonParams.STATEIDEL);
+                WtkMediaJNIKit.getInstance().StopAudioPlayout();
             }
             else if("iax.new.call".equals(action)) {
                 mStateInfo = "收到来自 "+WtkMediaJNIKit.getInstance().getCallNumber()+"的电话，是否接听...";
@@ -233,6 +251,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
             {
                 mStateInfo = "正在和 "+WtkMediaJNIKit.getInstance().getCallNumber()+"语音通话中...";
                 setActivityMode(CommonParams.STATETALKING);
+                WtkMediaJNIKit.getInstance().StartAudioPlayout();
             }
             else
             {

@@ -125,7 +125,6 @@ source_set("wtk_service_api") {
   if (is_android) {
     defines += [
       "ANDROID",
-      "IAX_DEBUG",
     ]
   }
   configs -= [ "//build/config/compiler:chromium_code" ]
@@ -164,6 +163,10 @@ rtc_shared_library("WtkMediaEngineJni") {
     "//wtk_voip_sdk_jni:wtk_rtc_api",
     "//wtk_voip_sdk_jni:wtk_service_api",
     #"//sdk/android:native_api_base",
+    #"//base:base",
+  ]
+  configs += [
+    ":iax2_warning",
   ]
   libs = [
     "log",

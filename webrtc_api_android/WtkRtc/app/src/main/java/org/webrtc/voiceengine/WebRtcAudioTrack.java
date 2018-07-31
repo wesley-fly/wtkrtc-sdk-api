@@ -20,6 +20,8 @@ import android.media.AudioTrack;
 import android.os.Process;
 import java.lang.Thread;
 import java.nio.ByteBuffer;
+import java.util.concurrent.locks.ReentrantLock;
+
 import javax.annotation.Nullable;
 import org.webrtc.ContextUtils;
 import org.webrtc.Logging;
@@ -331,6 +333,7 @@ public class WebRtcAudioTrack {
   }
 
   private boolean stopPlayout() {
+
     threadChecker.checkIsOnValidThread();
     Logging.d(TAG, "stopPlayout");
     assertTrue(audioThread != null);
@@ -346,6 +349,7 @@ public class WebRtcAudioTrack {
     Logging.d(TAG, "AudioTrackThread has now been stopped.");
     audioThread = null;
     releaseAudioResources();
+
     return true;
   }
 

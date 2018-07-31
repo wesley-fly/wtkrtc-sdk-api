@@ -13,11 +13,8 @@
 #if !defined(_WIN32_WCE)
 #include <process.h>
 #endif
-#ifdef USE_IPV6
-#include <winsock2.h>
-#else
+
 #include <winsock.h>
-#endif
 #include <stddef.h>
 #include <time.h>
 

@@ -3,7 +3,7 @@
 #include "../wtk_rtc_api/wtk_rtc_api.h"
 #include "wtkcall_lib.h"
 
-#define MAX_CALLS	4
+#define MAX_CALLS	1
 #define USE_PTT 	0
 
 static char* map_state(int state)
@@ -27,38 +27,48 @@ static char* map_state(int state)
 	}
 	return states;
 }
+void wtkcall_internal_start_audio_playout(void)
+{
+	iaxci_usermsg(IAXC_ERROR,"Wtk rtc engine: wtkcall_internal_start_audio_playout!\n");
+	iaxci_usermsg(IAXC_NOTICE, "start gettid = %lu,getpid = %lu\n", gettid(),getpid());
+
+	libwtk_create_call();
+	libwtk_create_audio_send_stream(0);
+	libwtk_create_audio_receive_stream(0);
+	libwtk_start_audio_stream();
+}
+void wtkcall_internal_stop_audio_playout(void)
+{
+	iaxci_usermsg(IAXC_ERROR,"Wtk rtc engine: wtkcall_internal_stop_audio_playout!\n");
+	iaxci_usermsg(IAXC_NOTICE, "stop gettid = %lu,getpid = %lu\n", gettid(),getpid());
+
+	libwtk_stop_audio_stream();
+	libwtk_destroy_audio_send_stream();
+	libwtk_destroy_audio_receive_stream();
+	libwtk_destroy_call();
+}
+static void wtkcall_internal_start_video_playout(void)
+{
+}
+static void wtkcall_internal_stop_video_playout(void)
+{
+}
 
 //Event for iax lib, will pass it to jni by wtkcall_send_jni_event
 static int wtkcall_iax_event_callback( iaxc_event e )
 {
 	switch(e.type) {
-		// R - Registration Event
 		case IAXC_EVENT_REGISTRATION:
-			iaxci_usermsg(IAXC_NOTICE, 
-								"wtkcall_iax_event_callback==>R\treg_ID=%d\treply=%d",
-								e.ev.reg.id, e.ev.reg.reply);
 			wtkcall_perform_registration_callback(e.ev.reg.id, e.ev.reg.reply);
 		break;
 		
-		// S - State Machine Event
 		case IAXC_EVENT_STATE: 
 			iaxci_usermsg(IAXC_NOTICE, 
 							"wtkcall_iax_event_callback==>S\tcallNo=%d\tstate=[0x%x\t%s]\tremote=%.255s\tremote_name=%.255s",
 							e.ev.call.callNo,e.ev.call.state,map_state(e.ev.call.state),e.ev.call.remote,e.ev.call.remote_name);
-
-			wtkcall_perform_state_callback(&calls[e.ev.call.callNo].sm,e.ev.call.callNo, e.ev.call.state, e.ev.call.remote_name, e.ev.call.remote);
-			if(e.ev.call.state & IAXC_CALL_STATE_COMPLETE)
-			{
-				//libwtk_start_audio_stream();
-				wtkcall_initialize_media();
-			}
-			if(e.ev.call.state == IAXC_CALL_STATE_FREE)
-			{
-				libwtk_stop_audio_stream();
-			}
+			wtkcall_perform_state_callback(&calls[e.ev.call.callNo].sm,e.ev.call.callNo, e.ev.call.state, e.ev.call.remote_name, e.ev.call.remote);	
 		break;
 
-		// T - Text Event
 		case IAXC_EVENT_TEXT:
 			if(e.ev.text.type==IAXC_TEXT_TYPE_IAX) 
 			{
@@ -79,21 +89,25 @@ static int wtkcall_iax_event_callback( iaxc_event e )
 			iaxci_usermsg(IAXC_NOTICE, "wtkcall_iax_event_callback==>WTK uncared or unknow state:\t%d\n", e.type );
 		break;
 	}
-	return 1;
+	return 0;
 }
 int wtkcall_send_audio_callback(char* data, int len)
 {
 	int rtp_samples;
 	int send_len = 0;
 	
-	rtp_samples = 40*(48000/1000);
+	if((selected_call < 0) || (calls[selected_call].session == NULL))
+		return -1;
+	
+	rtp_samples = 48000;//40*(48000/1000);
 	send_len = iaxc_push_audio(data, len, rtp_samples);
-	iaxci_usermsg(IAXC_NOTICE, "%s!,size = %d,send_len = %d", __FUNCTION__, len,send_len);
 	return send_len;
 }
 int wtkcall_send_video_callback(char* data, int len)
 {
 	iaxci_usermsg(IAXC_NOTICE, "%s!", __FUNCTION__, len);
+	if((selected_call < 0) || (calls[selected_call].session == NULL))
+		return -1;
 
 	int send_len = 0;
 	//send_len = iaxc_push_video(data, len, 0);
@@ -105,12 +119,8 @@ int wtkcall_initialize_iax(void)
 {
 	int retval = SUCESS_RET;
 	
-	char ver[32] = {0};
 	iaxc_set_event_callback(wtkcall_iax_event_callback); 
 
-	iaxc_version(ver);
-	iaxci_usermsg(IAXC_NOTICE, "IAX2 Client Version is %s!", ver);
-	
 	// Initialize IAX Library
 	if( iaxc_initialize( MAX_CALLS ) ) 
 	{
@@ -121,60 +131,42 @@ int wtkcall_initialize_iax(void)
 	
 	retval = iaxc_start_processing_thread();
 	if(retval == SUCESS_RET)
-		iaxci_usermsg(IAXC_NOTICE, "IAX2 Client Initialized OK");
-	
-	return retval;
-}
-
-int wtkcall_initialize_media(void)
-{
-	int retval = SUCESS_RET;
-	
-	retval = libwtk_initialize();
-
-	if(!retval)
 	{
 		libwtk_set_audio_transport(wtkcall_send_audio_callback);
-		libwtk_set_video_transport(wtkcall_send_video_callback);
+		iaxci_usermsg(IAXC_NOTICE, "IAX2 Client Initialized OK");
 	}
 	else
 	{
-		iaxci_usermsg(IAXC_ERROR, "Cannot initialize Wtk rtc engine!");
-		iaxc_shutdown();
-		retval = FAILED_RET;
-		return retval;
-	}
-	
-	retval = libwtk_init_audio_device(0);
-
-	if(!retval) {
-		libwtk_init_call();
-		//libwtk_init_local_render();
-		//libwtk_init_remote_render();
-		//libwtk_init_capture(0);libwtk_decode_audio
-
-		libwtk_create_audio_send_stream(0);
-		libwtk_create_audio_receive_stream(0);
-		libwtk_start_audio_stream();
-		//libwtk_create_video_send_stream();
-	}else{
-		iaxci_usermsg(IAXC_ERROR,"Wtk rtc engine: cannot initialize audio device!\n");
-		iaxc_shutdown();
-		retval = FAILED_RET;
+		iaxci_usermsg(IAXC_NOTICE, "IAX2 Client Initialized Error");
 	}
 
 	return retval;
 }
+
 void wtkcall_shutdown_iax(void)
 {
 	iaxc_stop_processing_thread();
 	iaxc_shutdown(); 
-	return;
 }
-void wtkcall_shutdown_media(void)
-{
 
-	return;
+void wtkcall_start_audio(void)
+{	
+	wtkcall_internal_start_audio_playout();
+}
+
+void wtkcall_stop_audio(void)
+{
+	wtkcall_internal_stop_audio_playout();
+}
+
+void wtkcall_start_video(void)
+{
+	wtkcall_internal_start_video_playout();
+}
+void wtkcall_stop_video(void)
+{
+	wtkcall_internal_stop_video_playout();
+
 }
 
 int wtkcall_register(const char* name,const char *number,const char *pass,const char *host,const char *port)
@@ -294,20 +286,6 @@ int wtkcall_dial(const char* dest,const char* host,const char* user,const char *
 				strncpy(calls[callNo].local, name, IAXC_EVENT_BUFSIZ);
 			option = strtok(NULL, "/");
 		}
-
-		/*while (option!=NULL) 
-		{
-			if(strcmp(option, "mixer")==0) {
-				calls[callNo].mstate |= IAXC_MEDIA_STATE_MIXED;
-			}
-			else if(strcmp(option, "nortp")==0) {
-				calls[callNo].mstate |= IAXC_MEDIA_STATE_NORTP;
-			}
-			else if(strcmp(option, "forward")==0) {
-				calls[callNo].mstate |= IAXC_MEDIA_STATE_FORWARD;
-			}
-			option = strtok(NULL, "/");
-		}*/
 	}
 
     strncpy(tmp, user, sizeof(tmp));
@@ -329,17 +307,12 @@ int wtkcall_dial(const char* dest,const char* host,const char* user,const char *
 	calls[callNo].state = IAXC_CALL_STATE_OUTGOING |IAXC_CALL_STATE_ACTIVE;
 	calls[callNo].last_ping = calls[callNo].last_activity;
 	
-	/* create a new identifier for the call */
-	//callId = get_new_callid();
-	//calls[callNo].sm.id = callId;
-    //calls[callNo].sm.outbound = is_outbound(calls[callNo].remote);
-	
 	/* reset activity and ping "timers" */
 	iaxc_note_activity(callNo);
 	iaxci_usermsg(IAXC_NOTICE, "Originating an %s call", video_format_preferred ? "audio+video" : "audio only");
 
 	iax_call(calls[callNo].session, calls[callNo].callerid_number,
-		calls[callNo].local, user, host, dest, NULL, 0,
+		calls[callNo].local, user, host, dest,
 		audio_format_preferred | video_format_preferred, 
 		audio_format_capability | video_format_capability,
         ext);
@@ -355,7 +328,6 @@ void wtkcall_answer( int callNo )
 {
     get_iaxc_lock();
 
-	iaxci_usermsg(IAXC_NOTICE, "wtkcall_answer callNo = %d", callNo);
 	if ( callNo >= 0 && callNo < max_calls ) {
         iaxc_answer_call( callNo );
     }
@@ -394,7 +366,7 @@ int wtkcall_hangup( int callNo)
 	put_iaxc_lock();
 	return ret;
 }
-int wtkcall_hold(int callNo, bool hold)
+int wtkcall_set_hold(int callNo, bool hold)
 {
 	int ret = -1;
 	get_iaxc_lock();
@@ -402,25 +374,23 @@ int wtkcall_hold(int callNo, bool hold)
     {
 		ret = 0;
 
-		libwtk_audio_stream_mute(hold);
-
         if(!hold)
         {
-            iaxc_select_call(callNo);
+            //iaxc_select_call(callNo);
             iaxc_unquelch(callNo);
             
-            if( calls[callNo].state & IAXC_CALL_STATE_ACTIVE &&
+            /*if( calls[callNo].state & IAXC_CALL_STATE_ACTIVE &&
                calls[callNo].state & IAXC_CALL_STATE_COMPLETE ) {
                 iax_send_text(calls[callNo].session, COMMAND_RESUME, 0);
-            }
+            }*/
         }
         else
         {
-            if( calls[callNo].state & IAXC_CALL_STATE_ACTIVE &&
+            /*if( calls[callNo].state & IAXC_CALL_STATE_ACTIVE &&
                calls[callNo].state & IAXC_CALL_STATE_COMPLETE )
             {
                 iax_send_text(calls[callNo].session, COMMAND_HOLD, 0);
-            }
+            }*/
             
             iaxc_quelch(callNo, HOLD);
         }
@@ -428,25 +398,7 @@ int wtkcall_hold(int callNo, bool hold)
 	put_iaxc_lock();
     return ret;
 }
-int wtkcall_mute(int callNo, bool mute)
-{
-	int ret = -1;
 
-    get_iaxc_lock();
-    if( callNo >= 0 && callNo < max_calls )
-    {
-    	ret = 0;
-        libwtk_audio_stream_mute(mute);
-		
-		if(mute)  
-			calls[callNo].mstate |= IAXC_MEDIA_STATE_MUTE;  // call muted
-        else
-			calls[callNo].mstate &= ~IAXC_MEDIA_STATE_MUTE; // call unmuted
-    }
-    put_iaxc_lock();
-
-    return ret;
-}
 int wtkcall_set_format( int callNo, int rtp_format)
 {
 	if(callNo < 0 || callNo >= max_calls)

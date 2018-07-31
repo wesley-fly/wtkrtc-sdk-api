@@ -14,13 +14,9 @@
 #ifndef _IAX2_PARSER_H
 #define _IAX2_PARSER_H
 
-#ifndef USE_IPV6
 #define SOCKADDR_ST sockaddr_in
 #define INADDRCMP   inaddrcmp
-#else
-#define SOCKADDR_ST sockaddr_storage
-#define INADDRCMP   inaddrstcmp
-#endif
+
 #define MAX_RELAY_NUM  6
 
 struct iax_ies {
@@ -73,35 +69,6 @@ struct iax_ies {
 	unsigned short rr_delay;
 	unsigned int rr_dropped;
 	unsigned int rr_ooo;
-
-	char *ext1;
-    
-    char * relay_token; 
-    struct sockaddr_in  *local_addr;
-    struct sockaddr_in6 *local_addr6;
-    
-    struct sockaddr_in *relay_addr[MAX_RELAY_NUM];
-    short  relay_index;
-    
-    char * relay_url[MAX_RELAY_NUM]; 
-    short  relay_url_index;
-    
-    unsigned char txreason;    /* Why peer send TXCNT */
-    unsigned char rr_netq;     /* network quelaity evaluation */
-    unsigned int  timestamp;   /* timestamp of TXCNT heart beat */
-    unsigned char netchangeid; /* identifier of network address changed */
-    
-    char *key_init;            /* initial key */
-    
-    short devicecaps; /* device capability */
-   
-	struct SOCKADDR_ST *rtp_addr;   // Outbound/Conference : rtp relay/mixer server address
-    char * rtp_url;                 // 20161226: Domain name of RTP server
-    
-    struct SOCKADDR_ST *ptt_addr;   // PTT: Media server address
-    char * ptt_url;                 // 20161226: Domain name of PTT server
-    char * ptt_token;
-	unsigned char force_nortp;      // Force to remove rtp header
 };
 
 #define DIRECTION_INGRESS 1

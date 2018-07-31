@@ -31,59 +31,48 @@
 #include "call/call.h"
 #include "system_wrappers/include/clock.h"
 
-//Test For video renderer.
-/*#include "test/video_renderer.h"
-#include "test/video_capturer.h"
-#include "test/vcm_capturer.h"
-#include "test/run_test.h"
-*/
 #include "wtk_rtc_api.h"
 
-#define USED_VIDEO_WIDTH 	352
-#define USED_VIDEO_HEIGHT 	288
-#define USED_VIDEO_FPS 		15
-#define USED_MAX_VIDEO_QP 	48
+#define USED_VIDEO_WIDTH 		352
+#define USED_VIDEO_HEIGHT 		288
+#define USED_VIDEO_FPS 			15
+#define USED_MAX_VIDEO_QP 		48
 
-#define SEND_SSRC 	11111111
-#define RECV_SSRC 	22222222
-#define RTX_SSRC 	33333333
+#define SEND_SSRC 				11111111
+#define RECV_SSRC 				22222222
+#define RTX_SSRC 				33333333
 
-#define AV_SYNC_GROUP "av_sync"
+#define AV_SYNC_GROUP 			"av_sync"
 
-#define AUDIO_MIN_BPS	6 * 1000
-#define AUDIO_MAX_BPS	12 * 1000
+#define AUDIO_MIN_BPS			6 * 1000
+#define AUDIO_MAX_BPS			12 * 1000
 
-#define VIDEO_MIN_BPS	32 * 1000
-#define VIDEO_MAX_BPS	64 * 1000
+#define VIDEO_MIN_BPS			32 * 1000
+#define VIDEO_MAX_BPS			64 * 1000
 
-#define CALL_MIN_BPS	32 * 1000
-#define CALL_START_BPS	64 * 1000
-#define CALL_MAX_BPS	128 * 1000
+#define CALL_MIN_BPS			6 * 1000
+#define CALL_START_BPS			8 * 1000
+#define CALL_MAX_BPS			12 * 1000
 
 bool g_Send_side_bwe = true;
 bool g_Loop_test = false;
 
-rtc::scoped_refptr<webrtc::AudioDeviceModule> g_Adm = nullptr;
-std::unique_ptr<webrtc::RtcEventLog> g_Event_log = nullptr;
+static std::unique_ptr<webrtc::Call>					g_Call = nullptr;
+static std::unique_ptr<webrtc::RtcEventLog> 			Event_log = nullptr;
+//static rtc::scoped_refptr<webrtc::AudioDeviceModule> 	Audio_DeviceModule = nullptr;
 
-webrtc::Call* g_Call = nullptr;
+static webrtc::AudioSendStream* 						g_AudioSendStream = nullptr;
+static webrtc::AudioReceiveStream* 						g_AudioReceiveStream = nullptr;
+static webrtc::VideoSendStream* 						g_VideoSendStream = nullptr;
+static webrtc::VideoReceiveStream* 						g_VideoReceiveStream = nullptr;
 
-webrtc::AudioSendStream *g_AudioSendStream = nullptr;
-webrtc::AudioReceiveStream *g_AudioReceiveStream = nullptr;
-webrtc::VideoSendStream *g_VideoSendStream = nullptr;
-webrtc::VideoReceiveStream *g_VideoReceiveStream = nullptr;
-/*
-std::unique_ptr<webrtc::test::VideoRenderer> g_Local_render = nullptr;
-std::unique_ptr<webrtc::test::VideoRenderer> g_Remote_render = nullptr;
-std::unique_ptr<webrtc::test::VideoCapturer> g_Video_capturers = nullptr;
-*/
-static audio_transport_callback_t send_audio_packet = nullptr;
-static video_transport_callback_t send_video_packet = nullptr;
+static audio_transport_callback_t 						send_audio_packet = nullptr;
+static video_transport_callback_t 						send_video_packet = nullptr;
 
 enum classPayloadTypes{
 	kPayloadTypeRtx = 98,
     kPayloadTypeIlbc = 102,
-    kPayloadTypeOpus = 109,//111,
+    kPayloadTypeOpus = 109,
     kPayloadTypeH264 = 122,
     kPayloadTypeVP8 = 120,
     kPayloadTypeVP9 = 101,
@@ -129,7 +118,8 @@ public:
 class VideoTransport:public webrtc::Transport{
 public:
     bool SendRtp(const uint8_t* packet,size_t length,const webrtc::PacketOptions& options) override
-    {//RTC_LOG(LS_INFO) << "SendRtp started";
+    {
+    	//RTC_LOG(LS_INFO) << "SendRtp started";
         int64_t send_time = webrtc::Clock::GetRealTimeClock()->TimeInMicroseconds();
 		rtc::SentPacket sent_packet(options.packet_id,send_time);
     	g_Call->OnSentPacket(sent_packet);
@@ -141,7 +131,8 @@ public:
     }
 
     bool SendRtcp(const uint8_t* packet, size_t length) override
-    {//RTC_LOG(LS_INFO) << "SendRtcp started";
+    {
+    	//RTC_LOG(LS_INFO) << "SendRtcp started";
 	    if(g_Loop_test)
     	{
 			int64_t send_time = webrtc::Clock::GetRealTimeClock()->TimeInMicroseconds();
@@ -159,24 +150,18 @@ VideoTransport* g_VideoSendTransport = new VideoTransport();
 
 void libwtk_set_audio_transport(audio_transport_callback_t func)
 {
-	RTC_LOG(LS_INFO) << __FUNCTION__;
-
 	send_audio_packet = func;
 }
 void libwtk_set_video_transport(video_transport_callback_t func)
 {
-	RTC_LOG(LS_INFO) << __FUNCTION__;
-
 	send_video_packet = func;
 }
 static bool IsUserIdPacket(uint8_t* buf,int len)
 {
-	RTC_LOG(LS_INFO) << __FUNCTION__;
 	return false;
 }
 int parserUserId(uint8_t *buf,int buflen)
 {
-	RTC_LOG(LS_INFO) << __FUNCTION__;
 	return 0;
 }
 
@@ -218,101 +203,16 @@ int libwtk_initialize(void)
 void libwtk_init_local_render(void)
 {
 	RTC_LOG(LS_INFO) << __FUNCTION__;
-	//g_Local_render.reset(webrtc::test::VideoRenderer::Create("Video Local Preview Render #1", USED_VIDEO_WIDTH, USED_VIDEO_HEIGHT));
 }
 
 void libwtk_init_remote_render(void)
 {
 	RTC_LOG(LS_INFO) << __FUNCTION__;
-	//g_Remote_render.reset(webrtc::test::VideoRenderer::Create("Video Remote Render #2 ", USED_VIDEO_WIDTH, USED_VIDEO_HEIGHT));
-}
-int libwtk_init_audio_device(int device_id)
-{	
-	int retval = SUCESS_RET;
-	RTC_LOG(LS_INFO) << __FUNCTION__;
-
-	if(!g_Adm)
-		g_Adm = webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kPlatformDefaultAudio);
-
-	if(g_Adm != nullptr)
-	{
-		/*bool stereo_playout = false;
-		bool stereo_record = false;
-		g_Adm->Init();
-		g_Adm->SetPlayoutDevice(device_id);
-		g_Adm->InitSpeaker();
-		g_Adm->SetRecordingDevice(device_id);
-		g_Adm->InitMicrophone();
-		
-		g_Adm->StereoPlayoutIsAvailable(&stereo_playout);
-		g_Adm->SetStereoPlayout(stereo_playout);
-		g_Adm->StereoRecordingIsAvailable(&stereo_record);
-		g_Adm->SetStereoRecording(stereo_record);
-		g_Adm->InitPlayout();
-		g_Adm->InitRecording();
-		RTC_LOG(LS_INFO) << __FUNCTION__ << " :PlayoutDevices="<<g_Adm->PlayoutDevices()<<" :RecordingDevices="<<g_Adm->RecordingDevices();*/
-
-		g_Adm->Init();
-		RTC_LOG(LS_INFO) << __FUNCTION__ << " :Init audio Success!";
-		retval = SUCESS_RET;//RecordingDevices
-	}else{
-		RTC_LOG(LS_INFO) << __FUNCTION__ << " :Init audio Failed!";
-		retval = FAILED_RET;
-	}
-	
-	return retval;
 }
 
-int libwtk_init_call(void)
-{
-	RTC_LOG(LS_INFO) << __FUNCTION__;
-	int retval = SUCESS_RET;
-	webrtc::AudioState::Config audioStateConfig;
-	if(g_Adm != nullptr)
-		audioStateConfig.audio_device_module = g_Adm;
-	else
-		audioStateConfig.audio_device_module = webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kPlatformDefaultAudio);
-	audioStateConfig.audio_mixer = webrtc::AudioMixerImpl::Create();
-	audioStateConfig.audio_processing = webrtc::AudioProcessingBuilder().Create();
-
-	webrtc::BitrateConstraints call_bitrate_config;
-	call_bitrate_config.min_bitrate_bps = CALL_MIN_BPS;
-	call_bitrate_config.start_bitrate_bps = CALL_START_BPS;
-	call_bitrate_config.max_bitrate_bps = CALL_MAX_BPS;
-	
-	g_Event_log = webrtc::RtcEventLog::Create(webrtc::RtcEventLog::EncodingType::Legacy);
-	webrtc::CallConfig callConfig(g_Event_log.get());
-	callConfig.audio_state = webrtc::AudioState::Create(audioStateConfig);
-	callConfig.bitrate_config = call_bitrate_config;
-	
-	g_Adm->RegisterAudioCallback(callConfig.audio_state->audio_transport());
-
-	g_Call = webrtc::Call::Create(callConfig);
-	if(g_Call != nullptr)
-	{
-		g_Call->SignalChannelNetworkState(webrtc::MediaType::AUDIO, webrtc::kNetworkUp);
-		g_Call->SignalChannelNetworkState(webrtc::MediaType::VIDEO, webrtc::kNetworkUp);
-		RTC_LOG(LS_INFO) << __FUNCTION__ << " :Init Call Success!";
-		retval = SUCESS_RET;
-	}else{
-		RTC_LOG(LS_INFO) << __FUNCTION__ << " :Init Call Failed!";
-		retval = FAILED_RET;
-	}
-
-	return retval;
-}
 int libwtk_init_capture(int device_id)
 {
 	int retval = SUCESS_RET;
-	/*g_Video_capturers.reset(webrtc::test::VcmCapturer::Create(USED_VIDEO_WIDTH, USED_VIDEO_HEIGHT,USED_VIDEO_FPS,device_id));
-	if(g_Video_capturers != nullptr)
-	{
-		RTC_LOG(LS_INFO) << __FUNCTION__ << " :Init Capture Success!";
-		retval = SUCESS_RET;
-	}else{
-		RTC_LOG(LS_INFO) << __FUNCTION__ << " :Init Capture Failed!";
-		retval = FAILED_RET;
-	}*/
 	RTC_LOG(LS_INFO) << __FUNCTION__;
 
 	return retval;
@@ -330,21 +230,94 @@ void libwtk_set_video_codec(void)
 void libwtk_start_capture(void)
 {
 	RTC_LOG(LS_INFO) << __FUNCTION__;
-	//g_Video_capturers->Start();
 }
 void libwtk_stop_capture(void)
 {
 	RTC_LOG(LS_INFO) << __FUNCTION__;
-	//g_Video_capturers->Stop();
 }
 void libwtk_switch_camera(int device_id)
 {
 	RTC_LOG(LS_INFO) << __FUNCTION__;
 }
+int libwtk_create_call(void)
+{
+	RTC_LOG(LS_INFO) << __FUNCTION__;
+	int retval = SUCESS_RET;
+	if(g_Call != nullptr)
+	{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_Call already exsit, so return success!";
+		retval = SUCESS_RET;
+		return retval;
+	}
+	else
+	{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_Call is nullprt, so go on!";
+	}
+	rtc::scoped_refptr<webrtc::AudioDeviceModule> Audio_DeviceModule = nullptr;
+	Audio_DeviceModule = webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::kPlatformDefaultAudio);
+	Audio_DeviceModule->Init();
+	if(Audio_DeviceModule->BuiltInAECIsAvailable())
+		Audio_DeviceModule->EnableBuiltInAEC(1);
+	if(Audio_DeviceModule->BuiltInAGCIsAvailable())
+		Audio_DeviceModule->EnableBuiltInAGC(1);
+	if(Audio_DeviceModule->BuiltInNSIsAvailable())
+		Audio_DeviceModule->EnableBuiltInNS(1);
+
+	webrtc::AudioState::Config audioStateConfig;
+	audioStateConfig.audio_device_module = Audio_DeviceModule;
+	audioStateConfig.audio_mixer = webrtc::AudioMixerImpl::Create();
+	audioStateConfig.audio_processing = webrtc::AudioProcessingBuilder().Create();
+
+	webrtc::BitrateConstraints call_bitrate_config;
+	call_bitrate_config.min_bitrate_bps = CALL_MIN_BPS;
+	call_bitrate_config.start_bitrate_bps = CALL_START_BPS;
+	call_bitrate_config.max_bitrate_bps = CALL_MAX_BPS;
+	
+	Event_log = webrtc::RtcEventLog::Create(webrtc::RtcEventLog::EncodingType::Legacy);
+	webrtc::CallConfig callConfig(Event_log.get());
+	callConfig.audio_state = webrtc::AudioState::Create(audioStateConfig);
+	callConfig.bitrate_config = call_bitrate_config;
+	
+	Audio_DeviceModule->RegisterAudioCallback(callConfig.audio_state->audio_transport());
+	
+	//g_Call = webrtc::Call::Create(callConfig);
+	g_Call.reset(webrtc::Call::Create(callConfig));
+	if(g_Call != nullptr)
+	{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :Init Call Success!";
+		retval = SUCESS_RET;
+	}else{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :Init Call Failed!";
+		retval = FAILED_RET;
+	}
+
+	return retval;
+}
+void libwtk_destroy_call(void)
+{
+	if(g_Call != nullptr)
+	{
+		g_Call.reset();
+		g_Call = nullptr;
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :Destroy Call Success!";
+	}else{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_Call is nullptr, no stream to destroy!";
+	}
+
+}
 
 int libwtk_create_audio_send_stream(int rtp_format)
 {
 	int retval = SUCESS_RET;
+	if(g_AudioSendStream != nullptr)
+	{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_AudioSendStream already exsit, so return success!";
+		return retval;
+	}
+	else
+	{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_AudioSendStream is nullprt, so go on!";
+	}
     webrtc::AudioSendStream::Config audio_send_config(g_AudioSendTransport);
 	audio_send_config.send_codec_spec = webrtc::AudioSendStream::Config::SendCodecSpec(kPayloadTypeOpus, {"OPUS", 48000, 2,{{"usedtx", "0"},{"stereo", "1"}}});
 	audio_send_config.encoder_factory = webrtc::CreateAudioEncoderFactory<webrtc::AudioEncoderOpus>();
@@ -380,6 +353,7 @@ void libwtk_destroy_audio_send_stream(void)
 	if (g_AudioSendStream != nullptr && g_Call != nullptr)
 	{
 		g_Call->DestroyAudioSendStream(g_AudioSendStream);
+		g_AudioSendStream = nullptr;
 		RTC_LOG(LS_INFO) << __FUNCTION__ << " , Success!";
 	}
 	else
@@ -390,7 +364,16 @@ void libwtk_destroy_audio_send_stream(void)
 int libwtk_create_audio_receive_stream(int rtp_format)
 {
 	int retval = SUCESS_RET;
-	//webrtc::AudioDecoderIlbc
+	if(g_AudioReceiveStream != nullptr)
+	{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_AudioReceiveStream already exsit, so return success!";
+		return retval;
+	}
+	else
+	{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_AudioReceiveStream is nullprt, so go on!";
+	}
+
     webrtc::AudioReceiveStream::Config audio_rev_config;
 	audio_rev_config.rtcp_send_transport = g_AudioSendTransport;
     audio_rev_config.decoder_factory = webrtc::CreateAudioDecoderFactory<webrtc::AudioDecoderOpus>();
@@ -426,6 +409,7 @@ void libwtk_destroy_audio_receive_stream(void)
 	if (g_AudioReceiveStream != nullptr && g_Call != nullptr)
 	{
 		g_Call->DestroyAudioReceiveStream(g_AudioReceiveStream);
+		g_AudioReceiveStream = nullptr;
 		RTC_LOG(LS_INFO) << __FUNCTION__ << " , Success!";
 	}
 	else
@@ -437,8 +421,17 @@ void libwtk_destroy_audio_receive_stream(void)
 int libwtk_create_video_send_stream(int rtp_format)
 {
 	int retval = SUCESS_RET;
+	if(g_VideoSendStream != nullptr)
+	{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_VideoSendStream already exsit, so return success!";
+		return retval;
+	}
+	else
+	{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_VideoSendStream is nullprt, so go on!";
+	}
+	
     webrtc::VideoSendStream::Config video_send_config(g_VideoSendTransport);
-
 	video_send_config.rtp.ssrcs.push_back(SEND_SSRC);
 	video_send_config.rtp.payload_name = "VP8";
 	video_send_config.rtp.payload_type = kPayloadTypeVP8;
@@ -496,6 +489,7 @@ void libwtk_destroy_video_send_stream(void)
 	if (g_VideoSendStream != nullptr && g_Call != nullptr)
 	{
 		g_Call->DestroyVideoSendStream(g_VideoSendStream);
+		g_VideoSendStream = nullptr;
 		RTC_LOG(LS_INFO) << __FUNCTION__ << " , Success!";
 	}
 	else
@@ -507,6 +501,15 @@ void libwtk_destroy_video_send_stream(void)
 int libwtk_create_video_receive_stream(int rtp_format)
 {
 	int retval = SUCESS_RET;
+	if(g_VideoReceiveStream != nullptr)
+	{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_VideoReceiveStream already exsit, so return success!";
+		return retval;
+	}
+	else
+	{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_VideoReceiveStream is nullprt, so go on!";
+	}
     webrtc::VideoReceiveStream::Config video_rev_config(g_VideoSendTransport);
 	//video_rev_config.renderer = g_Remote_render.get();
     video_rev_config.sync_group = AV_SYNC_GROUP;
@@ -560,6 +563,7 @@ void libwtk_destroy_video_receive_stream(void)
 	if (g_VideoReceiveStream != nullptr && g_Call != nullptr)
 	{
 		g_Call->DestroyVideoReceiveStream(g_VideoReceiveStream);
+		g_VideoReceiveStream = nullptr;
 		RTC_LOG(LS_INFO) << __FUNCTION__ << " , Success!";
 	}
 	else
@@ -569,7 +573,7 @@ void libwtk_destroy_video_receive_stream(void)
 }
 void libwtk_audio_stream_mute(bool mute)
 {	
-    g_AudioSendStream->SetMuted(mute);
+	RTC_LOG(LS_INFO) << __FUNCTION__ << " , mute = " << mute;
 }
 
 void libwtk_start_audio_stream(void)
@@ -578,6 +582,7 @@ void libwtk_start_audio_stream(void)
     {
     	g_AudioSendStream->Start();
 	    g_AudioReceiveStream->Start();
+		g_Call->SignalChannelNetworkState(webrtc::MediaType::AUDIO, webrtc::kNetworkUp);
 	}
 	else
 		RTC_LOG(LS_INFO) << __FUNCTION__ << " , g_AudioSendStream or g_AudioReceiveStream is null";
@@ -586,18 +591,25 @@ void libwtk_start_video_stream(void)
 {
 	if((g_VideoSendStream != nullptr) && g_VideoReceiveStream != nullptr)
     {
-		g_VideoSendStream->Start();
+    	g_VideoSendStream->Start();
 		g_VideoReceiveStream->Start();
+		g_Call->SignalChannelNetworkState(webrtc::MediaType::VIDEO, webrtc::kNetworkUp);
 	}
 	else
 		RTC_LOG(LS_INFO) << __FUNCTION__ << " , g_AudioSendStream or g_AudioReceiveStream is null";
 }
 void libwtk_stop_audio_stream(void)
-{	
+{
+	RTC_LOG(LS_INFO) << __FUNCTION__ << " , g_AudioSendStream or g_AudioReceiveStream ";
+
 	if((g_AudioSendStream != nullptr) && g_AudioReceiveStream != nullptr)
     {
-		g_AudioSendStream->Stop();
+    	RTC_LOG(LS_INFO) << __FUNCTION__ << " , g_AudioReceiveStream stop";
 		g_AudioReceiveStream->Stop();
+    	RTC_LOG(LS_INFO) << __FUNCTION__ << " , g_AudioSendStream stop";
+		g_AudioSendStream->Stop();
+		
+		g_Call->SignalChannelNetworkState(webrtc::MediaType::AUDIO, webrtc::kNetworkDown);
 	}
 	else
 		RTC_LOG(LS_INFO) << __FUNCTION__ << " , g_AudioSendStream or g_AudioReceiveStream is null";
@@ -608,6 +620,7 @@ void libwtk_stop_video_stream(void)
     {
 		g_VideoSendStream->Stop();
 		g_VideoReceiveStream->Stop();
+		g_Call->SignalChannelNetworkState(webrtc::MediaType::VIDEO, webrtc::kNetworkDown);
 	}
 	else
 		RTC_LOG(LS_INFO) << __FUNCTION__ << " , g_AudioSendStream or g_AudioReceiveStream is null";

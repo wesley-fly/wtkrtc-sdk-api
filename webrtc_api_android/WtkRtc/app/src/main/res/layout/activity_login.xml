@@ -35,7 +35,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <AutoCompleteTextView
+                <android.support.design.widget.TextInputEditText
                     android:id="@+id/iaxserver"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -43,7 +43,9 @@
                     android:inputType="textUri"
                     android:maxLines="1"
                     android:singleLine="true"
-                    android:text="192.168.4.163"/>
+                    android:text="@string/sign_in_server"/>
+                    <!--android:text="13.58.242.38"/>-->
+
 
             </android.support.design.widget.TextInputLayout>
 
@@ -51,7 +53,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <AutoCompleteTextView
+                <android.support.design.widget.TextInputEditText
                     android:id="@+id/iaxport"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -59,14 +61,14 @@
                     android:inputType="text|number"
                     android:maxLines="1"
                     android:singleLine="true"
-                    android:text="4569"/>
+                    android:text="@string/sign_in_port"/>
 
             </android.support.design.widget.TextInputLayout>
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <AutoCompleteTextView
+                <android.support.design.widget.TextInputEditText
                     android:id="@+id/iaxuser"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -81,7 +83,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <EditText
+                <android.support.design.widget.TextInputEditText
                     android:id="@+id/iaxpass"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

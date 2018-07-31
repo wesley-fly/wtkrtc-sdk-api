@@ -176,7 +176,7 @@ extern int iax_busy(struct iax_session *session);
 extern int iax_congestion(struct iax_session *session);
 extern int iax_hangup(struct iax_session *session, char *byemsg);
 extern int iax_call(struct iax_session *session, const char *cidnum, const char *cidname, const char *user, const char *host, 
-	const char *dest, const char *lang, int wait, uint64_t formats, uint64_t capabilities, char* ext);
+	const char *dest, uint64_t formats, uint64_t capabilities, char* ext);
 extern int iax_accept(struct iax_session *session, uint64_t format);
 extern int iax_answer(struct iax_session *session);
 extern int iax_sendurl(struct iax_session *session, char *url);

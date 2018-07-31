@@ -106,13 +106,12 @@ struct ast_frame {
         /*! Kind of frame */
         int frametype;
         /*! Subclass, frame dependent */
-        int subclass;
+        uint64_t subclass;
         /*! Length of data */
         int datalen;
         /*! Number of 8khz samples in this frame */
         int samples;
-        /*! Was the data malloc'd?  i.e. should we free it when we discard the f
-rame? */
+        /*! Was the data malloc'd?  i.e. should we free it when we discard the frame? */
         int mallocd;
         /*! How far into "data" the data really starts */
         int offset;
@@ -124,15 +123,7 @@ rame? */
         struct ast_frame *prev;
        /*! Next/Prev for linking stand alone frames */
         struct ast_frame *next;
-                                                                /* Unused except
- if debugging is turned on, but left
-                                                                   in the struct
- so that it can be turned on without
-                                                                   requiring a r
-ecompile of the whole thing */
 };
-
-
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

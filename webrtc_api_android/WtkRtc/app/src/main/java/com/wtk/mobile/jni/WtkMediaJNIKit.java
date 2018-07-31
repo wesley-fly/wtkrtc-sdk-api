@@ -5,10 +5,15 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
+
+import com.wtk.mobile.WtkRtc.MainActivity;
 import com.wtk.mobile.jni.WtkMediaJNI.StatusListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import static org.webrtc.ContextUtils.getApplicationContext;
 
 public class WtkMediaJNIKit implements StatusListener {
     private static final String TAG = "WtkMediaJNIKit";
@@ -32,31 +37,40 @@ public class WtkMediaJNIKit implements StatusListener {
 
         return instance;
     }
-
-    public int IaxInitialize()
-    {
-        return wtkMediaJNI.IaxInitialize(this);
-    }
-    public int MediaInitialize()
-    {
-        return wtkMediaJNI.MediaInitialize();
-    }
     public void SetBroadCast(Context context)
     {
         m_context = context;
     }
-    public int IaxRegister(String name, String number, String pass, String host, String port)
+    public int IaxInitialize()
     {
-        return wtkMediaJNI.IaxRegister(name, number, pass, host, port);
+        return wtkMediaJNI.IaxInitialize(this);
     }
     public void IaxShutdown()
     {
         wtkMediaJNI.IaxShutdown();
     }
-    public void MediaShutdown()
+    public void StartAudioPlayout()
     {
-        wtkMediaJNI.MediaShutdown();
+        wtkMediaJNI.StartAudioPlayout();
     }
+    public void StopAudioPlayout()
+    {
+        wtkMediaJNI.StopAudioPlayout();
+    }
+    public void StartVideoPlayout()
+    {
+        wtkMediaJNI.StartVideoPlayout();
+    }
+    public void StopVideoPlayout()
+    {
+        wtkMediaJNI.StopVideoPlayout();
+    }
+    public int IaxRegister(String name, String number, String pass, String host, String port)
+    {
+        return wtkMediaJNI.IaxRegister(name, number, pass, host, port);
+    }
+
+
     public void IaxUnRegister(int regId)
     {
         wtkMediaJNI.IaxUnRegister(regId);
@@ -75,13 +89,9 @@ public class WtkMediaJNIKit implements StatusListener {
     {
         wtkMediaJNI.IaxHangup(callNo);
     }
-    public void IaxHold(int hold)
+    public void IaxSetHold(int hold)
     {
-        wtkMediaJNI.IaxHold(callNo, hold);
-    }
-    public void IaxMute(int mute)
-    {
-        wtkMediaJNI.IaxMute(callNo, mute);
+        wtkMediaJNI.IaxSetHold(callNo, hold);
     }
     public void IaxSetFormat(int rtp_format)
     {
@@ -107,31 +117,51 @@ public class WtkMediaJNIKit implements StatusListener {
                 JSONObject obj = new JSONObject(jsonString);
                 switch (msg.what) {
                     case CommonParams.EVENT_REGISTRATION:
-                        Log.d(TAG, "Iax Registered");
+                        int regState = obj.getInt("reply");
+                        Intent regintent = new Intent();
+                        switch (regState){
+                            case CommonParams.REGISTRATION_ACCEPT:
+                                regintent.setAction("iax.reg.success");
+                                Log.d(TAG, "Iax Registered Success!");
+                                break;
+                            case CommonParams.REGISTRATION_REJECT:
+                                regintent.setAction("iax.reg.reject");
+                                Log.d(TAG, "Iax Registered Reject!");
+                                break;
+                            case CommonParams.REGISTRATION_TIMEOUT:
+                                regintent.setAction("iax.reg.timeout");
+                                Log.d(TAG, "Iax Registered Timeout!");
+                                break;
+                        }
+                        m_context.sendBroadcast(regintent);
                         break;
+
                     case CommonParams.EVENT_STATE:
                         int curState = obj.getInt("activity");
-                        Intent intent = new Intent();
+                        Intent stateintent = new Intent();
                         switch (curState){
                             case CommonParams.CALL_FREE:
-                                intent.setAction("iax.hangup");
+                                stateintent.setAction("iax.hangup");
                                 callNo = obj.getInt("callNo");
                                 callNumber = obj.getString("peernum");
                                 break;
                             case CommonParams.CALL_OUTGOING:
+                                callNumber = obj.getString("peernum");
                                 break;
                             case CommonParams.CALL_RINGIN:
                                 callNo = obj.getInt("callNo");
                                 callNumber = obj.getString("peernum");
-                                intent.setAction("iax.new.call");
+                                stateintent.setAction("iax.new.call");
                                 break;
                             case CommonParams.CALL_RINGBACK:
+                                stateintent.setAction("iax.ringback");
                                 break;
                             case CommonParams.CALL_ANSWERED:
-                                intent.setAction("iax.answer");
+                                stateintent.setAction("iax.answer");
+                                callNumber = obj.getString("peernum");
                                 break;
                         }
-                        m_context.sendBroadcast(intent);
+                        m_context.sendBroadcast(stateintent);
                         break;
                     default:
                         Log.d(TAG, "Unknow Message! ");
@@ -145,7 +175,7 @@ public class WtkMediaJNIKit implements StatusListener {
     MyHandler myEventHandler = new MyHandler();
     @Override
     public void onWtkCallEvent(int type, String jsonString) {
-        Log.e(TAG,"onWtkCallEvent type = " +type+" , json string = "+jsonString);
+        Log.d(TAG,"onWtkCallEvent type = " +type+" , json string = "+jsonString);
         Message msg = new Message();
         msg.what = type;
         msg.obj = jsonString;

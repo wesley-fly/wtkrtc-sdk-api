@@ -7,16 +7,7 @@
 #include "iaxclient_lib.h"
 
 #if defined(WIN32)  ||  defined(_WIN32_WCE)
-#ifdef USE_IPV6
-#ifdef USE_IPV6
-#include <winsock2.h>
-#else
 #include <winsock.h>
-#endif
-#else
-#include <winsock.h>
-#endif
-
 #else 
 #include <pthread.h>
 #include <sys/socket.h>

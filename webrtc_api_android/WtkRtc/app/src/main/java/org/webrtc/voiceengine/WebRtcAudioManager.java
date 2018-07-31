@@ -194,6 +194,9 @@ public class WebRtcAudioManager {
     Logging.d(TAG, "audio mode is: "
         + WebRtcAudioUtils.modeToString(audioManager.getMode()));
     initialized = true;
+    audioManager.setSpeakerphoneOn(false);
+    Logging.d(TAG, "Now audio mode is: "
+            + WebRtcAudioUtils.modeToString(audioManager.getMode()));
     volumeLogger.start();
     return true;
   }
@@ -250,7 +253,12 @@ public class WebRtcAudioManager {
     return ContextUtils.getApplicationContext().getPackageManager().hasSystemFeature(
         PackageManager.FEATURE_AUDIO_LOW_LATENCY);
   }
+  private int SetPlayoutSpeaker(boolean loudspeakerOn) {
+    // create audio manager if needed
+    audioManager.setSpeakerphoneOn(loudspeakerOn);
 
+    return 0;
+  }
   // Returns true if low-latency audio input is supported.
   // TODO(henrika): remove the hardcoded false return value when OpenSL ES
   // input performance has been evaluated and tested more.

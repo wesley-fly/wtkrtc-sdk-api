@@ -246,7 +246,7 @@ struct iaxc_ev_call_state {
 		IAXC_FORMAT_G726, IAXC_FORMAT_ADPCM, IAXC_FORMAT_SLINEAR, IAXC_FORMAT_LPC10,
 		IAXC_FORMAT_G729A, IAXC_FORMAT_SPEEX, IAXC_FORMAT_ILBC, IAXC_FORMAT_MAX_AUDIO
 	*/
-	int format;
+	uint64_t format;
 	
 	/*!
 		The audio format of the call.
@@ -255,7 +255,7 @@ struct iaxc_ev_call_state {
 		IAXC_FORMAT_H263_PLUS, IAXC_FORMAT_H264, IAXC_FORMAT_MPEG4, 
 		IAXC_FORMAT_THEORA, IAXC_FORMAT_MAX_VIDEO
 	*/
-	int vformat;
+	uint64_t vformat;
 
 	/*!
 		The remote number.
