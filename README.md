@@ -4,7 +4,6 @@ Sopport Linux & Mac platform video/audio loopback test.
 
 ##Note:
 1. Sorry for my zero C++  skill, the code also need more test.
-2. Also will improve the SDK API according my VoIP.
 
 ###Linux platform:
 1. Get the WebRTC source code, please refer webrtc.org, or
@@ -20,4 +19,4 @@ Sopport Linux & Mac platform video/audio loopback test.
 ###iOS platform:
 TBD
 ###Android platform:
-TBD
+First commit
