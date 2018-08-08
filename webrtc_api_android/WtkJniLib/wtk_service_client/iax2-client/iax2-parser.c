@@ -361,6 +361,10 @@ static struct iax2_ie ies[] = {
 	{ IAX_IE_RR_DELAY, "RR_DELAY", dump_short },
 	{ IAX_IE_RR_DROPPED, "RR_DROPPED", dump_int },
 	{ IAX_IE_RR_OOO, "RR_OOO", dump_int },
+	//Xiaofan
+	{ IAX_IE_RELAY_TOKEN, "RELAY TOKEN", dump_string },
+	{ IAX_IE_TXREASON, "TXREASON", dump_byte },
+	{ IAX_IE_TXSEQUENCE, "TXSEQUENCE", dump_byte },
 
     { 0, NULL, NULL },
 };
@@ -827,6 +831,15 @@ int iax_parse_ies(struct iax_ies *ies, unsigned char *data, int datalen)
 		case IAX_IE_RSA_RESULT:
 			ies->rsa_result = (char *) data + 2;
 			break;
+		case IAX_IE_RELAY_TOKEN:
+			ies->relay_token = (char *) data + 2;
+			break;
+		case IAX_IE_TXREASON:
+            ies->txreason = data[2];
+            break;
+		case IAX_IE_TXSEQUENCE:
+            ies->txsequence = data[2];
+            break;
 		case IAX_IE_APPARENT_ADDR:
 #ifdef EMBED
 			{

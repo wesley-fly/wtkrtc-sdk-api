@@ -52,8 +52,8 @@ int AppAllEventCallback(int type, void* info)
 				if(ptr)
 					*ptr = '\0'; 
 
-				sprintf(msg, "{callNo:%d, peername:%s, peernum :%s,  activity : %d , state : %d ,start : %d ,  duration :%d ,type :%d }",
-						  ci->callNo,peername, ci->peer_number,  ci->activity, ci->state, ci->start, ci->duration, ci->type);
+				sprintf(msg, "{callNo:%d, peername:%s, peernum :%s,  activity : %d ,start : %d ,  duration :%d ,type :%d }",
+						  ci->callNo,peername, ci->peer_number,  ci->activity,ci->start, ci->duration, ci->type);
 				break;
 			}
 			case EVENT_CONTROL:

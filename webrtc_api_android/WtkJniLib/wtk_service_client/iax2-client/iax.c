@@ -104,10 +104,14 @@
 #define MAX_RETRY_TIME 4000
 #define MEMORY_SIZE 1000
 
-#define TRANSFER_NONE  0
-#define TRANSFER_BEGIN 1
-#define TRANSFER_READY 2
-#define TRANSFER_REL   3
+#define TRANSFER_NONE		0
+#define TRANSFER_BEGIN_RS	1
+#define TRANSFER_READY_RS	2
+#define TRANSFER_REL		3 //For server
+#define TRANSFER_BEGIN_NAT	4
+#define TRANSFER_READY_NAT	5
+#define TRANSFER_BEGIN_P2P	6
+#define TRANSFER_READY_P2P	7
 
 /* UDP Socket (file descriptor) */
 static int netfd = -1;
@@ -191,6 +195,7 @@ struct iax_session {
     short sindex;
 	/* call center ticket*/
     char ticket[MAXSTRLEN*4+1];
+	char relay_token[MAXSTRLEN];
 	/* Refresh if applicable */
 	int refresh;
 
@@ -204,6 +209,7 @@ struct iax_session {
 	int transferid;
 	int transferpeer;	/* for attended transfer */
 	int transfer_moh;	/* for music on hold while performing attended transfer */
+	int transfer_heartbeatid;
 
 	struct iax_netstat remote_netstats;
 
@@ -427,6 +433,7 @@ struct iax_session *iax_session_new(void)
 		s->sendto = iax_sendto;
 		s->pingid = -1;
 		s->sindex = -1;
+		s->transfer_heartbeatid = -1;
 
 #ifdef USE_VOICE_TS_PREDICTION
 		s->nextpred = 0;
@@ -920,7 +927,6 @@ int iax_init(int preferredportno)
 		DEBU(G "Started on port %d\n", portno);
 	}
 
-	iax_seed_random();
 	callnums = 1 + (int)(32767.0 * (iax_random() / (RAND_MAX + 1.0)));
 
 	return portno;
@@ -1230,14 +1236,86 @@ static void stop_transfer(struct iax_session *session)
 	}
 }	/* stop_transfer */
 
+// Xiaofan Add for transfer
+static int iax_send_txcnt(struct iax_session *session, unsigned char txreason, unsigned char txseq);
+
+#define HEARTBEAT_START_DELAYTIME     5
+#define SLOW_HEARTBEAT_TIME     20
+#define FAST_HEARTBEAT_TIME     1
+#define FAST_HEARTBEAT_TIMEOUT  30
+
+static int heartbeat_interval = SLOW_HEARTBEAT_TIME;
+
+static int iax_send_heartbeat(struct iax_session *session)
+{
+	iax_send_txcnt(session, IAX_TXREASON_HEARTBEAT, 0);
+	return 0;
+}
+
+static void send_heartbeat(void *s)
+{
+	int i=0;
+	struct iax_session *session = (struct iax_session *)s;
+    
+	if(!iax_session_valid(session)) 
+		return;
+
+	iax_send_heartbeat(session);
+
+    session->transfer_heartbeatid = iax_sched_add(NULL, NULL, send_heartbeat, (void *)session, heartbeat_interval * 1000);
+}
+/*
+static void restore_heartbeat(void *s)
+{
+	struct iax_session *session = (struct iax_session *)s;
+    iax_heartbeat_interval(session, 0);
+}
+
+int iax_heartbeat_interval(struct iax_session *session, int fast)
+{
+	if(!iax_session_valid(session))
+        return -1;
+    
+    heartbeat_interval = fast ? FAST_HEARTBEAT_TIME : SLOW_HEARTBEAT_TIME;
+    
+    // restart the timer of heart beat
+    if(session->transfer_heartbeatid >= 0) {
+        iax_sched_del(NULL, NULL, send_heartbeat, (void *)session, 1);
+        session->transfer_heartbeatid = -1;
+    }
+    session->transfer_heartbeatid = iax_sched_add(NULL, NULL, send_heartbeat, (void *)session, heartbeat_interval * 1000);
+    
+    if(fast) {
+        iax_sched_add(NULL, NULL, restore_heartbeat, (void *)session, FAST_HEARTBEAT_TIMEOUT*1000);
+    }
+    else {
+        iax_sched_del(NULL, NULL, restore_heartbeat, (void *) session, 1);
+    }
+
+    return 0;
+}
+*/
+//Xiaofan end
+
 static void complete_transfer(struct iax_session *session, int peercallno, int xfr2peer, int preserveSeq)
 {
 	session->peercallno = peercallno;
 	/* Change from transfer to session now */
 	if (xfr2peer) {
+		if(session->transfer_heartbeatid >= 0) {
+	        iax_sched_del(NULL, NULL, send_heartbeat, (void *)session, 1);
+	        session->transfer_heartbeatid = -1;
+	    }
+	    session->transfer_heartbeatid = iax_sched_add(NULL,NULL, send_heartbeat, (void *)session, HEARTBEAT_START_DELAYTIME*1000);
+	    
+		if(session->pingid >= 0) {
+	        iax_sched_del(NULL, NULL, send_ping, (void *) session, 1);
+	        session->transfer_heartbeatid = -1;
+	    }
+		
 		memcpy(&session->peeraddr, &session->transfer, sizeof(session->peeraddr));
-		memset(&session->transfer, 0, sizeof(session->transfer));
-		session->transferring = TRANSFER_NONE;
+		/*memset(&session->transfer, 0, sizeof(session->transfer));
+		session->transferring = TRANSFER_NONE;*/
 		session->transferpeer = 0;
 		session->transfer_moh = 0;
 		/* Force retransmission of a real voice packet, and reset all timing */
@@ -1297,8 +1375,8 @@ int iax_setup_transfer(struct iax_session *org_session, struct iax_session *new_
 	s0->transfercallno = s0->peercallno;
 	s1->transfercallno = s1->peercallno;
 
-	s0->transferring = TRANSFER_BEGIN;
-	s1->transferring = TRANSFER_BEGIN;
+	s0->transferring = TRANSFER_BEGIN_RS;
+	s1->transferring = TRANSFER_BEGIN_RS;
 
 	s0->transferpeer = s1->callno;
 	s1->transferpeer = s0->callno;
@@ -1399,10 +1477,10 @@ static void iax_handle_txreject(struct iax_session *s)
 		send_command_immediate(s0, AST_FRAME_IAX, IAX_COMMAND_UNQUELCH, 0, NULL, 0, s0->iseqno);
 	}
 
-	memset(&s->transfer, 0, sizeof(s->transfer));
+	/*memset(&s->transfer, 0, sizeof(s->transfer));
 	s->transferring = TRANSFER_NONE;
 	s->transferpeer = 0;
-	s->transfer_moh = 0;
+	s->transfer_moh = 0;*/
 }
 
 static void destroy_session(struct iax_session *session)
@@ -1686,6 +1764,8 @@ int iax_hangup(struct iax_session *session, char *byemsg)
 {
 	struct iax_ie_data ied;
 	iax_sched_del(NULL, NULL, send_ping, (void *) session, 1);
+	iax_sched_del(NULL, NULL, send_heartbeat, (void *) session, 1);
+	
 	memset(&ied, 0, sizeof(ied));
 	iax_ie_append_str(&ied, IAX_IE_CAUSE, byemsg ? byemsg : "Normal clearing");
 	return send_command_final(session, AST_FRAME_IAX, IAX_COMMAND_HANGUP, 0, ied.buf, ied.pos, -1);
@@ -1793,12 +1873,37 @@ static int iax_send_lagrp(struct iax_session *session, unsigned int ts)
 	return send_command(session, AST_FRAME_IAX, IAX_COMMAND_LAGRP, ts, NULL, 0, -1);
 }
 
-static int iax_send_txcnt(struct iax_session *session)
+static int iax_send_txcnt(struct iax_session *session, unsigned char txreason, unsigned char txseq)
 {
 	struct iax_ie_data ied;
 	memset(&ied, 0, sizeof(ied));
 	iax_ie_append_int(&ied, IAX_IE_TRANSFERID, session->transferid);
+	if(strcmp(session->relay_token, "")!=0)
+    {
+        iax_ie_append_str(&ied, IAX_IE_RELAY_TOKEN, session->relay_token);
+        iax_ie_append_str(&ied, IAX_IE_USERNAME, session->username);
+    }
+	if(txreason > 0) {
+        iax_ie_append_byte(&ied, IAX_IE_TXREASON, txreason);
+    }
+	if(txseq > 0) {
+		iax_ie_append_byte(&ied, IAX_IE_TXSEQUENCE, txseq);
+    }
 	return send_command_transfer(session, AST_FRAME_IAX, IAX_COMMAND_TXCNT, 0, ied.buf, ied.pos);
+}
+static int iax_send_txaccept(struct iax_session *session,unsigned char txreason)
+{
+	struct iax_ie_data ied;
+	memset(&ied, 0, sizeof(ied));
+	iax_ie_append_int(&ied, IAX_IE_TRANSFERID, session->transferid);
+	if(strcmp(session->relay_token, "")!=0) {
+        iax_ie_append_str(&ied, IAX_IE_RELAY_TOKEN, session->relay_token);
+    }
+	if(txreason > 0) {
+		iax_ie_append_byte(&ied, IAX_IE_TXREASON, txreason);
+	}
+
+	return send_command_transfer(session, AST_FRAME_IAX, IAX_COMMAND_TXACC, 0, ied.buf, ied.pos);
 }
 
 static int iax_send_txrej(struct iax_session *session)
@@ -1808,14 +1913,6 @@ static int iax_send_txrej(struct iax_session *session)
 	iax_ie_append_int(&ied, IAX_IE_TRANSFERID, session->transferid);
 	//return send_command_transfer(session, AST_FRAME_IAX, IAX_COMMAND_TXREJ, 0, ied.buf, ied.pos);
 	return send_command(session, AST_FRAME_IAX, IAX_COMMAND_TXREJ, 0, ied.buf, ied.pos, -1);
-}
-
-static int iax_send_txaccept(struct iax_session *session)
-{
-	struct iax_ie_data ied;
-	memset(&ied, 0, sizeof(ied));
-	iax_ie_append_int(&ied, IAX_IE_TRANSFERID, session->transferid);
-	return send_command_transfer(session, AST_FRAME_IAX, IAX_COMMAND_TXACC, 0, ied.buf, ied.pos);
 }
 
 static int iax_send_txready(struct iax_session *session)
@@ -2318,10 +2415,11 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 
 	/* don't run last_ts backwards; i.e. for retransmits and the like */
 	if (ts > session->last_ts &&
+		(fh->type == AST_FRAME_VOICE ||
 	    (fh->type == AST_FRAME_IAX &&
 	     subclass != IAX_COMMAND_ACK &&
 	     subclass != IAX_COMMAND_PONG &&
-	     subclass != IAX_COMMAND_LAGRP))
+	     subclass != IAX_COMMAND_LAGRP)))
 	{
 		session->last_ts = ts;
 	}
@@ -2334,9 +2432,8 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 	/* Handle implicit ACKing unless this is an INVAL, and only if this is
 		from the real peer, not the transfer peer */
 	if ( !inaddrcmp(sin, &session->peeraddr) &&
-	     ( subclass != IAX_COMMAND_INVAL ||
-	       fh->type != AST_FRAME_IAX
-	     )
+	     ( subclass != IAX_COMMAND_INVAL ||fh->type != AST_FRAME_IAX) &&
+	     ( subclass != IAX_COMMAND_TXCNT && subclass != IAX_COMMAND_TXACC )
 	   )
 	{
 		unsigned char x;
@@ -2390,7 +2487,8 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 			(subclass != IAX_COMMAND_TXREL) &&
 			(subclass != IAX_COMMAND_TXCNT) &&
 			(subclass != IAX_COMMAND_TXACC) &&
-			(subclass != IAX_COMMAND_VNAK)) ||
+			(subclass != IAX_COMMAND_VNAK) &&
+			(subclass != IAX_COMMAND_HANGUP)) ||
 			(fh->type != AST_FRAME_IAX))
 		{
 			/* If it's not an ACK packet, it's out of order. */
@@ -2412,7 +2510,8 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 						we have anything to send, we'll retransmit and get an ACK back anyway XXX */
 					send_command_immediate(session, AST_FRAME_IAX, IAX_COMMAND_ACK, ts, NULL, 0,fh->iseqno);
 				}
-			} else
+			} 
+			else
 			{
 				/* Send a VNAK requesting retransmission */
 				iax2_vnak(session);
@@ -2490,6 +2589,11 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 				/* This is a new, incoming call */
 				/* save the capability for validation */
 				session->capability = e->ies.capability;
+				if(e->ies.called_number){
+					strncpy(session->username,
+							e->ies.called_number,
+							sizeof(session->username));
+				}
 				if (e->ies.codec_prefs) {
 					strncpy(session->codec_order,
 							e->ies.codec_prefs,
@@ -2567,13 +2671,6 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 				}
 				else {
 					struct iax_ie_data ied;
-					/* Although this should not happen, we
-					 * added this to make sure the
-					 * negotiation protocol is enforced.
-					 * For lack of event to notify the
-					 * application we use the defined
-					 * REJECT event.
-					 */
 					memset(&ied, 0, sizeof(ied));
 					iax_ie_append_str(&ied, IAX_IE_CAUSE, "Unable to negotiate codec");
 					send_command_final(session, AST_FRAME_IAX, IAX_COMMAND_REJECT, 0, ied.buf, ied.pos, -1);
@@ -2601,21 +2698,20 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 				/* Can't call schedule_delivery since timestamp is non-normal */
 				break;;
 			case IAX_COMMAND_TXREQ:
-				/* added check for defensive programming
-				 * - in case the asterisk server
-				 * or another client does not send the
-				 *  apparent transfer address
-				 */
 				if (e->ies.apparent_addr != NULL) {
+					if(e->ies.relay_token!=NULL) {
+		                memset(session->relay_token, 0, MAXSTRLEN);
+		                memcpy(session->relay_token, e->ies.relay_token, strlen(e->ies.relay_token));
+		            }
 					/* so a full voice frame is sent on the
 					   next voice output */
 					session->svoiceformat = -1;
 					session->transfer = *e->ies.apparent_addr;
 					session->transfer.sin_family = AF_INET;
 					session->transfercallno = e->ies.callno;
-					session->transferring = TRANSFER_BEGIN;
+					session->transferring = TRANSFER_BEGIN_RS;
 					session->transferid = e->ies.transferid;
-					iax_send_txcnt(session);
+					iax_send_txcnt(session,0,0);
 				}
 				free(e);
 				e = NULL;
@@ -2626,18 +2722,53 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 				/* Return immediately, makes no sense to schedule */
 				break;
 			case IAX_COMMAND_TXCNT:
+				iaxci_usermsg(3, "IAX_COMMAND_TXCNT session->transferring = %d,e->ies.txsequence=%d\n", session->transferring,e->ies.txsequence);
 				if (session->transferring)  {
-					session->transfer = *sin;
-					iax_send_txaccept(session);
+					if(e->ies.txreason == IAX_TXREASON_FROM_RS)
+					{
+						session->transfer = *sin;
+						iax_send_txcnt(session,IAX_TXREASON_NETCHANGE,e->ies.txsequence);
+						stop_transfer(session);
+					}
+					else if(e->ies.txreason == IAX_TXREASON_NETCHANGE)
+					{
+						iax_send_txaccept(session,IAX_TXREASON_HEARTBEAT);
+						stop_transfer(session);
+					}
+					else if(e->ies.txreason == IAX_TXREASON_HEARTBEAT)
+					{
+						iax_send_txaccept(session,IAX_TXREASON_HEARTBEAT);
+						stop_transfer(session);
+					}
+					else 
+					{
+						session->transfer = *sin;
+						iax_send_txaccept(session,0);
+					}
 				}
+				
 				free(e);
 				e = NULL;
 				break;
 			case IAX_COMMAND_TXACC:
 				if (session->transferring) {
-					stop_transfer(session);
-					session->transferring = TRANSFER_READY;
-					iax_send_txready(session);
+					if(e->ies.txreason == IAX_TXREASON_NETCHANGE)
+					{
+						//stop_transfer(session);
+						//session->transferring = TRANSFER_READY_RS;
+						//iax_send_txready(session);
+						//stop_transfer(session);
+					}
+					else if(e->ies.txreason == IAX_TXREASON_HEARTBEAT)
+					{
+						stop_transfer(session);
+					}
+					else
+					{
+                        stop_transfer(session);
+						session->transferring = TRANSFER_READY_RS;
+						iax_send_txready(session);
+                    }
 				}
 				free(e);
 				e = NULL;
@@ -2651,7 +2782,7 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 				else {
 					complete_transfer(session, session->peercallno, 0, 1);
 				}
-				e->etype = IAX_EVENT_TRANSFER;
+				e->etype = IAX_EVENT_TRANSFER_RS;
 				/* notify that asterisk no longer sitting between peers */
 				e = schedule_delivery(e, ts, updatehistory);
 				break;

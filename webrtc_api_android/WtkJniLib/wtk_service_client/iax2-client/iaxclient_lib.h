@@ -164,20 +164,15 @@ void iaxci_do_audio_callback(int callNo, unsigned int ts, int remote,
 
 struct wtkState 
 {
-	//int	 id;			// unique identifier of this call's state machine 
-	int  activity;		// the activity which application should perform 
-	//int  last_state;	// previous state of this call
+	int  activity;
 
 	struct timeval tm_start;    // time to setup the call
 	struct timeval tm_answer;   // time to answer the call
-	struct timeval tm_transfer; // p2p transfer finished time
 
 	unsigned int  duration;		// duration of the call
 	unsigned char type;			// see _Call_Type definition
 	int reason;
 	short hangup;			  // whether the hangup activity is invoked by self, and why hangup
-
-	char local_codecs[32];  // codecs supported for sending
 };
 
 struct iaxc_call {

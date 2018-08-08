@@ -9,7 +9,7 @@
 static char* map_state(int state)
 {
 	static char *map[] = { "unknown", "active", "outgoing", "ringing",
-		"complete", "selected", "busy", "transfered", NULL };
+		"complete", "selected", "busy", "transfered_rs", "transfered_nat","transfered_p2p",NULL };
 	static char states[256]; 	/* buffer to hold ascii states */
 	int i, j;
 	int next=0;

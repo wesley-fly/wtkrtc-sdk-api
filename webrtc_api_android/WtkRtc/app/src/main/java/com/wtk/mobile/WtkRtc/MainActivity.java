@@ -11,7 +11,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -20,14 +19,7 @@ import com.wtk.mobile.jni.CommonParams;
 import com.wtk.mobile.jni.WtkMediaJNIKit;
 
 import org.webrtc.ContextUtils;
-import org.webrtc.voiceengine.WebRtcAudioManager;
 import org.webrtc.voiceengine.WebRtcAudioRecord;
-import org.webrtc.voiceengine.WebRtcAudioTrack;
-
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Enumeration;
 
 public class MainActivity extends AppCompatActivity implements OnClickListener {
     private String TAG="LoginActivity";
@@ -42,14 +34,13 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
     private String password = null;
     private EditText editDest;
 
-    private String mStateInfo = "空闲中";
-    private TextView txtLocalIp,txtState;
+    private String mStateInfo = "Idle";
+    private TextView txtState;
     private int mCurrentSpeaker = 0;
     private int mCurrentMute = 0;
     private int mCurrentHold = 0;
 
     private CallReceiver receiver = null;
-
     //Android
     private AudioManager audioManager;
 
@@ -78,10 +69,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         mIsHoldButton.setOnClickListener(this);
         mIsMuteButton.setOnClickListener(this);
 
-        txtLocalIp = findViewById(R.id.txtNetInfo);
         txtState = findViewById(R.id.txtState);
-
-        txtLocalIp.setText(GetLocalIpAddress());
         txtState.setText(mStateInfo);
 
         setActivityMode(CommonParams.STATEIDEL);
@@ -111,17 +99,17 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 String ext = "testExt";
                 Log.d(TAG, "IaxDial params is " +calleeId+",host="+host+"userIdPass="+userIdPass+"cmd="+cmd+"ext="+ext);
                 WtkMediaJNIKit.getInstance().IaxDial(calleeId,host,userIdPass,cmd,ext);
-                mStateInfo = "向 "+calleeId+"发起呼叫，正在接通中...";
+                mStateInfo = "Make new call to "+calleeId+"...";
                 setActivityMode(CommonParams.STATERINGIN);
                 break;
             case R.id.btn_answer:
                 WtkMediaJNIKit.getInstance().IaxAnswer();
-                mStateInfo = "正在和 "+WtkMediaJNIKit.getInstance().getCallNumber()+"语音通话中...";
+                mStateInfo = "Speaking with "+WtkMediaJNIKit.getInstance().getCallNumber()+"...";
                 setActivityMode(CommonParams.STATETALKING);
                 break;
             case R.id.btn_hangup:
                 WtkMediaJNIKit.getInstance().IaxHangup();
-                mStateInfo = "空闲中";
+                mStateInfo = "Idle";
                 setActivityMode(CommonParams.STATEIDEL);
                 break;
             case R.id.btn_is_speaker:
@@ -165,7 +153,9 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         filter.addAction("iax.new.call");
         filter.addAction("iax.hangup");
         filter.addAction("iax.answer");
-
+        filter.addAction("iax.transfer.rs");
+        filter.addAction("iax.transfer.nat");
+        filter.addAction("iax.transfer.p2p");
         receiver = new CallReceiver();
         registerReceiver(receiver, filter);
     }
@@ -239,44 +229,40 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
             String action = intent.getAction();
 
             if("iax.hangup".equals(action)) {
-                mStateInfo = "空闲中";
+                mStateInfo = "Idle";
                 setActivityMode(CommonParams.STATEIDEL);
                 WtkMediaJNIKit.getInstance().StopAudioPlayout();
             }
             else if("iax.new.call".equals(action)) {
-                mStateInfo = "收到来自 "+WtkMediaJNIKit.getInstance().getCallNumber()+"的电话，是否接听...";
+                mStateInfo = "Received new call from "+WtkMediaJNIKit.getInstance().getCallNumber()+", answer or hangup...";
                 setActivityMode(CommonParams.STATERINGIN);
             }
             else if("iax.answer".equals(action))
             {
-                mStateInfo = "正在和 "+WtkMediaJNIKit.getInstance().getCallNumber()+"语音通话中...";
+                mStateInfo = "Speaking with "+WtkMediaJNIKit.getInstance().getCallNumber()+"...";
                 setActivityMode(CommonParams.STATETALKING);
                 WtkMediaJNIKit.getInstance().StartAudioPlayout();
             }
+            else if("iax.transfer.rs".equals(action))
+            {
+                mStateInfo = "Speaking with "+WtkMediaJNIKit.getInstance().getCallNumber()+"..., and already relay server transfer";
+                setActivityMode(CommonParams.STATETALKING);
+            }
+            else if("iax.transfer.nat".equals(action))
+            {
+                mStateInfo = "Speaking with "+WtkMediaJNIKit.getInstance().getCallNumber()+"..., and already nat transfer";
+                setActivityMode(CommonParams.STATETALKING);
+            }
+            else if("iax.transfer.p2p".equals(action))
+            {
+                mStateInfo = "Speaking with "+WtkMediaJNIKit.getInstance().getCallNumber()+"..., and already p2p transfer";
+                setActivityMode(CommonParams.STATETALKING);
+            }
             else
             {
-                mStateInfo = "空闲中";
+                mStateInfo = "Idle";
                 setActivityMode(CommonParams.STATEIDEL);
             }
         }
-    }
-    public String GetLocalIpAddress() {
-        String localIPs = "";
-        try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface
-                    .getNetworkInterfaces(); en.hasMoreElements();) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf
-                        .getInetAddresses(); enumIpAddr.hasMoreElements();) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress()) {
-                        localIPs += inetAddress.getHostAddress().toString() + " ";
-                    }
-                }
-            }
-        } catch (SocketException ex) {
-            Log.e(TAG, ex.toString());
-        }
-        return localIPs;
     }
 }

@@ -111,28 +111,4 @@
             android:textColor="#ff0000" />
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
-        <TextView
-            android:layout_width="500px"
-            android:layout_height="wrap_content"
-            android:text="Network Info："
-            android:textColor="#000000"/>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="10dp" >
-        <TextView
-            android:id="@+id/txtNetInfo"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:text="No Local IP Info"
-            android:textColor="#000000"/>
-    </LinearLayout>
 </LinearLayout>

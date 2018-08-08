@@ -25,6 +25,7 @@ public interface CommonParams {
     static final int CALL_RINGIN=2;		/* an incoming call received and play ring-in sound*/
     static final int CALL_RINGBACK=3;    /* an outgoing call received by callee and play ringback sound*/
     static final int CALL_ANSWERED=4;	/* the call has been answered */
-    static final int CALL_TRANSFERED=5;	/* the call has been transfered from Asterisk */
-    static final int CALL_TRANSFERED_FREE=6;
+    static final int CALL_TRANSFERED_RS=5;	/* the call has been transfered from Asterisk */
+    static final int CALL_TRANSFERED_NAT=6;
+    static final int CALL_TRANSFERED_P2P=7;
 }

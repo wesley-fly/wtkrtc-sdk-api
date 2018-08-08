@@ -69,6 +69,10 @@ struct iax_ies {
 	unsigned short rr_delay;
 	unsigned int rr_dropped;
 	unsigned int rr_ooo;
+	//xiaofan
+	char *relay_token;
+	unsigned char txreason;
+	unsigned char txsequence;
 };
 
 #define DIRECTION_INGRESS 1

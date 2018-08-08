@@ -27,7 +27,7 @@
 #include "iax2.h"
 #include "iax2-parser.h"
 
-#define MAXSTRLEN 80
+#define MAXSTRLEN 256
 
 #define IAX_AUTHMETHOD_PLAINTEXT IAX_AUTH_PLAINTEXT
 #define IAX_AUTHMETHOD_MD5       IAX_AUTH_MD5
@@ -63,7 +63,7 @@ struct iax_session;
 #define IAX_EVENT_URL           19      /* URL received */
 #define IAX_EVENT_LDCOMPLETE    20      /* URL loading complete */
 
-#define IAX_EVENT_TRANSFER      21      /* Transfer has taken place */
+#define IAX_EVENT_TRANSFER_RS   21      /* Transfer has taken place */
 
 #define IAX_EVENT_DPREQ         22      /* Dialplan request */
 #define IAX_EVENT_DPREP         23      /* Dialplan reply */
@@ -80,6 +80,9 @@ struct iax_session;
 #define IAX_EVENT_CNG           32      /* Comfort-noise (almost silence) */
 #define IAX_EVENT_POKE          33
 #define IAX_EVENT_VIDEO         34      /* Send/receive video */
+
+#define IAX_EVENT_TRANSFER_NAT   35      /* Transfer has taken place */
+#define IAX_EVENT_TRANSFER_P2P   36      /* Transfer has taken place */
 
 
 /* moved from iax.c to support attended transfer */

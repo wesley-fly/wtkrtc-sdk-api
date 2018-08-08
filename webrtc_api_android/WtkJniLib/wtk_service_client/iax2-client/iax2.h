@@ -130,6 +130,17 @@
 #define IAX_IE_FORMAT2              			56      		/*!< Desired codec format - u8 version + integer array */
 #define IAX_IE_CALLCENTER_TICKET    			195    			/*!< 0xc3 ticket for call center auth */
 #define IAX_IE_SECRET_INDEX						203  			/* Index of current secret */
+
+#define IAX_IE_TXSEQUENCE						216
+#define IAX_IE_TXREASON							217
+#define IAX_IE_TX_NAT_ADDR						218
+#define IAX_IE_TX_LOCAL_ADDR					219
+#define IAX_IE_RELAY_TOKEN						222
+
+#define IAX_TXREASON_HEARTBEAT      			1
+#define IAX_TXREASON_NETCHANGE      			2
+#define IAX_TXREASON_FROM_RS					3
+
 //Add by Xiaofan end
 
 #define IAX_AUTH_PLAINTEXT			(1 << 0)

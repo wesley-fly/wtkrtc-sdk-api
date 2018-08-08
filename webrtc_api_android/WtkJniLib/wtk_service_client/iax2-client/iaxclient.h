@@ -137,15 +137,18 @@ typedef int socklen_t;
 #define IAXC_EVENT_VIDCAP_ERROR  12  /*!< Indicates a video capture error occurred */
 #define IAXC_EVENT_VIDCAP_DEVICE 13  /*!< Indicates a possible video capture device insertion/removal */
 
-#define IAXC_CALL_STATE_FREE     0       /*!< Indicates a call slot is free */
-#define IAXC_CALL_STATE_ACTIVE   (1<<1)  /*!< Indicates a call is active */
-#define IAXC_CALL_STATE_OUTGOING (1<<2)  /*!< Indicates a call is outgoing */
-#define IAXC_CALL_STATE_RINGING  (1<<3)  /*!< Indicates a call is ringing */
-#define IAXC_CALL_STATE_COMPLETE (1<<4)  /*!< Indicates a completed call */
-#define IAXC_CALL_STATE_SELECTED (1<<5)  /*!< Indicates the call is selected */
-#define IAXC_CALL_STATE_BUSY     (1<<6)  /*!< Indicates a call is busy */
-#define IAXC_CALL_STATE_TRANSFER (1<<7)  /*!< Indicates the call transfer has been released */
-#define CALL_STATE_TIMEOUT		(1<<8)  /*!< Indicates the call has been hangup for timeout out */
+#define IAXC_CALL_STATE_FREE     		0       /*!< Indicates a call slot is free */
+#define IAXC_CALL_STATE_ACTIVE   		(1<<1)  /*!< Indicates a call is active */
+#define IAXC_CALL_STATE_OUTGOING 		(1<<2)  /*!< Indicates a call is outgoing */
+#define IAXC_CALL_STATE_RINGING  		(1<<3)  /*!< Indicates a call is ringing */
+#define IAXC_CALL_STATE_COMPLETE 		(1<<4)  /*!< Indicates a completed call */
+#define IAXC_CALL_STATE_SELECTED 		(1<<5)  /*!< Indicates the call is selected */
+#define IAXC_CALL_STATE_BUSY     		(1<<6)  /*!< Indicates a call is busy */
+#define IAXC_CALL_STATE_TRANSFER_RS 	(1<<7)  /*!< Indicates the call transfer has been released */
+#define IAXC_CALL_STATE_TRANSFER_NAT	(1<<8)
+#define IAXC_CALL_STATE_TRANSFER_P2P	(1<<9)
+#define CALL_STATE_TIMEOUT				(1<<10)  /*!< Indicates the call has been hangup for timeout out */
+
 
 /*! Indicates that text is for an IAXClient status change */
 #define IAXC_TEXT_TYPE_STATUS     1   
@@ -235,7 +238,7 @@ struct iaxc_ev_call_state {
 
 		\see IAXC_CALL_STATE_FREE, IAXC_CALL_STATE_ACTIVE, IAXC_CALL_STATE_OUTGOING,
 		IAXC_CALL_STATE_RINGING, IAXC_CALL_STATE_COMPLETE, IAXC_CALL_STATE_SELECTED,
-		IAXC_CALL_STATE_BUSY, IAXC_CALL_STATE_TRANSFER
+		IAXC_CALL_STATE_BUSY, IAXC_CALL_STATE_TRANSFER_RS
 	*/
 	int state;
 	

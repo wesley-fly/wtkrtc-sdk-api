@@ -32,13 +32,11 @@ typedef struct _Call_Info {
 	char peer_name[256];		// peer's name (UTF-8 String)
 	char peer_number[256];      // peer's freepp number
 	int activity;				// current activity of the call (see _Call_State)
-	int state;				// call state flags
 	int reason;            // reason to finish call, when activity = CALL_FREE - 20170519
 	unsigned int start;				// Start Time
 	unsigned int duration;      // Call Duration
-	short type;					     // type of history record (see _Call_Type)
-    char  relay_token[256];   // token allocated by relay server
-
+	unsigned char type;					     // type for SDK(jni) level
+    //char  relay_token[256];   // token allocated by relay server
 }CallInfo;
 
 typedef struct _Message_Info {
@@ -77,14 +75,16 @@ enum _Call_State  {
 	CALL_RINGIN=2,		/* an incoming call received and play ring-in sound*/
 	CALL_RINGBACK=3,    /* an outgoing call received by callee and play ringback sound*/
 	CALL_ANSWERED=4,	/* the call has been answered */
-	CALL_TRANSFERED=5,	/* the call has been transfered from Asterisk */
-    CALL_TRANSFERED_FREE=6, /* the call has been transfered from Asterisk to a free path, e.g NAT/LAN */
+	CALL_TRANSFERED_RS=5,	/* the call has been transfered from Asterisk */
+    CALL_TRANSFERED_NAT=6,
+    CALL_TRANSFERED_P2P=7,
 };
 enum _Call_Type {
-	OUTGOING_CALL=0,
-	INCOMING_CALL=1,
-	MISSED_CALL=2,
-	REJECTED_CALL=3,
+	CALL_TYPE_IDEL=0,
+	CALL_TYPE_OUTGOING=1,
+	CALL_TYPE_INCOMING=2,
+	CALL_TYPE_MISSED=3,
+	CALL_TYPE_REJECTED=4,
 };
 
 

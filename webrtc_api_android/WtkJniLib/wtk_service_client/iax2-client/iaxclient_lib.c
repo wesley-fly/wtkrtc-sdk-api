@@ -93,16 +93,14 @@ static iaxc_event *event_queue = NULL;
 void wtkState_clear_state(struct wtkState* call)
 {
 	call->activity = CALL_FREE;
-	call->type = OUTGOING_CALL;
+	call->type = CALL_TYPE_IDEL;
 	
 	memset(&call->tm_start, 0, sizeof(struct timeval));
 	memset(&call->tm_answer, 0, sizeof(struct timeval));
-	memset(&call->tm_transfer, 0, sizeof(struct timeval));
 	
 	call->duration = 0;
 	call->hangup = 0; // not self, no timeout out
 	call->reason = 0;
-	strcpy(call->local_codecs, "");
 }
 struct string_array
 {
@@ -429,19 +427,17 @@ EXPORT int iaxc_first_free_call()
 
 EXPORT void iaxc_clear_call(int toDump)
 {
-	// XXX libiax should handle cleanup, I think..
 	calls[toDump].state = IAXC_CALL_STATE_FREE;
 	calls[toDump].format = 0;
 	calls[toDump].vformat = 0;
-	//calls[toDump].session = NULL;
 	if (calls[toDump].session)
 	{
 		iax_destroy(calls[toDump].session);
 		calls[toDump].session = NULL;
 	}
 	iaxci_do_state_callback(toDump);
-	
-	wtkState_clear_state(&calls[toDump].sm);
+
+	//wtkState_clear_state(&calls[toDump].sm);
 }
 
 /* select a call.  */
@@ -1023,7 +1019,6 @@ static void iaxc_handle_network_event(struct iax_event *e, int callNo)
 		handle_url_event(e, callNo);
 		break;
 	case IAX_EVENT_CNG:
-		/* ignore? */
 		break;
 	case IAX_EVENT_TIMEOUT:
 		iax_hangup(e->session, "Call timed out");
@@ -1031,12 +1026,26 @@ static void iaxc_handle_network_event(struct iax_event *e, int callNo)
 		calls[callNo].sm.hangup |= HANGUP_TIMEOUT;
 		iaxc_clear_call(callNo);
 		break;
-	/*case IAX_EVENT_TRANSFER_RELAY: // P2P Relay
-        calls[callNo].state |= IAXC_CALL_STATE_TRANSFER2;*/
-	case IAX_EVENT_TRANSFER:
-		calls[callNo].state |= IAXC_CALL_STATE_TRANSFER;
+	case IAX_EVENT_TRANSFER_RS:
+		calls[callNo].state &= ~IAXC_CALL_STATE_TRANSFER_NAT;
+		calls[callNo].state &= ~IAXC_CALL_STATE_TRANSFER_P2P;
+		calls[callNo].state |= IAXC_CALL_STATE_TRANSFER_RS;
 		iaxci_do_state_callback(callNo);
-		iaxci_usermsg(IAXC_STATUS,"Call %d transfer released", callNo);
+		iaxci_usermsg(IAXC_STATUS,"Call %d Relay Server transfer released", callNo);
+		break;
+	case IAX_EVENT_TRANSFER_NAT:
+		calls[callNo].state &= ~IAXC_CALL_STATE_TRANSFER_RS;
+		calls[callNo].state &= ~IAXC_CALL_STATE_TRANSFER_P2P;
+		calls[callNo].state |= IAXC_CALL_STATE_TRANSFER_NAT;
+		iaxci_do_state_callback(callNo);
+		iaxci_usermsg(IAXC_STATUS,"Call %d NAT transfer released", callNo);
+		break;
+	case IAX_EVENT_TRANSFER_P2P:
+		calls[callNo].state &= ~IAXC_CALL_STATE_TRANSFER_RS;
+		calls[callNo].state &= ~IAXC_CALL_STATE_TRANSFER_NAT;
+		calls[callNo].state |= IAXC_CALL_STATE_TRANSFER_P2P;
+		iaxci_do_state_callback(callNo);
+		iaxci_usermsg(IAXC_STATUS,"Call %d P2P transfer released", callNo);
 		break;
 	case IAX_EVENT_DTMF:
 		iaxci_do_dtmf_callback(callNo,e->subclass);
@@ -1059,7 +1068,7 @@ EXPORT int iaxc_unregister( int id )
 
 EXPORT int iaxc_register(const char * user, const char * pass, const char * host)
 {
-	return iaxc_register_ex(user, pass, host, 60);
+	return iaxc_register_ex(user, pass, host, 600);
 }
 
 EXPORT int iaxc_register_ex(const char * user, const char * pass, const char * host, int refresh)
@@ -1535,7 +1544,7 @@ EXPORT int iaxc_push_audio(void *data, unsigned int size, unsigned int samples)
 
 	if ( iax_send_voice(call->session, call->format, data, size, samples) == -1 )
 	{
-		iaxci_usermsg(IAXC_STATUS, "iaxc_push_audio: failed to send audio frame of size %d on call %d\n", size, selected_call);
+		//iaxci_usermsg(IAXC_STATUS, "iaxc_push_audio: failed to send audio frame of size %d on call %d\n", size, selected_call);
 		return -1;
 	}
 
@@ -1584,35 +1593,45 @@ EXPORT void  wtkcall_perform_state_callback(struct wtkState* call, int callNo, i
 	{
 		if(new_state & IAXC_CALL_STATE_RINGING)
 		{
+			call->tm_start = iax_tvnow();
 			if(new_state & IAXC_CALL_STATE_OUTGOING)
 			{
 				new_activity = CALL_OUTGOING;
-				call->type = OUTGOING_CALL;
+				call->type = CALL_TYPE_OUTGOING;
 			}
 			else
 			{
 				new_activity = CALL_RINGIN;
-				call->type = MISSED_CALL;
+				call->type = CALL_TYPE_INCOMING;
 			}
-			call->tm_start = iax_tvnow();
 		}
 		else if((new_state & IAXC_CALL_STATE_COMPLETE)&&(new_state & IAXC_CALL_STATE_SELECTED))
 		{
-			/*-- an incoming/outgoing call is answered now */
 			call->tm_answer = iax_tvnow();
-			new_activity = CALL_ANSWERED;
-		}
-		else if(new_state & IAXC_CALL_STATE_TRANSFER)
-		{
-            call->tm_transfer = iax_tvnow();
-			new_activity = CALL_TRANSFERED;
+			if(new_state & IAXC_CALL_STATE_TRANSFER_RS)
+			{
+				new_activity = CALL_TRANSFERED_RS;
+			}
+			else if(new_state & IAXC_CALL_STATE_TRANSFER_NAT)
+			{
+				new_activity = CALL_TRANSFERED_NAT;
+			}
+			else if(new_state & IAXC_CALL_STATE_TRANSFER_P2P)
+			{
+				new_activity = CALL_TRANSFERED_P2P;
+			}
+			else
+			{
+				new_activity = CALL_ANSWERED;
+			}
 		}
 	}
 	else if(new_state==IAXC_CALL_STATE_FREE)
 	{
 		/* the call will be free */
 		new_activity = CALL_FREE;
-		if(call->activity==CALL_ANSWERED)
+		if((call->activity==CALL_ANSWERED)||
+			(call->activity==CALL_TRANSFERED_RS)||(call->activity==CALL_TRANSFERED_NAT)||(call->activity==CALL_TRANSFERED_P2P))
 		{
 			struct timeval end;
 			end = iax_tvnow();
@@ -1620,15 +1639,13 @@ EXPORT void  wtkcall_perform_state_callback(struct wtkState* call, int callNo, i
 		}
 		else if(!(call->hangup & HANGUP_SELF))
 		{
-			call->type = REJECTED_CALL;
+			call->type = CALL_TYPE_REJECTED;
 		}
 	}
 
 	if(new_activity != -1)  
 	{
-		if(new_activity != CALL_TRANSFERED)
-			call->activity = new_activity;
-
+		call->activity = new_activity;
 		if(wtkcall_send_jni_event!=NULL)
 		{
 			CallInfo info;
@@ -1636,7 +1653,6 @@ EXPORT void  wtkcall_perform_state_callback(struct wtkState* call, int callNo, i
 			
 			/* current state and informaton */
 			info.callNo = callNo;
-			info.state = state | ((call->hangup & HANGUP_TIMEOUT) ? CALL_STATE_TIMEOUT : 0);
 			strcpy(info.peer_name, name);
 			strcpy(info.peer_number, number);
 			
@@ -1646,15 +1662,17 @@ EXPORT void  wtkcall_perform_state_callback(struct wtkState* call, int callNo, i
 			info.type		= call->type;
 			info.reason   	= call->reason;
 			
-			if(new_activity==CALL_TRANSFERED)
+			if(new_activity==CALL_TRANSFERED_RS)
 			{
-				//iaxci_get_token(call->id, info.relay_token);
 			}
 			
-			iaxci_usermsg(IAXC_STATUS, "wtkcall_send_jni_event(EVENT_STATE):callNo=%d,peerName=%s,peerNumber=%s,activity=%d,state=%d,reason=%d,startTime=%d,duration=%d,typeRecord=%d,relay_token=%s",
-					info.callNo,info.peer_name,info.peer_number,info.activity,
-					info.state,info.reason,info.start,info.duration,info.type,info.relay_token);
+			iaxci_usermsg(IAXC_STATUS, "wtkcall_send_jni_event(EVENT_STATE):peerName=%s,peerNumber=%s,activity=%d,reason=%d(H:%d),duration=%d,type_jni=%d",
+					info.peer_name,info.peer_number,info.activity,
+					info.reason,call->hangup,info.duration,info.type);
 			wtkcall_send_jni_event(EVENT_STATE, (void*)&info);
+
+			if(new_activity == CALL_FREE)
+				wtkState_clear_state(&calls[callNo].sm);
 		}
 	}
 }
@@ -1667,7 +1685,6 @@ EXPORT void  wtkcall_perform_message_callback(struct wtkState* call, char *messa
 
 	strcmds = parse_string_array(message, ' ');    
 	release_string_array(strcmds);
-	//iaxci_usermsg(IAXC_STATUS, "wtkcall_send_jni_event(EVENT_MESSAGE, message=%s)",message);
 	if(wtkcall_send_jni_event)
 		wtkcall_send_jni_event(EVENT_MESSAGE, (void*)&message);
 }

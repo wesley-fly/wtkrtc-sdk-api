@@ -160,6 +160,18 @@ public class WtkMediaJNIKit implements StatusListener {
                                 stateintent.setAction("iax.answer");
                                 callNumber = obj.getString("peernum");
                                 break;
+                            case CommonParams.CALL_TRANSFERED_RS:
+                                stateintent.setAction("iax.transfer.rs");
+                                callNumber = obj.getString("peernum");
+                                break;
+                            case CommonParams.CALL_TRANSFERED_NAT:
+                                stateintent.setAction("iax.transfer.nat");
+                                callNumber = obj.getString("peernum");
+                                break;
+                            case CommonParams.CALL_TRANSFERED_P2P:
+                                stateintent.setAction("iax.transfer.p2p");
+                                callNumber = obj.getString("peernum");
+                                break;
                         }
                         m_context.sendBroadcast(stateintent);
                         break;
