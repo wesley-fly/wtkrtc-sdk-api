@@ -1068,7 +1068,7 @@ EXPORT int iaxc_unregister( int id )
 
 EXPORT int iaxc_register(const char * user, const char * pass, const char * host)
 {
-	return iaxc_register_ex(user, pass, host, 600);
+	return iaxc_register_ex(user, pass, host, 60);
 }
 
 EXPORT int iaxc_register_ex(const char * user, const char * pass, const char * host, int refresh)

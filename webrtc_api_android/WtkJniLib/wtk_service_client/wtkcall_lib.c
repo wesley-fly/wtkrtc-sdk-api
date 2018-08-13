@@ -99,7 +99,7 @@ int wtkcall_send_audio_callback(char* data, int len)
 	if((selected_call < 0) || (calls[selected_call].session == NULL))
 		return -1;
 	
-	rtp_samples = 48000;//40*(48000/1000);
+	rtp_samples = 40*(48000/1000);
 	send_len = iaxc_push_audio(data, len, rtp_samples);
 	return send_len;
 }

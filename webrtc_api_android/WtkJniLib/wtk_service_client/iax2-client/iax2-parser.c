@@ -364,7 +364,8 @@ static struct iax2_ie ies[] = {
 	//Xiaofan
 	{ IAX_IE_RELAY_TOKEN, "RELAY TOKEN", dump_string },
 	{ IAX_IE_TXREASON, "TXREASON", dump_byte },
-	{ IAX_IE_TXSEQUENCE, "TXSEQUENCE", dump_byte },
+	{ IAX_IE_TXSTATUS, "TXSTATUS", dump_byte },
+	{ IAX_IE_LOCAL_ADDR, "LOCAL IPV4", dump_addr },
 
     { 0, NULL, NULL },
 };
@@ -461,7 +462,11 @@ void iax_showframe(struct iax_frame *f, struct ast_iax2_full_hdr *fhi, int rx, s
 		"TRANSFER",
 		"PROVISION",
 		"FWDOWNLD",
-		"FWDATA"
+		"FWDATA",
+		"TXMEDIA",
+		"RTKEY",
+		"CALLTOKEN",
+		"HEARTBEAT"
 	};
 	const char *cmds[] = {
 		"(0?)",
@@ -837,9 +842,19 @@ int iax_parse_ies(struct iax_ies *ies, unsigned char *data, int datalen)
 		case IAX_IE_TXREASON:
             ies->txreason = data[2];
             break;
-		case IAX_IE_TXSEQUENCE:
-            ies->txsequence = data[2];
+		case IAX_IE_TXSTATUS:
+            ies->txstatus = data[2];
             break;
+		case IAX_IE_LOCAL_ADDR:
+#ifdef EMBED
+			unsigned char buf[8];
+			memcpy(buf, data+2, 8);
+			ies->local_addr = ((struct sockaddr_in *)buf);
+#else /* !EMBED */
+			ies->local_addr = ((struct sockaddr_in *)(data + 2));
+#endif /* EMBED */
+			break;
+
 		case IAX_IE_APPARENT_ADDR:
 #ifdef EMBED
 			{

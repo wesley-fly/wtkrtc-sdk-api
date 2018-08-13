@@ -23,15 +23,12 @@
 #define IAX_COMMAND_TXREADY			25
 #define IAX_COMMAND_TXREL			26
 #define IAX_COMMAND_TXREJ			27
+#define IAX_COMMAND_HEARTBEAT     	41
 
 #define IAX_IE_USERNAME				6
 #define IAX_IE_APPARENT_ADDR		18		/* Apparent address of peer - struct sockaddr_in */
-#define IAX_IE_TXSEQUENCE			216		/* NAT change time squeue number*/
-#define IAX_IE_TXREASON				217		/* 0:Normal, 1:Heart beat, 2:Nat change, 3:Nat change, */
+#define IAX_IE_TXEVENT				216
 #define IAX_IE_RELAY_TOKEN			222			/*relay token generet by asterisk*/
-
-#define IAX_TXREASON_HEARTBEAT      1
-#define IAX_TXREASON_NETCHANGE      2
 
 //Relay common def
 #define RELAY_PORT_DEFAULT			4579
@@ -41,12 +38,23 @@
 #define USERNAME_SIZE				80
 
 //Route Table def.
-#define ROUTETABLE_LIST_SIZE		65537  
+#define ROUTETABLE_LIST_SIZE		65537
+
 #define ROUTETABLE_IDEL				0
 #define ROUTETABLE_SETTING			1
 #define ROUTETABLE_SETTED			2
-#define ROUTETABLE_RELEASING		3
-#define ROUTETABLE_RELEASED			4
+#define ROUTETABLE_NATTED			3
+#define ROUTETABLE_P2PED			4
+#define ROUTETABLE_RELEASING		5
+#define ROUTETABLE_RELEASED			6
+
+#define TX_STATUS_EVENT_INIT_NAT	0
+#define TX_STATUS_EVENT_INIT_P2P	1
+#define TX_STATUS_EVENT_RS			2
+#define TX_STATUS_EVENT_NAT			3
+#define TX_STATUS_EVENT_P2P			4
+#define TX_STATUS_EVENT_NONE		5
+
 #define LEFT_SIDE_FRAME				1
 #define RIGHT_SIDE_FRAME			2
 
@@ -57,8 +65,5 @@
 
 #define MGMT_CONFIG				2
 #define MGMT_CONFIG_TRACELEVEL	1
-
-
-
 
 #endif

@@ -59,6 +59,10 @@ int inaddrcmp(const struct sockaddr_in *sin1, const struct sockaddr_in *sin2)
 	return ((sin1->sin_addr.s_addr != sin2->sin_addr.s_addr) 
 		|| (sin1->sin_port != sin2->sin_port));
 }
+int inonlyaddrcmp(const struct sockaddr_in *sin1, const struct sockaddr_in *sin2)
+{
+	return (sin1->sin_addr.s_addr != sin2->sin_addr.s_addr);
+}
 //Socket API
 int setup_socket(int port, char* ipaddr, int bind_any)
 {
@@ -118,21 +122,6 @@ int iax_parse_ies(struct iax_ies *ies, unsigned char *data, int datalen)
 				memcpy(ies->username, (char *)data + 2, len);
 				TraceEvent(TRACE_DEBUG, "ies->username=[%s], len=[%d]", ies->username, len);
 			break;								
-			case IAX_IE_TXREASON:
-				if (len != 1) {
-					TraceEvent(TRACE_ERROR, "Expecting IAX_IE_TXREASON to be single byte but was [%d]", len);
-				} else {
-					ies->txreason= data[2];
-				}
-			break;
-			case IAX_IE_TXSEQUENCE:
-				if (len != 1) {
-					TraceEvent(TRACE_ERROR, "Expecting IAX_IE_TXSEQUENCE to be single byte but was [%d]", len);
-				} else {
-					ies->txsequence = data[2];
-				}
-			break;								
-						
 			default:
 			break;
 		}
@@ -145,40 +134,7 @@ int iax_parse_ies(struct iax_ies *ies, unsigned char *data, int datalen)
 	}
 	return 0;
 }
-int modify_txreason_ie(unsigned char *data, int datalen)
-{
-	/* Parse data into information elements */
-	int len;
-	int ie;
-	while(datalen >= 2) {
-		ie = data[0];
-		len = data[1];
-		if (len > datalen - 2) {
-			TraceEvent(TRACE_ERROR, "Information element length exceeds message size");
-			return -1;
-		}
-		switch(ie) {
-			case IAX_IE_TXREASON:
-				if (len != 1) {
-					TraceEvent(TRACE_ERROR, "Expecting IAX_IE_TXREASON to be single byte but was [%d]", len);
-					return -1;
-				} else {
-					//data[2] = IAX_TXREASON_NETCHANGE;
-					data[2] |= 1<<1;
-					TraceEvent(TRACE_DEBUG, "IAX_IE_TXREASON changed to [%d]", data[2]&0xff);
-					return 0;
-				}
-			break;						
-			default:
-			break;
-		}
 
-		datalen -= (len + 2);
-		data += (len + 2);
-	}
-
-	return -1;
-}
 int uncompress_subclass(unsigned char csub)
 {
 	/* If the SC_LOG flag is set, return 2^csub otherwise csub */

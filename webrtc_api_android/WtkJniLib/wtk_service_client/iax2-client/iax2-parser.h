@@ -72,7 +72,8 @@ struct iax_ies {
 	//xiaofan
 	char *relay_token;
 	unsigned char txreason;
-	unsigned char txsequence;
+	unsigned char txstatus;
+	struct sockaddr_in *local_addr;
 };
 
 #define DIRECTION_INGRESS 1

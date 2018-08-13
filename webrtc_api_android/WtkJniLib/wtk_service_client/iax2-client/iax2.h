@@ -65,6 +65,7 @@
 #define IAX_COMMAND_PROVISION	35	/* Provision device */
 #define IAX_COMMAND_FWDOWNL    36      /* Download firmware */
 #define IAX_COMMAND_FWDATA     37      /* Firmware Data */
+#define IAX_COMMAND_HEARTBEAT     41
 
 #define IAX_DEFAULT_REG_EXPIRE  60	/* By default require re-registration once per minute */
 
@@ -131,15 +132,16 @@
 #define IAX_IE_CALLCENTER_TICKET    			195    			/*!< 0xc3 ticket for call center auth */
 #define IAX_IE_SECRET_INDEX						203  			/* Index of current secret */
 
-#define IAX_IE_TXSEQUENCE						216
+#define IAX_IE_TXSTATUS							216
 #define IAX_IE_TXREASON							217
 #define IAX_IE_TX_NAT_ADDR						218
 #define IAX_IE_TX_LOCAL_ADDR					219
 #define IAX_IE_RELAY_TOKEN						222
+#define IAX_IE_LOCAL_ADDR						224
 
-#define IAX_TXREASON_HEARTBEAT      			1
-#define IAX_TXREASON_NETCHANGE      			2
-#define IAX_TXREASON_FROM_RS					3
+#define IAX_XFER_RS      					1
+#define IAX_XFER_NAT      					2
+#define IAX_XFER_P2P 						3
 
 //Add by Xiaofan end
 

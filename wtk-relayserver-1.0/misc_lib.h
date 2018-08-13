@@ -39,18 +39,16 @@ struct RT_Info {
 	unsigned short r_callno;
 	char l_username[USERNAME_SIZE];
 	char r_username[USERNAME_SIZE];
-	unsigned char l_txsequence;
-	unsigned char r_txsequence;
 	unsigned char l_txstatus;
 	unsigned char r_txstatus;
-	unsigned char l_txmaxcount;
-	unsigned char r_txmaxcount;
 
 	unsigned char status;
 	unsigned char txstatus;
 
-	int pkt_len;		
-	uint8_t pktbuf[RELAY_PKTBUF_SIZE];
+	int l_pkt_len;		
+	uint8_t l_pktbuf[RELAY_PKTBUF_SIZE];
+	int r_pkt_len;		
+	uint8_t r_pktbuf[RELAY_PKTBUF_SIZE];
 
 	struct RT_Info* next;
 };
@@ -92,7 +90,6 @@ struct iax_ies {
 	char relaytoken[64];
 	char username[USERNAME_SIZE];
 	unsigned char txreason;
-	unsigned char txsequence;	
 };
 
 struct mgmt_type {
@@ -111,6 +108,7 @@ struct mgmt_type {
 extern int traceLevel;
 extern int useSyslog;
 extern int inaddrcmp(const struct sockaddr_in *sin1, const struct sockaddr_in *sin2);
+extern int inonlyaddrcmp(const struct sockaddr_in *sin1, const struct sockaddr_in *sin2);
 extern void TraceEvent(int level, char* file, int line, char* format, ...);
 extern int setup_socket(int port, char* ipaddr, int bind_any);
 extern int iax_parse_ies(struct iax_ies *ies, unsigned char *data, int datalen);

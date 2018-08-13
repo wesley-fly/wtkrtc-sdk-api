@@ -57,6 +57,15 @@ static void deinit_rs_info(rs_info_t *rs_info)
 	rs_info->mgmt_fd = -1;
 	//clear_relay_route_list();
 }
+/*
+//TODO:Verify TXCNT, TXREQ
+if (data_validity_check(ies.relaytoken,rs_info->md5key))
+{
+	TraceEvent( TRACE_WARNING, "Data validation is not passed, RelayToken=[%s],packet from '%s:%d'", ies.RelayToken, inet_ntoa(sender_sock->sin_addr), ntohs(sender_sock->sin_port));
+	return -1;
+}
+*/
+
 static int process_udp(rs_info_t* rs_info,struct sockaddr_in* sender_sock,uint8_t* udp_buf,size_t udp_size)
 {
 	int flag=0;
@@ -114,6 +123,7 @@ static int process_udp(rs_info_t* rs_info,struct sockaddr_in* sender_sock,uint8_
 		} else {
 			subclass = uncompress_subclass(fh->csub);
 		}
+		
 		if((subclass == IAX_COMMAND_TXCNT)&&(fh->type == AST_FRAME_IAX))
 		{
 			if(iax_parse_ies(&ies, udp_buf + sizeof(*fh), res - sizeof(*fh))) 
@@ -126,14 +136,6 @@ static int process_udp(rs_info_t* rs_info,struct sockaddr_in* sender_sock,uint8_
 				TraceEvent( TRACE_WARNING, "ies.RelayToken is empty, packet from '%s:%d'", inet_ntoa(sender_sock->sin_addr), ntohs(sender_sock->sin_port));
 				return -1;
 			}
-			/*
-			//TODO:Verify TXCNT, TXREQ
-			if (data_validity_check(ies.relaytoken,rs_info->md5key))
-			{
-				TraceEvent( TRACE_WARNING, "Data validation is not passed, RelayToken=[%s],packet from '%s:%d'", ies.RelayToken, inet_ntoa(sender_sock->sin_addr), ntohs(sender_sock->sin_port));
-				return -1;
-			}
-			*/
 			scan = find_routeinfo_by_relaytoken(rs_info->rti, ies.relaytoken);
 			if ( NULL == scan )
 			{
@@ -144,8 +146,8 @@ static int process_udp(rs_info_t* rs_info,struct sockaddr_in* sender_sock,uint8_
 				memcpy(&(scan->l_ipaddr), sender_sock, sizeof(struct sockaddr_in));
 				scan->l_callno = ntohs(fh->scallno) & ~0x8000;
 				scan->status = ROUTETABLE_SETTING;
-				memcpy(scan->pktbuf, udp_buf, udp_size); 
-				scan->pkt_len = udp_size;
+				memcpy(scan->l_pktbuf, udp_buf, udp_size); 
+				scan->l_pkt_len = udp_size;
 				rs_info->rti = scan;
 
 				add_route_to_RtInfoListArray(scan->l_callno, scan);
@@ -158,14 +160,14 @@ static int process_udp(rs_info_t* rs_info,struct sockaddr_in* sender_sock,uint8_
 					{
 						TraceEvent( TRACE_INFO, "Frame update, l_ipaddr change to [%s:%d]", inet_ntoa(sender_sock->sin_addr), ntohs(sender_sock->sin_port));
 						memcpy(&(scan->l_ipaddr), sender_sock, sizeof(struct sockaddr_in));
-						memcpy(scan->pktbuf, udp_buf, udp_size); 
-						scan->pkt_len = udp_size;
+						memcpy(scan->l_pktbuf, udp_buf, udp_size); 
+						scan->l_pkt_len = udp_size;
 					}
 					else
 					{
 						TraceEvent( TRACE_INFO, "Frame retransmissions, ies.relaytoken=%s", ies.relaytoken);
-						memcpy(scan->pktbuf, udp_buf, udp_size);
-						scan->pkt_len = udp_size;
+						memcpy(scan->l_pktbuf, udp_buf, udp_size);
+						scan->l_pkt_len = udp_size;
 					}
 				}
 				else if((scan->status == ROUTETABLE_SETTING)&&(scan->l_callno != (ntohs(fh->scallno) & ~0x8000)))
@@ -177,7 +179,7 @@ static int process_udp(rs_info_t* rs_info,struct sockaddr_in* sender_sock,uint8_
 					scan->status = ROUTETABLE_SETTED;
 
 					sendto(rs_info->relay_fd, udp_buf, udp_size, 0, (struct sockaddr*)&(scan->l_ipaddr), sizeof(struct sockaddr_in));
-					sendto(rs_info->relay_fd, scan->pktbuf, scan->pkt_len, 0, (struct sockaddr*)&(scan->r_ipaddr), sizeof(struct sockaddr_in));
+					sendto(rs_info->relay_fd, scan->l_pktbuf, scan->l_pkt_len, 0, (struct sockaddr*)&(scan->r_ipaddr), sizeof(struct sockaddr_in));
 
 					add_route_to_RtInfoListArray(scan->r_callno, scan);
 					
@@ -185,181 +187,222 @@ static int process_udp(rs_info_t* rs_info,struct sockaddr_in* sender_sock,uint8_
 
 					return 0;
 				}
-				if ((scan->status == ROUTETABLE_SETTED)||(scan->status == ROUTETABLE_RELEASING))
+			}
+		}
+		else if((subclass == IAX_COMMAND_HEARTBEAT)&&(fh->type == AST_FRAME_IAX))
+		{
+			if(iax_parse_ies(&ies, udp_buf + sizeof(*fh), res - sizeof(*fh))) 
+			{
+				TraceEvent( TRACE_WARNING, "iax_parse_ies is fail, packet from '%s:%d'", inet_ntoa(sender_sock->sin_addr), ntohs(sender_sock->sin_port));
+				return -1;
+			}
+			if (strlen(ies.relaytoken)==0)
+			{
+				TraceEvent( TRACE_WARNING, "ies.RelayToken is empty, packet from '%s:%d'", inet_ntoa(sender_sock->sin_addr), ntohs(sender_sock->sin_port));
+				return -1;
+			}
+			scan = find_routeinfo_by_relaytoken(rs_info->rti, ies.relaytoken);
+			if ( NULL == scan )
+			{
+				TraceEvent( TRACE_INFO, "Can not find route ies.relaytoken=%s, so return IAX_COMMAND_HEARTBEAT", ies.relaytoken);
+			}
+			else
+			{
+				scan->txstatus = 0;
+				if ((scan->status >= ROUTETABLE_SETTED)||(scan->status <= ROUTETABLE_RELEASING))
 				{
 					int len = 0;
+					
 					if (scan->l_callno == (ntohs(fh->scallno) & ~0x8000))
 					{
-						if(inaddrcmp(&scan->l_ipaddr, sender_sock) && ies.txreason == IAX_TXREASON_HEARTBEAT)
+						if(inaddrcmp(&scan->l_ipaddr, sender_sock))
 						{
-							TraceEvent( TRACE_INFO, "IAX_TXREASON_HEARTBEAT and left ipaddr changed from [%s:%d] to [%s:%d]",
-								inet_ntoa(scan->l_ipaddr.sin_addr), ntohs(scan->l_ipaddr.sin_port),
-								inet_ntoa(sender_sock->sin_addr), ntohs(sender_sock->sin_port));
-							scan->l_txsequence = 0;
-							scan->l_txmaxcount = 0;
-							if (modify_txreason_ie(udp_buf + sizeof(*fh), udp_size - sizeof(*fh)))
-							{
-								TraceEvent(TRACE_INFO, "Modify modify_txreason_ie left fail!!!!!!!");
-								len = udp_size;
-							}
-							else
-							{
-								memcpy(&(scan->l_ipaddr), sender_sock, sizeof(struct sockaddr_in));
-								udp_buf[udp_size] = IAX_IE_APPARENT_ADDR;
-								udp_buf[udp_size+1] = (int)sizeof(struct sockaddr_in);
-								memcpy(udp_buf+udp_size+2, sender_sock, (int)sizeof(struct sockaddr_in));
-								len = udp_size+2+(int)sizeof(struct sockaddr_in);
-								
-								udp_buf[len] = IAX_IE_TXSEQUENCE;
-								udp_buf[len+1] = 1;
-								udp_buf[len+2] = ++scan->l_txsequence;    	  							
-								len = len + 3;
-
-								scan->l_txstatus = 1;
-								scan->l_txmaxcount++;
-							}
-							TraceEvent( TRACE_INFO, "Left r_txsequence=[%d], count = %d", scan->r_txsequence,scan->r_txmaxcount);
-							sendto(rs_info->relay_fd, udp_buf, len, 0, (struct sockaddr*)&(scan->r_ipaddr), sizeof(struct sockaddr_in));
-						}
-						else if (scan->l_txstatus==1 && ies.txreason==IAX_TXREASON_HEARTBEAT && scan->l_txmaxcount < 4)
-						{
-							if (modify_txreason_ie(udp_buf + sizeof(*fh), udp_size - sizeof(*fh)))
-							{
-								TraceEvent(TRACE_INFO, "Modify modify_txreason_ie left fail!!!!!!!");
-								len = udp_size;
-							}
-							else
-							{
-								udp_buf[udp_size] = IAX_IE_APPARENT_ADDR;
-								udp_buf[udp_size+1] = (int)sizeof(struct sockaddr_in);
-								memcpy(udp_buf+udp_size+2, sender_sock, (int)sizeof(struct sockaddr_in));
-								len = udp_size+2+(int)sizeof(struct sockaddr_in);
-								
-								udp_buf[len] = IAX_IE_TXSEQUENCE;
-								udp_buf[len+1] = 1;
-								udp_buf[len+2] = scan->l_txsequence;    	  							
-								len = len + 3;
-								
-								scan->l_txstatus = 1;
-								scan->l_txmaxcount++;
-							}
-							TraceEvent( TRACE_INFO, "Re-Left r_txsequence=[%d], count = %d", scan->l_txsequence,scan->l_txmaxcount);
+							memcpy(&(scan->l_ipaddr), sender_sock, sizeof(struct sockaddr_in));
 							
-							sendto(rs_info->relay_fd, udp_buf, len, 0, (struct sockaddr*)&(scan->r_ipaddr), sizeof(struct sockaddr_in));
-						}
-						else if (scan->r_txstatus==1 && ies.txreason==IAX_TXREASON_NETCHANGE && ies.txsequence==scan->r_txsequence)
-						{
-							scan->r_txstatus = 0;
-							scan->r_txmaxcount = 0;
-							sendto(rs_info->relay_fd, udp_buf, udp_size, 0, (struct sockaddr*)&(scan->r_ipaddr), sizeof(struct sockaddr_in));
-							TraceEvent( TRACE_INFO, "Left IAX_TXREASON_NETCHANGE done!");
+							if(scan->status == ROUTETABLE_SETTED || scan->status == ROUTETABLE_NATTED || scan->status == ROUTETABLE_P2PED)
+							{
+								int l_len = scan->l_pkt_len;
+								scan->l_pktbuf[l_len] = IAX_IE_TXEVENT;
+								scan->l_pktbuf[l_len+1] = 1;
+								scan->l_pktbuf[l_len+2] = TX_STATUS_EVENT_RS;    	  							
+								l_len = l_len + 3;
+								
+								sendto(rs_info->relay_fd, scan->l_pktbuf, l_len, 0, (struct sockaddr*)&(scan->r_ipaddr), sizeof(struct sockaddr_in));
+								
+								int r_len = scan->r_pkt_len;
+								scan->r_pktbuf[r_len] = IAX_IE_TXEVENT;
+								scan->r_pktbuf[r_len+1] = 1;
+								scan->r_pktbuf[r_len+2] = TX_STATUS_EVENT_RS;    	  							
+								r_len = r_len + 3;
+								sendto(rs_info->relay_fd, scan->r_pktbuf, r_len, 0, (struct sockaddr*)&(scan->l_ipaddr), sizeof(struct sockaddr_in));
+
+								scan->status = ROUTETABLE_SETTED;
+							}
 						}
 						else
-						{      	  					
-							sendto(rs_info->relay_fd, udp_buf, udp_size, 0, (struct sockaddr*)&(scan->r_ipaddr), sizeof(struct sockaddr_in));
+						{
+							udp_buf[udp_size] = IAX_IE_APPARENT_ADDR;
+							udp_buf[udp_size+1] = (int)sizeof(struct sockaddr_in);
+							memcpy(udp_buf+udp_size+2, sender_sock, (int)sizeof(struct sockaddr_in));
+							len = udp_size+2+(int)sizeof(struct sockaddr_in);
+							
+							udp_buf[len] = IAX_IE_TXEVENT;
+							udp_buf[len+1] = 1;
+							if(scan->status == ROUTETABLE_SETTED)
+							{
+								if(inonlyaddrcmp(&scan->l_ipaddr, &scan->r_ipaddr))
+									udp_buf[len+2] = TX_STATUS_EVENT_INIT_NAT;
+								else
+									udp_buf[len+2] = TX_STATUS_EVENT_INIT_P2P;
+							}
+							else if (scan->status == ROUTETABLE_NATTED || scan->status == ROUTETABLE_P2PED)
+							{
+								udp_buf[len+2] = TX_STATUS_EVENT_NONE;
+							}
+							len = len + 3;
+							
+							memcpy(scan->l_pktbuf, udp_buf, udp_size);
+							scan->l_pkt_len = udp_size;
+							
+							sendto(rs_info->relay_fd, udp_buf, len, 0, (struct sockaddr*)&(scan->r_ipaddr), sizeof(struct sockaddr_in));
 						}
 					}
 					else
 					{
-						if (inaddrcmp(&scan->r_ipaddr, sender_sock) && ies.txreason == IAX_TXREASON_HEARTBEAT)
+						if (inaddrcmp(&scan->r_ipaddr, sender_sock))
 						{
-							TraceEvent( TRACE_INFO, "IAX_TXREASON_HEARTBEAT and right ipaddr changed from [%s:%d] to [%s:%d]\r\n",
-								inet_ntoa(scan->r_ipaddr.sin_addr), ntohs(scan->r_ipaddr.sin_port),
-								inet_ntoa(sender_sock->sin_addr), ntohs(sender_sock->sin_port));
-							scan->r_txsequence = 0;
-							scan->r_txmaxcount = 0;
-							if (modify_txreason_ie(udp_buf + sizeof(*fh), udp_size - sizeof(*fh)))
+							memcpy(&(scan->r_ipaddr), sender_sock, sizeof(struct sockaddr_in));
+							
+							if(scan->status == ROUTETABLE_SETTED || scan->status == ROUTETABLE_NATTED || scan->status == ROUTETABLE_P2PED)
 							{
-								TraceEvent(TRACE_INFO, "Modify modify_txreason_ie right fail!!!!!!!");
-								len = udp_size;
-							}
-							else
-							{
-								memcpy(&(scan->r_ipaddr), sender_sock, sizeof(struct sockaddr_in));
-								udp_buf[udp_size] = IAX_IE_APPARENT_ADDR;
-								udp_buf[udp_size+1] = (int)sizeof(struct sockaddr_in);
-								memcpy(udp_buf+udp_size+2, sender_sock, (int)sizeof(struct sockaddr_in));
-								len = udp_size+2+(int)sizeof(struct sockaddr_in);
-								udp_buf[len] = IAX_IE_TXSEQUENCE;
-								udp_buf[len+1] = 1;
-								udp_buf[len+2] = ++scan->r_txsequence;    	  							
-								len = len + 3;
-
-								scan->r_txstatus = 1;
-								scan->r_txmaxcount++; 
-							}
-							TraceEvent( TRACE_INFO, "Right r_txsequence=[%d], count = %d", scan->r_txsequence,scan->r_txmaxcount);
-							sendto(rs_info->relay_fd, udp_buf, len, 0, (struct sockaddr*)&(scan->l_ipaddr), sizeof(struct sockaddr_in));
-						}
-						else if (scan->r_txstatus==1 && ies.txreason==IAX_TXREASON_HEARTBEAT && scan->r_txmaxcount < 4)
-						{
-							if (modify_txreason_ie(udp_buf + sizeof(*fh), udp_size - sizeof(*fh)))
-							{
-								TraceEvent(TRACE_INFO, "Modify modify_txreason_ie right fail!!!!!!!");
-								len = udp_size;
-							}
-							else
-							{
-								udp_buf[udp_size] = IAX_IE_APPARENT_ADDR;
-								udp_buf[udp_size+1] = (int)sizeof(struct sockaddr_in);
-								memcpy(udp_buf+udp_size+2, sender_sock, (int)sizeof(struct sockaddr_in));
-								len = udp_size+2+(int)sizeof(struct sockaddr_in);
-								udp_buf[len] = IAX_IE_TXSEQUENCE;
-								udp_buf[len+1] = 1;
-								udp_buf[len+2] = scan->r_txsequence;
-								len = len + 3;
+								int l_len = scan->l_pkt_len;
+								scan->l_pktbuf[l_len] = IAX_IE_TXEVENT;
+								scan->l_pktbuf[l_len+1] = 1;
+								scan->l_pktbuf[l_len+2] = TX_STATUS_EVENT_RS;    	  							
+								l_len = l_len + 3;
 								
-								scan->r_txstatus = 1;
-								scan->r_txmaxcount++;
+								sendto(rs_info->relay_fd, scan->l_pktbuf, l_len, 0, (struct sockaddr*)&(scan->r_ipaddr), sizeof(struct sockaddr_in));
+								
+								int r_len = scan->r_pkt_len;
+								scan->r_pktbuf[r_len] = IAX_IE_TXEVENT;
+								scan->r_pktbuf[r_len+1] = 1;
+								scan->r_pktbuf[r_len+2] = TX_STATUS_EVENT_RS;    	  							
+								r_len = r_len + 3;
+								sendto(rs_info->relay_fd, scan->r_pktbuf, r_len, 0, (struct sockaddr*)&(scan->l_ipaddr), sizeof(struct sockaddr_in));
+
+								scan->status = ROUTETABLE_SETTED;
 							}
-							TraceEvent( TRACE_INFO, "Re-Right r_txsequence=[%d], count = %d", scan->r_txsequence,scan->r_txmaxcount);
-							sendto(rs_info->relay_fd, udp_buf, len, 0, (struct sockaddr*)&(scan->l_ipaddr), sizeof(struct sockaddr_in));
-						}
-						else if (scan->l_txstatus==1 && ies.txreason==IAX_TXREASON_NETCHANGE && ies.txsequence==scan->l_txsequence)
-						{
-							scan->l_txstatus = 0;
-							scan->l_txmaxcount = 0;
-							sendto(rs_info->relay_fd, udp_buf, udp_size, 0, (struct sockaddr*)&(scan->l_ipaddr), sizeof(struct sockaddr_in));
-							TraceEvent( TRACE_INFO, "Right IAX_TXREASON_NETCHANGE done!");
 						}
 						else
 						{
-							sendto(rs_info->relay_fd, udp_buf, udp_size, 0, (struct sockaddr*)&(scan->l_ipaddr), sizeof(struct sockaddr_in));
+							udp_buf[udp_size] = IAX_IE_APPARENT_ADDR;
+							udp_buf[udp_size+1] = (int)sizeof(struct sockaddr_in);
+							memcpy(udp_buf+udp_size+2, sender_sock, (int)sizeof(struct sockaddr_in));
+							len = udp_size+2+(int)sizeof(struct sockaddr_in);
+							udp_buf[len] = IAX_IE_TXEVENT;
+							udp_buf[len+1] = 1;
+							if(scan->status == ROUTETABLE_SETTED)
+							{
+								if(inonlyaddrcmp(&scan->l_ipaddr, &scan->r_ipaddr))
+									udp_buf[len+2] = TX_STATUS_EVENT_INIT_NAT;
+								else
+									udp_buf[len+2] = TX_STATUS_EVENT_INIT_P2P;
+							}
+							else if (scan->status == ROUTETABLE_NATTED || scan->status == ROUTETABLE_P2PED)
+							{
+								udp_buf[len+2] = TX_STATUS_EVENT_NONE;
+							}
+							len = len + 3;
+
+							memcpy(scan->r_pktbuf, udp_buf, udp_size);
+							scan->r_pkt_len = udp_size;
+							
+							sendto(rs_info->relay_fd, udp_buf, len, 0, (struct sockaddr*)&(scan->l_ipaddr), sizeof(struct sockaddr_in));
 						}
 					}
 					return 0;
 				}
 			}
 		}
-		else if((subclass == IAX_COMMAND_TXREQ)&&(fh->type == AST_FRAME_IAX))
-		{
-			TraceEvent( TRACE_INFO, "Other Full frame IAX_COMMAND_TXREQ");
-		}
 		else if((subclass == IAX_COMMAND_TXREADY)&&(fh->type == AST_FRAME_IAX))
 		{
-			TraceEvent( TRACE_INFO, "Other Full frame IAX_COMMAND_TXREADY");
-			/*scan = find_routeinfo_by_addr_and_callno(sender_sock, ntohs(fh->scallno) & ~0x8000, &flag);
+			if(iax_parse_ies(&ies, udp_buf + sizeof(*fh), res - sizeof(*fh))) 
+			{
+				TraceEvent( TRACE_WARNING, "iax_parse_ies is fail, packet from '%s:%d'", inet_ntoa(sender_sock->sin_addr), ntohs(sender_sock->sin_port));
+				return -1;
+			}
+			scan = find_routeinfo_by_addr_and_callno(sender_sock, ntohs(fh->scallno) & ~0x8000, &flag);
 			if (NULL != scan)
 			{
 				if (flag == LEFT_SIDE_FRAME)
 				{
-					scan->txstatus = 1<<0;
+					if(inonlyaddrcmp(&scan->l_ipaddr, &scan->r_ipaddr))
+					{
+						if(scan->status == ROUTETABLE_SETTED)
+							scan->txstatus |= 1<<0;
+					}
+					else 
+					{
+						if (scan->status == ROUTETABLE_SETTED)
+							scan->txstatus |= 1<<2;
+					}
 				}
 				else
 				{
-					scan->txstatus = 1<<1;
+					if(inonlyaddrcmp(&scan->l_ipaddr, &scan->r_ipaddr))
+					{
+						if(scan->status == ROUTETABLE_SETTED)
+							scan->txstatus |= 1<<1;
+					}
+					else 
+					{
+						if (scan->status == ROUTETABLE_SETTED)
+							scan->txstatus |= 1<<3;
+					}
 				}
-			}*/
+				TraceEvent( TRACE_INFO, "Full frame IAX_COMMAND_TXREADY, scan->txstatus = %d",scan->txstatus);
+				
+				if(scan->txstatus == 3){
+					int l_len = scan->l_pkt_len;
+					scan->l_pktbuf[l_len] = IAX_IE_TXEVENT;
+					scan->l_pktbuf[l_len+1] = 1;
+					scan->l_pktbuf[l_len+2] = TX_STATUS_EVENT_NAT;    	  							
+					l_len = l_len + 3;
+					
+					sendto(rs_info->relay_fd, scan->l_pktbuf, l_len, 0, (struct sockaddr*)&(scan->r_ipaddr), sizeof(struct sockaddr_in));
+					
+					int r_len = scan->r_pkt_len;
+					scan->r_pktbuf[r_len] = IAX_IE_TXEVENT;
+					scan->r_pktbuf[r_len+1] = 1;
+					scan->r_pktbuf[r_len+2] = TX_STATUS_EVENT_NAT;    	  							
+					r_len = r_len + 3;
+					sendto(rs_info->relay_fd, scan->r_pktbuf, r_len, 0, (struct sockaddr*)&(scan->l_ipaddr), sizeof(struct sockaddr_in));
+
+					scan->status = ROUTETABLE_NATTED;
+				}
+				if(scan->txstatus == 12){
+					int l_len = scan->l_pkt_len;
+					scan->l_pktbuf[l_len] = IAX_IE_TXEVENT;
+					scan->l_pktbuf[l_len+1] = 1;
+					scan->l_pktbuf[l_len+2] = TX_STATUS_EVENT_P2P;    	  							
+					l_len = l_len + 3;
+					
+					sendto(rs_info->relay_fd, scan->l_pktbuf, l_len, 0, (struct sockaddr*)&(scan->r_ipaddr), sizeof(struct sockaddr_in));
+					
+					int r_len = scan->r_pkt_len;
+					scan->r_pktbuf[r_len] = IAX_IE_TXEVENT;
+					scan->r_pktbuf[r_len+1] = 1;
+					scan->r_pktbuf[r_len+2] = TX_STATUS_EVENT_P2P;    	  							
+					r_len = r_len + 3;
+					sendto(rs_info->relay_fd, scan->r_pktbuf, r_len, 0, (struct sockaddr*)&(scan->l_ipaddr), sizeof(struct sockaddr_in));
+
+					scan->status = ROUTETABLE_P2PED;
+				}
+			}
+			
 		}
-		else if((subclass == IAX_COMMAND_TXREL)&&(fh->type == AST_FRAME_IAX))
+		else//TXACC:24/PING:2/PONG:3/ACK:4/HANGUP:5/TXREJ:27
 		{
-			TraceEvent( TRACE_INFO, "Other Full frame IAX_COMMAND_TXREL");
-		}
-		else
-		{
-			//TXACC:24/PING:2/PONG:3/ACK:4/HANGUP:5/TXREJ:27
-			if((subclass == IAX_COMMAND_TXREADY)||(subclass == IAX_COMMAND_TXREL)||(subclass == IAX_COMMAND_TXREQ)||(subclass == IAX_COMMAND_TXACC))
-				TraceEvent( TRACE_INFO, "Other Full frame subclass = %d, packet from [%s:%d], just forward it", subclass, inet_ntoa(sender_sock->sin_addr), ntohs(sender_sock->sin_port));
 			scan = find_routeinfo_by_addr_and_callno(sender_sock, ntohs(fh->scallno) & ~0x8000, &flag);
 			if (NULL != scan)
 			{
