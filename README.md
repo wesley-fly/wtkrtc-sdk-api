@@ -2,8 +2,8 @@
 This WebRTC API based M67 release, will update&record code from time to time, include video/audio test. The Android/iOS platform use IAX2.
 
 Note:
-1.Current supported & tested platform are macOS/Linux/Android.
-2.iOS will add it later.
+1. Current supported & tested platform are macOS/Linux/Android.
+2. iOS will add it later.
 
 Linux/macOS platform Setup:
 1. Get the WebRTC source code, please refer webrtc.org, or
@@ -17,4 +17,5 @@ Linux/macOS platform Setup:
 6. Have fun.
 
 Android platform Setup:
-Mostly same as Linux/macOS platform.
+1. Mostly same as Linux/macOS platform.
+2. Because mobile APP use IAX2 as signal protocal, so you need setup a IAX2 server, like asterisk, then enter app, sign in with asterisk server's config.
