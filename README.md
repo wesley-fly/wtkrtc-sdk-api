@@ -1,11 +1,11 @@
 # WebRTC API
-WebRTC API based M67 release, will update&record code from time to time.
-Sopport Linux & Mac platform video/audio loopback test.
+This WebRTC API based M67 release, will update&record code from time to time, include video/audio test. The Android/iOS platform use IAX2.
 
-##Note:
-1. Sorry for my zero C++  skill, the code also need more test.
+Note:
+1.Current supported & tested platform are macOS/Linux/Android.
+2.iOS will add it later.
 
-###Linux platform:
+Linux/macOS platform Setup:
 1. Get the WebRTC source code, please refer webrtc.org, or
     https://webrtc.org/native-code/android/ for add Android build tools, and
     https://webrtc.org/native-code/ios/ for add iOS build tools.
@@ -16,7 +16,5 @@ Sopport Linux & Mac platform video/audio loopback test.
 5. Compile it, the bin file will gen at out/Linux/ dirctory, just run it
 6. Have fun.
 
-###iOS platform:
-TBD
-###Android platform:
-First commit
+Android platform Setup:
+Mostly same as Linux/macOS platform.

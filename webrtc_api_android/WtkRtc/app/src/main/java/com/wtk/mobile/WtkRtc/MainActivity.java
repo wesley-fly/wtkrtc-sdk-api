@@ -22,9 +22,10 @@ import org.webrtc.ContextUtils;
 import org.webrtc.voiceengine.WebRtcAudioRecord;
 
 public class MainActivity extends AppCompatActivity implements OnClickListener {
-    private String TAG="LoginActivity";
+    private String TAG="MainActivity";
     private Button mDialButton,mAnswerButton,mHangupButton;
     private Button mIsSpeakerButton,mIsHoldButton,mIsMuteButton;
+    private Button mVideoButton,mApi1Button,mApi2Button;
     private SharedPreferences m_sp = null;
     private int regID = 0;
     private int isCaller = 0;
@@ -61,6 +62,10 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         mIsHoldButton = findViewById(R.id.btn_is_hold);
         mIsMuteButton = findViewById(R.id.btn_is_mute);
 
+        mVideoButton = findViewById(R.id.btn_video);
+        mApi1Button = findViewById(R.id.btn_test_api1);
+        mApi2Button = findViewById(R.id.btn_test_api2);
+
         mDialButton.setOnClickListener(this);
         mAnswerButton.setOnClickListener(this);
         mHangupButton.setOnClickListener(this);
@@ -68,6 +73,10 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         mIsSpeakerButton.setOnClickListener(this);
         mIsHoldButton.setOnClickListener(this);
         mIsMuteButton.setOnClickListener(this);
+
+        mVideoButton.setOnClickListener(this);
+        mApi1Button.setOnClickListener(this);
+        mApi2Button.setOnClickListener(this);
 
         txtState = findViewById(R.id.txtState);
         txtState.setText(mStateInfo);
@@ -141,6 +150,17 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                     mIsMuteButton.setText("UnMute");
                     WebRtcAudioRecord.setMicrophoneMute(true);
                 }
+                break;
+            case R.id.btn_video:
+                Intent MainInterface = new Intent(MainActivity.this, VideoActivity.class);
+                MainInterface.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(MainInterface);
+                break;
+            case R.id.btn_test_api1:
+                WtkMediaJNIKit.getInstance().IaxSetFormat(0);
+                break;
+            case R.id.btn_test_api2:
+                WtkMediaJNIKit.getInstance().IaxSetFormat(1);
                 break;
         }
     }
@@ -231,6 +251,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
             if("iax.hangup".equals(action)) {
                 mStateInfo = "Idle";
                 setActivityMode(CommonParams.STATEIDEL);
+                WtkMediaJNIKit.getInstance().StopVideoPlayout();
                 WtkMediaJNIKit.getInstance().StopAudioPlayout();
             }
             else if("iax.new.call".equals(action)) {

@@ -37,7 +37,7 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener{
         txtPass = findViewById(R.id.iaxpass);
 
         mSignInButton.setOnClickListener(this);
-        WtkMediaJNIKit.getInstance().IaxInitialize();
+        WtkMediaJNIKit.getInstance().IaxInitialize(LoginActivity.this);
 
         WtkMediaJNIKit.getInstance().SetBroadCast(LoginActivity.this);
     }
@@ -76,7 +76,7 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener{
             Log.e(TAG, "Sign in info is empty!");
         }
 
-        retId = WtkMediaJNIKit.getInstance().IaxRegister("029-88"+name, name, pass, server,port);
+        retId = WtkMediaJNIKit.getInstance().IaxRegister("029-88"+name, name, pass, server,port, 60);
     }
 
     private void setSharedPreferences(int redId, String host, String name, String port, String passwprd)

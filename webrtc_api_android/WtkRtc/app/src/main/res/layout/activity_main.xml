@@ -94,9 +94,30 @@
             android:textAllCaps="false"
             android:text="Mute"
             android:enabled="false" />
-
     </LinearLayout>
 
+    <LinearLayout  android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+        <Button android:id="@+id/btn_video"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Video"
+            android:textAllCaps="false"/>
+        <Button android:id="@+id/btn_test_api1"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Test 1"
+            android:textAllCaps="false"/>
+        <Button android:id="@+id/btn_test_api2"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Test 2"
+            android:textAllCaps="false"/>
+    </LinearLayout>
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -107,7 +128,7 @@
             android:id="@+id/txtState"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="空闲中"
+            android:text="Idel"
             android:textColor="#ff0000" />
     </LinearLayout>
 
