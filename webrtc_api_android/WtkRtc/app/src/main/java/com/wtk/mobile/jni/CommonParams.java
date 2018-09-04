@@ -28,4 +28,8 @@ public interface CommonParams {
     static final int CALL_TRANSFERED_RS=5;	/* the call has been transfered from Asterisk */
     static final int CALL_TRANSFERED_NAT=6;
     static final int CALL_TRANSFERED_P2P=7;
+
+    static final int VIDEO_CODEC_VP8 = 0;
+    static final int VIDEO_CODEC_VP9 = 1;
+    static final int VIDEO_CODEC_H264 = 2;
 }

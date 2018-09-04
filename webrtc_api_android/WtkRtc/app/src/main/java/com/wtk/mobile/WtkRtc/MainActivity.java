@@ -21,6 +21,8 @@ import com.wtk.mobile.jni.WtkMediaJNIKit;
 import org.webrtc.ContextUtils;
 import org.webrtc.voiceengine.WebRtcAudioRecord;
 
+import static com.wtk.mobile.jni.CommonParams.VIDEO_CODEC_H264;
+
 public class MainActivity extends AppCompatActivity implements OnClickListener {
     private String TAG="MainActivity";
     private Button mDialButton,mAnswerButton,mHangupButton;
