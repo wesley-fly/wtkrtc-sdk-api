@@ -103,12 +103,12 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 String cmd;
                 isCaller = 1;
                 if(calleeId.contains("80")||calleeId.equals("8888")) {
-                    cmd = "/nortp/forward";
+                    cmd = "/nortp";
                 } else {
                     cmd = "/forward";
                 }
                 String ext = "testExt";
-                Log.d(TAG, "IaxDial params is " +calleeId+",host="+host+"userIdPass="+userIdPass+"cmd="+cmd+"ext="+ext);
+                Log.d(TAG, "IaxDial params is " +calleeId+",host="+host+",userIdPass="+userIdPass+",cmd="+cmd+",ext="+ext);
                 WtkMediaJNIKit.getInstance().IaxDial(calleeId,host,userIdPass,cmd,ext);
                 mStateInfo = "Make new call to "+calleeId+"...";
                 setActivityMode(CommonParams.STATERINGIN);
@@ -155,7 +155,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 break;
             case R.id.btn_video:
                 Intent MainInterface = new Intent(MainActivity.this, VideoActivity.class);
-                MainInterface.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(MainInterface);
                 break;
             case R.id.btn_test_api1:

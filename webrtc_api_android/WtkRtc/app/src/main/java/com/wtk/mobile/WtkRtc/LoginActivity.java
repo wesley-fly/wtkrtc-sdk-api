@@ -17,6 +17,9 @@ import android.widget.Toast;
 import com.wtk.mobile.jni.WtkMediaJNIKit;
 
 import static com.wtk.mobile.jni.CommonParams.VIDEO_CODEC_H264;
+import static com.wtk.mobile.jni.CommonParams.VIDEO_CODEC_HW_H264;
+import static com.wtk.mobile.jni.CommonParams.VIDEO_CODEC_VP8;
+import static com.wtk.mobile.jni.CommonParams.VIDEO_CODEC_VP9;
 
 
 public class LoginActivity extends AppCompatActivity implements OnClickListener{
@@ -40,8 +43,8 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener{
 
         mSignInButton.setOnClickListener(this);
         WtkMediaJNIKit.getInstance().IaxInitialize(LoginActivity.this);
-        WtkMediaJNIKit.getInstance().ConfigVideoParams(VIDEO_CODEC_H264,640,480,30,32);
-        WtkMediaJNIKit.getInstance().ConfigStreamBitrate(12000,24000,100000,200000);
+        WtkMediaJNIKit.getInstance().ConfigVideoParams(VIDEO_CODEC_HW_H264,640,480,30,15);
+        WtkMediaJNIKit.getInstance().ConfigStreamBitrate(12*1000,24*1000,100*1000,800*1000);
 
         WtkMediaJNIKit.getInstance().SetBroadCast(LoginActivity.this);
     }

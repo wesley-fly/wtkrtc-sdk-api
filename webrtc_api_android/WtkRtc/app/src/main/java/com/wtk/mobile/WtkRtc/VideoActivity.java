@@ -101,8 +101,12 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
                 break;
             case R.id.btn_hangup:
                 WtkMediaJNIKit.getInstance().IaxHangup();
+                finish();
                 break;
             case R.id.btn_back_audio:
+                WtkMediaJNIKit.getInstance().StopCapturer();
+                WtkMediaJNIKit.getInstance().StopVideoPlayout();
+                finish();
                 break;
             case R.id.btn_back_audio1:
                 break;
@@ -115,7 +119,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 
     private void PrepareVideoRender()
     {
-        mLocalSurfaceView = ViERenderer.CreateRenderer(VideoActivity.this, true);
+        mLocalSurfaceView = ViERenderer.CreateRenderer(VideoActivity.this, false);
         if(mLocalLinearLayout != null)
         {
             ViewGroup.LayoutParams params = mLocalLinearLayout.getLayoutParams();

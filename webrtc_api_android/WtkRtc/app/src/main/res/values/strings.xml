@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Wtk Rtc</string>
+    <string name="app_name">Wtk RTC</string>
 
     <!-- Strings related to login -->
     <string name="iax_server">IaxServer</string>
