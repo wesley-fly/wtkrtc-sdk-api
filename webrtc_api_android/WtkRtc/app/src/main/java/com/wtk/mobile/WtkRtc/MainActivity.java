@@ -21,8 +21,6 @@ import com.wtk.mobile.jni.WtkMediaJNIKit;
 import org.webrtc.ContextUtils;
 import org.webrtc.voiceengine.WebRtcAudioRecord;
 
-import static com.wtk.mobile.jni.CommonParams.VIDEO_CODEC_H264;
-
 public class MainActivity extends AppCompatActivity implements OnClickListener {
     private String TAG="MainActivity";
     private Button mDialButton,mAnswerButton,mHangupButton;
@@ -158,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 startActivity(MainInterface);
                 break;
             case R.id.btn_test_api1:
-                WtkMediaJNIKit.getInstance().IaxSetFormat(0);
+                WtkMediaJNIKit.getInstance().CtrlConference(3);
                 break;
             case R.id.btn_test_api2:
                 WtkMediaJNIKit.getInstance().IaxSetFormat(1);
@@ -177,6 +175,8 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         filter.addAction("iax.transfer.rs");
         filter.addAction("iax.transfer.nat");
         filter.addAction("iax.transfer.p2p");
+        filter.addAction("iax.video.start");
+        filter.addAction("iax.video.stop");
         receiver = new CallReceiver();
         registerReceiver(receiver, filter);
     }
@@ -254,6 +254,15 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 setActivityMode(CommonParams.STATEIDEL);
                 WtkMediaJNIKit.getInstance().StopVideoPlayout();
                 WtkMediaJNIKit.getInstance().StopAudioPlayout();
+            }
+            else if("iax.video.start".equals(action))
+            {
+                //Intent MainInterface = new Intent(MainActivity.this, VideoActivity.class);
+               // startActivity(MainInterface);
+            }
+            else if("iax.video.stop".equals(action))
+            {
+                //setActivityMode(CommonParams.STATETALKING);
             }
             else if("iax.new.call".equals(action)) {
                 mStateInfo = "Received new call from "+WtkMediaJNIKit.getInstance().getCallNumber()+", answer or hangup...";

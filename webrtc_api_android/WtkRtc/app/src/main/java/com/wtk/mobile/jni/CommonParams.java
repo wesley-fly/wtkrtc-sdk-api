@@ -29,6 +29,9 @@ public interface CommonParams {
     static final int CALL_TRANSFERED_NAT=6;
     static final int CALL_TRANSFERED_P2P=7;
 
+    static final String MSG_VIDEO_START="VIDEO_START";
+    static final String MSG_VIDEO_STOP="VIDEO_STOP";
+
     static final int VIDEO_CODEC_VP8 = 0;
     static final int VIDEO_CODEC_VP9 = 1;
     static final int VIDEO_CODEC_H264 = 2;

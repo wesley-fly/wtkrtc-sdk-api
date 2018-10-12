@@ -1,6 +1,9 @@
 package com.wtk.mobile.WtkRtc;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.SurfaceView;
@@ -25,6 +28,8 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     private int mCurrentCamera = 1; //Front
     private int mIsCameraStarted = 1;
     private int mCurrentRotation = 0;
+
+    private HangupReceiver hangupreceiver = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,7 +64,12 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     protected void onStart()
     {
         super.onStart();
-
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("iax.hangup");
+        filter.addAction("iax.video.start");
+        filter.addAction("iax.video.stop");
+        hangupreceiver = new HangupReceiver();
+        registerReceiver(hangupreceiver, filter);
     }
     @Override
     public void onClick(View paramView){
@@ -101,7 +111,6 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
                 break;
             case R.id.btn_hangup:
                 WtkMediaJNIKit.getInstance().IaxHangup();
-                finish();
                 break;
             case R.id.btn_back_audio:
                 WtkMediaJNIKit.getInstance().StopCapturer();
@@ -114,6 +123,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     }
     @Override
     protected void onDestroy() {
+        unregisterReceiver(hangupreceiver);
         super.onDestroy();
     }
 
@@ -135,5 +145,23 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
             mRemoteLinearLayout.addView(mRemoteSurfaceView);
         }
         WtkMediaJNIKit.getInstance().SetVideoView(mLocalSurfaceView,mRemoteSurfaceView);
+    }
+    private class HangupReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            if("iax.hangup".equals(action)) {
+                finish();
+            }
+            else if("iax.video.start".equals(action))
+            {
+                //
+            }
+            else if("iax.video.stop".equals(action))
+            {
+                //finish();
+            }
+        }
     }
 }
