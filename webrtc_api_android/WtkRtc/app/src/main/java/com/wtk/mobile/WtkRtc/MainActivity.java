@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
     private String TAG="MainActivity";
     private Button mDialButton,mAnswerButton,mHangupButton;
     private Button mIsSpeakerButton,mIsHoldButton,mIsMuteButton;
-    private Button mVideoButton,mApi1Button,mApi2Button;
+    private Button mVideoButton,mVideoConfButton,mApi2Button;
     private SharedPreferences m_sp = null;
     private int regID = 0;
     private int isCaller = 0;
@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         mIsMuteButton = findViewById(R.id.btn_is_mute);
 
         mVideoButton = findViewById(R.id.btn_video);
-        mApi1Button = findViewById(R.id.btn_test_api1);
+        mVideoConfButton = findViewById(R.id.btn_video_conf);
         mApi2Button = findViewById(R.id.btn_test_api2);
 
         mDialButton.setOnClickListener(this);
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         mIsMuteButton.setOnClickListener(this);
 
         mVideoButton.setOnClickListener(this);
-        mApi1Button.setOnClickListener(this);
+        mVideoConfButton.setOnClickListener(this);
         mApi2Button.setOnClickListener(this);
 
         txtState = findViewById(R.id.txtState);
@@ -100,12 +100,17 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 String userIdPass = userid + ":" + password;
                 String cmd;
                 isCaller = 1;
-                if(calleeId.contains("80")||calleeId.equals("8888")) {
+                if(calleeId.contains("80")) {
+                    //for call center
                     cmd = "/nortp";
+                } else if(calleeId.contains("777")) {
+                    //for conference
+                    cmd = "/mixer";
                 } else {
+                    //normal call
                     cmd = "/forward";
                 }
-                String ext = "testExt";
+                String ext = "Test-Ext";
                 Log.d(TAG, "IaxDial params is " +calleeId+",host="+host+",userIdPass="+userIdPass+",cmd="+cmd+",ext="+ext);
                 WtkMediaJNIKit.getInstance().IaxDial(calleeId,host,userIdPass,cmd,ext);
                 mStateInfo = "Make new call to "+calleeId+"...";
@@ -155,11 +160,12 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 Intent MainInterface = new Intent(MainActivity.this, VideoActivity.class);
                 startActivity(MainInterface);
                 break;
-            case R.id.btn_test_api1:
-                WtkMediaJNIKit.getInstance().CtrlConference(3);
+            case R.id.btn_video_conf:
+                Intent VideoConf = new Intent(MainActivity.this, VideoConfActivity.class);
+                startActivity(VideoConf);
                 break;
             case R.id.btn_test_api2:
-                WtkMediaJNIKit.getInstance().IaxSetFormat(1);
+                WtkMediaJNIKit.getInstance().CtrlConference(3);
                 break;
         }
     }
@@ -198,6 +204,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         unregisterReceiver(receiver);
         Log.d(TAG, "IaxUnRegister, ret = " + regID);
         WtkMediaJNIKit.getInstance().IaxUnRegister(regID);
+        WtkMediaJNIKit.getInstance().IaxShutdown();
         super.onDestroy();
     }
     private void setActivityMode(int mode)
@@ -211,6 +218,8 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 mIsHoldButton.setEnabled(false);
                 mIsSpeakerButton.setEnabled(false);
                 mIsMuteButton.setEnabled(false);
+                mVideoButton.setEnabled(false);
+                mVideoConfButton.setEnabled(false);
                 txtState.setText(mStateInfo);
                 //Init some init params
                 isCaller = 0;
@@ -240,6 +249,11 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 mIsHoldButton.setEnabled(true);
                 mIsSpeakerButton.setEnabled(true);
                 mIsMuteButton.setEnabled(true);
+                String calleeId = editDest.getText().toString();
+                if(calleeId.contains("777")||(calleeId.contains("80")))
+                    mVideoConfButton.setEnabled(true);
+                else
+                    mVideoButton.setEnabled(true);
                 txtState.setText(mStateInfo);
                 break;
         }
@@ -252,7 +266,12 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
             if("iax.hangup".equals(action)) {
                 mStateInfo = "Idle";
                 setActivityMode(CommonParams.STATEIDEL);
-                WtkMediaJNIKit.getInstance().StopVideoPlayout();
+                String calleeId = editDest.getText().toString();
+                if(calleeId.contains("777")||(calleeId.contains("80")))
+                    WtkMediaJNIKit.getInstance().StopVideoConf();
+                else
+                    WtkMediaJNIKit.getInstance().StopVideoPlayout();
+
                 WtkMediaJNIKit.getInstance().StopAudioPlayout();
             }
             else if("iax.video.start".equals(action))

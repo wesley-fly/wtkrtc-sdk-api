@@ -35,5 +35,5 @@ public interface CommonParams {
     static final int VIDEO_CODEC_VP8 = 0;
     static final int VIDEO_CODEC_VP9 = 1;
     static final int VIDEO_CODEC_H264 = 2;
-    static final int VIDEO_CODEC_HW_H264 = 3;
+    static final int VIDEO_CODEC_H264_AUTO = 3;
 }

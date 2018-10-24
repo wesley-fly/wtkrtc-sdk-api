@@ -19,6 +19,7 @@
         </activity>
         <activity android:name="com.wtk.mobile.WtkRtc.MainActivity" android:screenOrientation="portrait" />
         <activity android:name="com.wtk.mobile.WtkRtc.VideoActivity" android:screenOrientation="portrait" />
+        <activity android:name="com.wtk.mobile.WtkRtc.VideoConfActivity" android:screenOrientation="portrait" />
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

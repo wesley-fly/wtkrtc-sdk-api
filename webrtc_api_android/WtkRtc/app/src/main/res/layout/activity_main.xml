@@ -103,13 +103,13 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Video"
+            android:text="Open Video"
             android:textAllCaps="false"/>
-        <Button android:id="@+id/btn_test_api1"
+        <Button android:id="@+id/btn_video_conf"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Test 1"
+            android:text="Video Conf"
             android:textAllCaps="false"/>
         <Button android:id="@+id/btn_test_api2"
             android:layout_width="fill_parent"

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:weightSum="1">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0px"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:id="@+id/ll_local_view"
+            android:layout_width="144dp"
+            android:layout_height="176dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="313dp"
+            android:background="#1f000000"
+            android:orientation="horizontal" />
+
+        <LinearLayout
+            android:id="@+id/ll_remote_view_0"
+            android:layout_width="144dp"
+            android:layout_height="176dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="0dp"
+            android:background="#1f000000"
+            android:orientation="horizontal" />
+
+        <LinearLayout
+            android:id="@+id/ll_remote_view_1"
+            android:layout_width="144dp"
+            android:layout_height="176dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="234dp"
+            android:layout_marginTop="0dp"
+            android:background="#1f000000"
+            android:orientation="horizontal" />
+
+        <LinearLayout
+            android:id="@+id/ll_remote_view_2"
+            android:layout_width="144dp"
+            android:layout_height="176dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="156dp"
+            android:background="#1f000000"
+            android:orientation="horizontal" />
+
+        <LinearLayout
+            android:id="@+id/ll_remote_view_3"
+            android:layout_width="144dp"
+            android:layout_height="176dp"
+            android:layout_below="@+id/ll_remote_view_1"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="234dp"
+            android:layout_marginTop="6dp"
+            android:background="#1f000000"
+            android:orientation="horizontal" />
+
+    </RelativeLayout>
+
+    <LinearLayout  android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+        <Button android:id="@+id/btn_conf_is_start_video"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Stop Video"
+            android:textAllCaps="false"/>
+        <Button android:id="@+id/btn_conf_switch_camera"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Switch Camera"
+            android:textAllCaps="false"/>
+        <Button android:id="@+id/btn_conf_hangup"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Hangup"
+            android:textAllCaps="false"/>
+
+    </LinearLayout>
+
+</LinearLayout>
