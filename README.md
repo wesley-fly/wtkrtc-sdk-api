@@ -1,6 +1,11 @@
 # WebRTC API
 This WebRTC API based M67 release, will update&record code from time to time, include video/audio test. The Android/iOS platform use IAX2.
 
+Feature:
+1.Audio/Video call with media relay server, codec is opus/vp8/vp9/h264(both SW & HW coder);
+2.Audio/Video conference with conference server;
+3.APP call Web H5 client;
+4.Signal protocal is IAX2(Asterisk server);
 Note:
 1. Current supported & tested platform are macOS/Linux/Android.
 2. iOS will add it later.
