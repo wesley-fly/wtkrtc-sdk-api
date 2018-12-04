@@ -69,5 +69,16 @@ index 7b22cb4..f826601 100644
 +  //RTC_CHECK_RUNS_SERIALIZED(&audio_capture_race_checker_);
    channel_proxy_->ProcessAndEncodeAudio(std::move(audio_frame));
  }
- 
 
+#Android debug out/args 
+target_os = "android"
+target_cpu = "arm"
+rtc_use_h264 = true
+proprietary_codecs = true
+ffmpeg_branding = "Chrome"
+arm_use_neon = true
+current_cpu = "arm"
+rtc_build_json = false
+
+#Setup
+git checkout -b local_develop_r67 refs/remote/branch-heads/67
