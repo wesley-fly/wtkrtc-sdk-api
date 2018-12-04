@@ -1,0 +1,73 @@
+# Changes not staged for commit:
+#   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#	modified:   chromium/config/Chrome/android/arm-neon/libavcodec/codec_list.c
+#	modified:   chromium/config/Chrome/android/arm-neon/libavcodec/parser_list.c
+#	modified:   ffmpeg_generated.gni
+#
+no changes added to commit (use "git add" and/or "git commit -a")
+[lee@bogon ffmpeg]$ cd ffmpeg/^C
+[lee@bogon ffmpeg]$ git diff chromium/config/Chrome/android/arm-neon/libavcodec/parser_list.c
+diff --git a/chromium/config/Chrome/android/arm-neon/libavcodec/parser_list.c b/chromium/config/Chrome/android/arm-neon/libavcodec/parser_list.c
+index a2c3bc9..5a9962e 100644
+--- a/chromium/config/Chrome/android/arm-neon/libavcodec/parser_list.c
++++ b/chromium/config/Chrome/android/arm-neon/libavcodec/parser_list.c
+@@ -4,4 +4,5 @@ static const AVCodecParser * const parser_list[] = {
+     &ff_mpegaudio_parser,
+     &ff_opus_parser,
+     &ff_vorbis_parser,
++    &ff_h264_parser,
+     NULL };
+[lee@bogon ffmpeg]$ git diff chromium/config/Chrome/android/arm-neon/libavcodec/codec_list.c
+diff --git a/chromium/config/Chrome/android/arm-neon/libavcodec/codec_list.c b/chromium/config/Chrome/android/arm-neon/libavcodec/codec_list.c
+index 4c1c44c..c08ffb0 100644
+--- a/chromium/config/Chrome/android/arm-neon/libavcodec/codec_list.c
++++ b/chromium/config/Chrome/android/arm-neon/libavcodec/codec_list.c
+@@ -13,4 +13,5 @@ static const AVCodec * const codec_list[] = {
+     &ff_pcm_s32le_decoder,
+     &ff_pcm_u8_decoder,
+     &ff_libopus_decoder,
++    &ff_h264_decoder,
+     NULL };
+[lee@bogon ffmpeg]$ git diff ffmpeg_generated.gni
+diff --git a/ffmpeg_generated.gni b/ffmpeg_generated.gni
+index a856c31..eddd64c 100644
+--- a/ffmpeg_generated.gni
++++ b/ffmpeg_generated.gni
+@@ -12,7 +12,7 @@ ffmpeg_c_sources = []
+ ffmpeg_gas_sources = []
+ ffmpeg_yasm_sources = []
+ 
+-use_linux_config = is_linux || is_fuchsia
++use_linux_config = is_linux || is_fuchsia || is_android
+ 
+ if ((is_android && current_cpu == "arm" && arm_use_neon) || (is_android && current_cpu == "arm64") || (is_android && current_cpu == "mips64el") || (is_android && current_cpu == "mipsel") || (is_and
+   ffmpeg_c_sources += [
+[lee@bogon ffmpeg]$ cd ../
+[lee@bogon third_party]$ git diff openh264/BUILD.gn
+diff --git a/openh264/BUILD.gn b/openh264/BUILD.gn
+index 7b22cb4..f826601 100644
+--- a/openh264/BUILD.gn
++++ b/openh264/BUILD.gn
+@@ -34,7 +34,7 @@ config("config") {
+   if (is_android) {
+     # Android NDK is necessary for its cpufeatures and this define is what
+     # OpenH264 code uses to check if it should be used.
+-    defines += [ "ANDROID_NDK" ]
++    defines = [ "ANDROID_NDK" ]
+   }
+ }
+ 
+--- a/audio/audio_send_stream.cc
++++ b/audio/audio_send_stream.cc
+@@ -316,7 +316,7 @@ void AudioSendStream::Stop() {
+ }
+ 
+ void AudioSendStream::SendAudioData(std::unique_ptr<AudioFrame> audio_frame) {
+-  RTC_CHECK_RUNS_SERIALIZED(&audio_capture_race_checker_);
++  //RTC_CHECK_RUNS_SERIALIZED(&audio_capture_race_checker_);
+   channel_proxy_->ProcessAndEncodeAudio(std::move(audio_frame));
+ }
+ 
+

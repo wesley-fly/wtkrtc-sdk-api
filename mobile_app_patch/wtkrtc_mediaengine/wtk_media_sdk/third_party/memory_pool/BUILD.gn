@@ -1,0 +1,29 @@
+import("//webrtc.gni")
+
+if (is_android) {
+  import("//build/config/android/config.gni")
+  import("//build/config/android/rules.gni")
+}
+
+source_set("libmemory_pool") {
+  sources = [    
+    "memory_pool.h",
+    "memory_pool_posix.h",
+    "memory_pool_win.h",
+    "critical_section_wrapper.h",
+    "critical_section_posix.cc",
+    "critical_section_posix.h",
+    "critical_section_win.cc",
+    "critical_section_win.h",
+    "critical_section.cc",
+    "list_wrapper.cc",
+    "list_wrapper.h",
+  ]
+
+  configs -= [ "//build/config/compiler:chromium_code" ]
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    "//build/config/compiler:no_incompatible_pointer_warnings",
+  ]
+}
+

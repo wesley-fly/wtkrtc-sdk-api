@@ -1,0 +1,57 @@
+import("//webrtc.gni")
+
+if (is_android) {
+  import("//build/config/android/config.gni")
+  import("//build/config/android/rules.gni")
+}
+
+rtc_source_set("wtk_video_capturer") {
+  sources = [
+    "wtk_video_capturer/wtk_vcm_capturer.cc",
+    "wtk_video_capturer/wtk_vcm_capturer.h",
+    "wtk_video_capturer/wtk_video_capturer.cc",
+    "wtk_video_capturer/wtk_video_capturer.h",
+  ]
+
+  if (!build_with_chromium && is_clang) {
+    suppressed_configs += [ "//build/config/clang:find_bad_constructs" ]
+  }
+}
+rtc_source_set("wtk_rtc_api") {
+  sources = [
+    "wtk_rtc_api.cc",
+    "wtk_rtc_api.h",
+  ]
+  deps = [
+    "//call:call",
+    "//call:bitrate_allocator",
+    "//logging:rtc_event_log_impl_base",
+    "//modules/audio_coding:audio_coding",
+    "//modules/audio_device:audio_device",
+    "//modules/audio_processing:audio_processing",
+    "//modules/audio_mixer:audio_mixer_impl",
+    "//modules/video_capture:video_capture_internal_impl",
+    "//modules/video_render:video_render",
+    "//modules/video_render:video_render_module",
+    "//modules/video_render:video_render_internal_impl",
+    "//system_wrappers:metrics_default",
+    "//system_wrappers:field_trial_default", 
+    "//system_wrappers:runtime_enabled_features_default",
+    "//media:media",
+    "//api/audio_codecs:builtin_audio_decoder_factory",
+    "//api/video_codecs:video_codecs_api",
+    "//modules/rtp_rtcp:rtp_rtcp",
+    "//modules/video_coding:android_codec_factory_helper",
+    "//sdk/android:video_jni",
+    "//rtc_base:rtc_json",
+
+    ":wtk_video_capturer",
+  ]
+
+  if (is_clang) {
+    suppressed_configs += [
+        "//build/config/clang:extra_warnings",
+        "//build/config/clang:find_bad_constructs",
+    ]
+  }
+}

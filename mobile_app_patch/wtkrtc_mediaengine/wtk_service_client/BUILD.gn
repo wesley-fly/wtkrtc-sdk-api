@@ -1,0 +1,110 @@
+import("//webrtc.gni")
+
+if (is_android) {
+  import("//build/config/android/config.gni")
+  import("//build/config/android/rules.gni")
+}
+
+config("wtk_common_warning"){
+  if (is_clang) {
+    cflags = [
+      "-Wno-absolute-value",
+      "-Wno-strict-prototypes",
+      "-Wno-undef",
+      "-Wno-sizeof-pointer-memaccess",
+      "-Wno-undefined-bool-conversion",
+      "-Wno-format-security",
+      "-Wno-unused-function",
+      "-Wno-implicit-function-declaration",
+      "-Wno-unused-variable",
+      "-Wno-int-conversion",
+      "-Wno-incompatible-pointer-types",
+      "-Wno-#warnings",
+      "-Wno-implicit-int",
+      "-Wno-visibility",
+      "-Wno-constant-conversion",
+      "-Wno-tautological-constant-out-of-range-compare",
+    ]
+  }
+}
+#source_set("ptt_interfaces") {
+#  sources = [
+#    "ptt_client/ptt.c",
+#    "ptt_client/ptt.h",
+#    "ptt_client/pttclient.c",
+#    "ptt_client/pttclient.h",
+#    "ptt_client/tbcp.c",
+#    "ptt_client/tbcp.h",
+#    "ptt_client/util.c",
+#    "ptt_client/util.h",
+#  ]
+#  deps = [
+#    ":iax_interfaces",
+#  ]
+#}
+
+source_set("wtk_iax2_interfaces") {
+  sources = [
+    "iax2-client/frame.h",
+    "iax2-client/iax-client.h",
+    "iax2-client/iax.c",
+    "iax2-client/iax2-parser.c",
+    "iax2-client/iax2-parser.h",
+    "iax2-client/iax2.h",
+    "iax2-client/iaxclient.h",   
+    "iax2-client/iaxclient_lib.c",
+    "iax2-client/iaxclient_lib.h",
+    "iax2-client/md5.c",
+    "iax2-client/md5.h",
+    "iax2-client/unixfuncs.c",    
+  ]
+  defines = [ 
+    "HAVE_GETTIMEOFDAY",
+    "_POSIX_SOURCE",
+    "_GNU_SOURCE",
+  ]
+  if (is_android) {
+    defines += [
+      "ANDROID",
+      "IAX_DEBUG",
+    ]
+  }
+  configs -= [ "//build/config/compiler:chromium_code" ]
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    "//build/config/compiler:no_incompatible_pointer_warnings",#must after no_chromium_code
+    ":wtk_common_warning",
+  ]
+
+  deps = [
+    "../wtk_rtc_api:wtk_rtc_api",
+  ]
+}
+
+source_set("wtk_service_api") {
+  sources = [
+    "wtkcall_lib.c",
+    "wtkcall_lib.h",
+  ]
+  defines = [ 
+    "HAVE_GETTIMEOFDAY",
+    "_POSIX_SOURCE",
+    "_GNU_SOURCE",
+  ]
+  if (is_android) {
+    defines += [
+      "ANDROID",
+    ]
+  }
+  configs -= [ "//build/config/compiler:chromium_code" ]
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    "//build/config/compiler:no_incompatible_pointer_warnings",#must after no_chromium_code
+    ":wtk_common_warning",
+  ]
+
+  deps = [
+    "../wtk_rtc_api:wtk_rtc_api",
+    ":wtk_iax2_interfaces",
+  ]
+}
