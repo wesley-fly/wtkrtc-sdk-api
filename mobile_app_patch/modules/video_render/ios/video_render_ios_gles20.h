@@ -15,13 +15,12 @@
 #include <map>
 #include <memory>
 
-#include "base/platform_thread.h"
+#include "rtc_base/platform_thread.h"
 #include "modules/video_render/ios/video_render_ios_channel.h"
 #include "modules/video_render/ios/video_render_ios_view.h"
 
 namespace webrtc {
 
-class CriticalSectionWrapper;
 class EventTimerWrapper;
 
 class VideoRenderIosGles20 {
@@ -62,7 +61,8 @@ class VideoRenderIosGles20 {
   int SwapAndDisplayBuffers();
 
  private:
-  std::unique_ptr<CriticalSectionWrapper> gles_crit_sec_;
+
+  rtc::CriticalSection gles_crit_sec_;
   EventTimerWrapper* screen_update_event_;
   // TODO(pbos): Remove unique_ptr and use member directly.
   std::unique_ptr<rtc::PlatformThread> screen_update_thread_;

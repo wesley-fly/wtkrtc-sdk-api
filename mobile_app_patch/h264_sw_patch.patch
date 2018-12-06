@@ -81,4 +81,4 @@ current_cpu = "arm"
 rtc_build_json = false
 
 #Setup
-git checkout -b local_develop_r67 refs/remote/branch-heads/67
+git checkout -b local_develop_r67 refs/remotes/branch-heads/67

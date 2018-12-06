@@ -17,7 +17,8 @@
 
 // TODO(sjlee): unify this copy with the android one.
 #include "modules/video_render/ios/open_gles20.h"
-#include "system_wrappers/include/trace.h"
+#include "rtc_base/criticalsection.h"
+#include "rtc_base/logging.h"
 
 using namespace webrtc;
 
@@ -177,13 +178,8 @@ GLuint OpenGles20::LoadShader(GLenum shader_type, const char* shader_source) {
       if (info_len) {
         char* buf = (char*)malloc(info_len);
         glGetShaderInfoLog(shader, info_len, NULL, buf);
-        WEBRTC_TRACE(kTraceError,
-                     kTraceVideoRenderer,
-                     0,
-                     "%s: Could not compile shader %d: %s",
-                     __FUNCTION__,
-                     shader_type,
-                     buf);
+
+		RTC_LOG(LS_ERROR) << __FUNCTION__ << ",Could not compile shader " << shader_type << ":" << buf;
         free(buf);
       }
       glDeleteShader(shader);
@@ -218,12 +214,8 @@ GLuint OpenGles20::CreateProgram(const char* vertex_source,
       if (info_len) {
         char* buf = (char*)malloc(info_len);
         glGetProgramInfoLog(program, info_len, NULL, buf);
-        WEBRTC_TRACE(kTraceError,
-                     kTraceVideoRenderer,
-                     0,
-                     "%s: Could not link program: %s",
-                     __FUNCTION__,
-                     buf);
+
+		RTC_LOG(LS_ERROR) << __FUNCTION__ << ",Could not link program: " << buf;
         free(buf);
       }
       glDeleteProgram(program);
@@ -316,15 +308,19 @@ void OpenGles20::UpdateTextures(const VideoFrame& frame) {
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texture_ids_[0]);
-  GlTexSubImage2D(width, height, frame.stride(kYPlane), frame.buffer(kYPlane));
+  //GlTexSubImage2D(width, height, frame.stride(kYPlane), frame.buffer(kYPlane));
+  GlTexSubImage2D(width, height, frame.video_frame_buffer()->GetI420()->StrideY(),
+					frame.video_frame_buffer()->GetI420()->DataY());
 
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, texture_ids_[1]);
-  GlTexSubImage2D(
-      width / 2, height / 2, frame.stride(kUPlane), frame.buffer(kUPlane));
+  //GlTexSubImage2D(width / 2, height / 2, frame.stride(kUPlane), frame.buffer(kUPlane));
+  GlTexSubImage2D(width / 2, height / 2, frame.video_frame_buffer()->GetI420()->StrideU(),
+                  frame.video_frame_buffer()->GetI420()->DataU());
 
   glActiveTexture(GL_TEXTURE2);
   glBindTexture(GL_TEXTURE_2D, texture_ids_[2]);
-  GlTexSubImage2D(
-      width / 2, height / 2, frame.stride(kVPlane), frame.buffer(kVPlane));
+  //GlTexSubImage2D(width / 2, height / 2, frame.stride(kVPlane), frame.buffer(kVPlane));
+  GlTexSubImage2D(width / 2, height / 2, frame.video_frame_buffer()->GetI420()->StrideV(),
+                  frame.video_frame_buffer()->GetI420()->DataV());
 }

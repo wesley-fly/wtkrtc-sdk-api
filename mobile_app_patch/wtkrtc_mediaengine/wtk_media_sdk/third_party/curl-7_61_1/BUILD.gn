@@ -171,7 +171,6 @@ source_set("libcurl-7_61_1") {
   defines = [ 
     "BUILDING_LIBCURL",
     "HAVE_CONFIG_H",
-    "WEBRTC_ANDROID",
   ]
   include_dirs = [
     "include",

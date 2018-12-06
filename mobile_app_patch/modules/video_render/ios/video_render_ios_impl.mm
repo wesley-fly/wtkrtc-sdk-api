@@ -14,17 +14,15 @@
 
 #include "modules/video_render/ios/video_render_ios_impl.h"
 #include "modules/video_render/ios/video_render_ios_gles20.h"
-#include "system_wrappers/include/critical_section_wrapper.h"
-#include "system_wrappers/include/trace.h"
+#include "rtc_base/criticalsection.h"
+
+#include "rtc_base/logging.h"
+
 
 using namespace webrtc;
 
 #define IOS_UNSUPPORTED()                                  \
-  WEBRTC_TRACE(kTraceError,                                \
-               kTraceVideoRenderer,                        \
-               id_,                                        \
-               "%s is not supported on the iOS platform.", \
-               __FUNCTION__);                              \
+  RTC_LOG(LS_ERROR) << __FUNCTION__ << ",is not supported on the iOS platform." ; \
   return -1;
 
 VideoRenderIosImpl::VideoRenderIosImpl(const int32_t id,
@@ -32,15 +30,15 @@ VideoRenderIosImpl::VideoRenderIosImpl(const int32_t id,
                                        const bool full_screen)
     : id_(id),
       ptr_window_(window),
-      full_screen_(full_screen),
-      crit_sec_(CriticalSectionWrapper::CreateCriticalSection()) {}
+      full_screen_(full_screen)/*,
+      crit_sec_(CriticalSectionWrapper::CreateCriticalSection()) */{}
 
 VideoRenderIosImpl::~VideoRenderIosImpl() {
-  delete crit_sec_;
+  //delete crit_sec_;
 }
 
 int32_t VideoRenderIosImpl::Init() {
-  CriticalSectionScoped cs(crit_sec_);
+  rtc::CritScope cs(&crit_sec_);
 
   ptr_ios_render_.reset(new VideoRenderIosGles20(
       (__bridge VideoRenderIosView*)ptr_window_, full_screen_, id_));
@@ -50,7 +48,7 @@ int32_t VideoRenderIosImpl::Init() {
 }
 
 int32_t VideoRenderIosImpl::ChangeWindow(void* window) {
-  CriticalSectionScoped cs(crit_sec_);
+  rtc::CritScope cs(&crit_sec_);
   if (window == NULL) {
     return -1;
   }
@@ -67,7 +65,7 @@ rtc::VideoSinkInterface<VideoFrame>* VideoRenderIosImpl::AddIncomingRenderStream
     const float top,
     const float right,
     const float bottom) {
-  CriticalSectionScoped cs(crit_sec_);
+  rtc::CritScope cs(&crit_sec_);
   if (!ptr_window_) {
     return NULL;
   }
@@ -78,7 +76,7 @@ rtc::VideoSinkInterface<VideoFrame>* VideoRenderIosImpl::AddIncomingRenderStream
 
 int32_t VideoRenderIosImpl::DeleteIncomingRenderStream(
     const uint32_t stream_id) {
-  CriticalSectionScoped cs(crit_sec_);
+  rtc::CritScope cs(&crit_sec_);
 
   return ptr_ios_render_->DeleteEaglChannel(stream_id);
 }
@@ -103,7 +101,7 @@ int32_t VideoRenderIosImpl::StopRender() {
 
 VideoRenderType VideoRenderIosImpl::RenderType() { return kRenderiOS; }
 
-RawVideoType VideoRenderIosImpl::PerferedVideoType() { return kVideoI420; }
+VideoType VideoRenderIosImpl::PerferedVideoType() { return VideoType::kI420; }
 
 bool VideoRenderIosImpl::FullScreen() { IOS_UNSUPPORTED(); }
 

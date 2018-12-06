@@ -78,7 +78,8 @@ if (!build_with_chromium) {
           "logging:rtc_event_log2rtp_dump",
         ]
       }
-      if(is_android) {
+    }
+    if(is_android) {
         deps += [
           "wtkrtc_mediaengine:WtkMediaSDKJni",
           #"wtkrtc_mediaengine/wtk_media_sdk/common/android_jni:WtkMediaEngineJni",
@@ -93,7 +94,9 @@ if (!build_with_chromium) {
           "wtkrtc_mixer:wtk-mixer",
         ]
       }
-    }
+    deps += [
+      "base:base",
+    ]
   }
 }
 

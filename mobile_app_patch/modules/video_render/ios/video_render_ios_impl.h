@@ -54,7 +54,7 @@ class VideoRenderIosImpl : IVideoRender {
   int32_t StopRender() override;
 
   VideoRenderType RenderType() override;
-  RawVideoType PerferedVideoType() override;
+  VideoType PerferedVideoType() override;
   bool FullScreen() override;
   int32_t GetGraphicsMemory(
       uint64_t& total_graphics_memory,
@@ -62,7 +62,7 @@ class VideoRenderIosImpl : IVideoRender {
   int32_t GetScreenResolution(
       uint32_t& screen_width,
       uint32_t& screen_height) const override;  // NOLINT
-  uint32_t RenderFrameRate(const uint32_t stream_id);
+  uint32_t RenderFrameRate(const uint32_t stream_id) override;
   int32_t SetStreamCropping(const uint32_t stream_id,
                             const float left,
                             const float top,
@@ -90,7 +90,7 @@ class VideoRenderIosImpl : IVideoRender {
                     const float left,
                     const float top,
                     const float right,
-                    const float bottom);
+                    const float bottom) override;
   int32_t FullScreenRender(void* window, const bool enable);
 
  private:
@@ -98,7 +98,7 @@ class VideoRenderIosImpl : IVideoRender {
   void* ptr_window_;
   bool full_screen_;
 
-  CriticalSectionWrapper* crit_sec_;
+  rtc::CriticalSection crit_sec_;
   std::unique_ptr<VideoRenderIosGles20> ptr_ios_render_;
 };
 }  // namespace webrtc

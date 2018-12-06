@@ -112,7 +112,7 @@ class VideoCaptureModule: public rtc::RefCountInterface {
   // false, generated frames will carry the rotation information from
   // SetCaptureRotation. Return value indicates whether this operation succeeds.
   virtual bool SetApplyRotation(bool enable) = 0;
-#if defined(WEBRTC_ANDROID)
+#if defined(WEBRTC_ANDROID)||defined(WEBRTC_IOS)
   virtual int32_t SetCaptureDevice(int deviceId) = 0;
   virtual int32_t GetCaptureDevice() = 0;
 #endif

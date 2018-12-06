@@ -17,20 +17,20 @@
 using namespace webrtc;
 
 VideoRenderIosChannel::VideoRenderIosChannel(VideoRenderIosView* view)
-    : view_(view), current_frame_(new VideoFrame()), buffer_is_updated_(false) {
+    : view_(view), current_frame_( webrtc::VideoFrame(I420Buffer::Create(1280, 720),webrtc::kVideoRotation_0, 0)), buffer_is_updated_(false) {
 }
 
-VideoRenderIosChannel::~VideoRenderIosChannel() { delete current_frame_; }
+VideoRenderIosChannel::~VideoRenderIosChannel() { /*delete current_frame_;*/ }
 
 void VideoRenderIosChannel::OnFrame(const VideoFrame& video_frame) {
 
-  current_frame_->CopyFrame(video_frame);
-  current_frame_->set_render_time_ms(0);
+  current_frame_ = video_frame;
+  current_frame_.set_timestamp_us(0);
   buffer_is_updated_ = true;
 }
 
 bool VideoRenderIosChannel::RenderOffScreenBuffer() {
-  if (![view_ renderFrame:current_frame_]) {
+  if (![view_ renderFrame:&current_frame_]) {
     return false;
   }
 

@@ -15,7 +15,8 @@
 #include <memory>
 
 #include "modules/video_render/ios/video_render_ios_view.h"
-#include "system_wrappers/include/trace.h"
+#include "rtc_base/logging.h"
+
 
 using namespace webrtc;
 
@@ -133,13 +134,7 @@ using namespace webrtc;
 
 - (BOOL)presentFramebuffer {
   if (![_context presentRenderbuffer:GL_RENDERBUFFER]) {
-    WEBRTC_TRACE(kTraceWarning,
-                 kTraceVideoRenderer,
-                 0,
-                 "%s:%d [context present_renderbuffer] "
-                 "returned false",
-                 __FUNCTION__,
-                 __LINE__);
+	RTC_LOG(LS_ERROR) << __FUNCTION__ << ",[context present_renderbuffer] returned false.";
   }
   return YES;
 }

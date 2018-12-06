@@ -13,12 +13,13 @@
 
 #include "modules/video_render/video_render_defines.h"
 #include "modules/video_render/ios/video_render_ios_view.h"
+#include "api/video/i420_buffer.h"
 
 namespace webrtc {
 
 class VideoRenderIosGles20;
 
-class VideoRenderIosChannel : public rtc::VideoSinkInterface<VideoFrame>sssss {
+class VideoRenderIosChannel : public rtc::VideoSinkInterface<VideoFrame> {
  public:
   explicit VideoRenderIosChannel(VideoRenderIosView* view);
   virtual ~VideoRenderIosChannel();
@@ -35,7 +36,7 @@ class VideoRenderIosChannel : public rtc::VideoSinkInterface<VideoFrame>sssss {
 
  private:
   VideoRenderIosView* view_;
-  VideoFrame* current_frame_;
+  VideoFrame current_frame_;
   bool buffer_is_updated_;
 };
 

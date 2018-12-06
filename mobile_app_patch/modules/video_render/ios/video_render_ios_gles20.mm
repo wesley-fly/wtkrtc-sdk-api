@@ -13,7 +13,8 @@
 #endif
 
 #include "modules/video_render/ios/video_render_ios_gles20.h"
-#include "system_wrappers/include/critical_section_wrapper.h"
+#include "rtc_base/criticalsection.h"
+
 #include "system_wrappers/include/event_wrapper.h"
 
 using namespace webrtc;
@@ -21,7 +22,7 @@ using namespace webrtc;
 VideoRenderIosGles20::VideoRenderIosGles20(VideoRenderIosView* view,
                                            bool full_screen,
                                            int render_id)
-    : gles_crit_sec_(CriticalSectionWrapper::CreateCriticalSection()),
+    : //gles_crit_sec_(CriticalSectionWrapper::CreateCriticalSection()),
       screen_update_event_(0),
       view_(view),
       window_rect_(),
@@ -72,7 +73,7 @@ VideoRenderIosGles20::~VideoRenderIosGles20() {
 }
 
 int VideoRenderIosGles20::Init() {
-  CriticalSectionScoped cs(gles_crit_sec_.get());
+  rtc::CritScope cs(&gles_crit_sec_);
 
   if (!view_) {
     view_ = [[VideoRenderIosView alloc] init];
@@ -101,7 +102,7 @@ VideoRenderIosChannel* VideoRenderIosGles20::CreateEaglChannel(int channel,
                                                                float top,
                                                                float right,
                                                                float bottom) {
-  CriticalSectionScoped cs(gles_crit_sec_.get());
+  rtc::CritScope cs(&gles_crit_sec_);
 
   if (HasChannel(channel)) {
     return NULL;
@@ -121,7 +122,7 @@ VideoRenderIosChannel* VideoRenderIosGles20::CreateEaglChannel(int channel,
 }
 
 int VideoRenderIosGles20::DeleteEaglChannel(int channel) {
-  CriticalSectionScoped cs(gles_crit_sec_.get());
+  rtc::CritScope cs(&gles_crit_sec_);
 
   std::map<int, VideoRenderIosChannel*>::iterator it;
   it = agl_channels_.find(channel);
@@ -145,7 +146,7 @@ int VideoRenderIosGles20::DeleteEaglChannel(int channel) {
 }
 
 bool VideoRenderIosGles20::HasChannel(int channel) {
-  CriticalSectionScoped cs(gles_crit_sec_.get());
+  rtc::CritScope cs(&gles_crit_sec_);
 
   std::map<int, VideoRenderIosChannel*>::iterator it =
       agl_channels_.find(channel);
@@ -165,7 +166,7 @@ bool VideoRenderIosGles20::ScreenUpdateThreadProc(void* obj) {
 bool VideoRenderIosGles20::ScreenUpdateProcess() {
   screen_update_event_->Wait(100);
 
-  CriticalSectionScoped cs(gles_crit_sec_.get());
+  rtc::CritScope cs(&gles_crit_sec_);
 
   if (!is_rendering_) {
     return false;
@@ -222,7 +223,7 @@ bool VideoRenderIosGles20::ScreenUpdateProcess() {
 }
 
 int VideoRenderIosGles20::GetWindowRect(Rect& rect) {
-  CriticalSectionScoped cs(gles_crit_sec_.get());
+  rtc::CritScope cs(&gles_crit_sec_);
 
   if (!view_) {
     return -1;
@@ -238,7 +239,7 @@ int VideoRenderIosGles20::GetWindowRect(Rect& rect) {
 }
 
 int VideoRenderIosGles20::ChangeWindow(void* new_window) {
-  CriticalSectionScoped cs(gles_crit_sec_.get());
+  rtc::CritScope cs(&gles_crit_sec_);
 
   view_ = (__bridge VideoRenderIosView*)new_window;
 

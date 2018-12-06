@@ -195,7 +195,7 @@ int32_t VideoCaptureImpl::IncomingFrame(uint8_t* videoFrame,
                       << static_cast<int>(frameInfo.videoType) << "to I420.";
     return -1;
   }
-#if defined(WEBRTC_ANDROID)
+#if defined(WEBRTC_ANDROID)||defined(WEBRTC_IOS)
   if (GetCaptureDevice() == 0) //Back
     buffer = webrtc::I420Buffer::Rotate(*buffer, kVideoRotation_90);
   else

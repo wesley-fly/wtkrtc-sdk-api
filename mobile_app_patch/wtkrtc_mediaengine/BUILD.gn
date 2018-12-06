@@ -17,6 +17,12 @@ config("wtk_common_warning"){
       "-Wno-unused-variable",
       "-Wno-sign-compare",
     ]
+    if(is_ios) {
+      cflags += [
+        "-Wno-c++14-extensions",
+        "-Wno-constexpr-not-const",
+      ]
+    }
   }
 }
 ####################
@@ -186,21 +192,31 @@ if(is_ios) {
     ]
     deps = []
     sources += [
-      "wtk_media_sdk/common/ios/wtk_media_sdk_oc.mm",
-      "wtk_media_sdk/common/ios/wtk_media_sdk_oc.h",
+      #"wtk_media_sdk/common/ios/wtk_media_sdk_oc.mm",
+      #"wtk_media_sdk/common/ios/wtk_media_sdk_oc.h",
     ]
     deps += [
       "wtk_rtc_api:wtk_rtc_api",
-      "wtk_service_client:wtk_service_api",
-      ":wtk_sync_http_api",
-      ":wtk_user_profile",
-      ":wtk_media_log",
-      ":wtk_notification",
-      ":wtk_tools_func",
-      ":wtk_call_ctrl",
-      ":wtk_conf_ctrl",
-      ":wtk_ptt_ctrl",
+      #"wtk_service_client:wtk_service_api",
+      #":wtk_sync_http_api",
+      #":wtk_user_profile",
+      #":wtk_media_log",
+      #":wtk_notification",
+      #":wtk_tools_func",
+      #":wtk_call_ctrl",
+      #":wtk_conf_ctrl",
+      #":wtk_ptt_ctrl",
+      #"wtk_media_sdk/third_party/memory_pool:libmemory_pool",
     ]
+    configs += [
+      ":wtk_common_warning",
+    ]
+    if (is_clang) {
+      suppressed_configs += [
+        "//build/config/clang:extra_warnings",
+        "//build/config/clang:find_bad_constructs",
+      ]
+    }
   }
 }
 if(is_android) {
@@ -225,9 +241,7 @@ if(is_android) {
       "//build/config/android:hide_all_but_jni",
       ":wtk_common_warning",
     ]
-    deps += [
-      "wtk_media_sdk/third_party/memory_pool:libmemory_pool",
-    ]
+
     libs = [
       "log",
     ]
@@ -250,6 +264,7 @@ if(is_android) {
       ":wtk_call_ctrl",
       ":wtk_conf_ctrl",
       ":wtk_ptt_ctrl",
+      "wtk_media_sdk/third_party/memory_pool:libmemory_pool",
     ]
   }
 }

@@ -84,7 +84,7 @@ public:
     }
     int32_t StopCapture() override { return -1; }
     bool CaptureStarted() override {return false; }
-#if defined(WEBRTC_ANDROID)
+#if defined(WEBRTC_ANDROID)||defined(WEBRTC_IOS)
 	int32_t SetCaptureDevice(int32_t deviceId) override { return -1; }
 	int32_t GetCaptureDevice() override { return -1; }
 #endif

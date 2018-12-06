@@ -24,6 +24,9 @@ config("wtk_common_warning"){
       "-Wno-visibility",
       "-Wno-constant-conversion",
       "-Wno-tautological-constant-out-of-range-compare",
+      #ios add
+      "-Wno-address-of-packed-member",
+      "-Wno-builtin-memcpy-chk-size",
     ]
   }
 }
@@ -60,13 +63,18 @@ source_set("wtk_iax2_interfaces") {
   ]
   defines = [ 
     "HAVE_GETTIMEOFDAY",
-    "_POSIX_SOURCE",
     "_GNU_SOURCE",
+    "IAX_DEBUG",
   ]
   if (is_android) {
     defines += [
       "ANDROID",
-      "IAX_DEBUG",
+      "_POSIX_SOURCE",
+    ]
+  }
+  else if (is_ios) {
+    defines += [
+      "MACOSX",
     ]
   }
   configs -= [ "//build/config/compiler:chromium_code" ]
@@ -86,16 +94,13 @@ source_set("wtk_service_api") {
     "wtkcall_lib.c",
     "wtkcall_lib.h",
   ]
-  defines = [ 
-    "HAVE_GETTIMEOFDAY",
-    "_POSIX_SOURCE",
-    "_GNU_SOURCE",
-  ]
+
   if (is_android) {
     defines += [
       "ANDROID",
     ]
   }
+  
   configs -= [ "//build/config/compiler:chromium_code" ]
   configs += [
     "//build/config/compiler:no_chromium_code",
