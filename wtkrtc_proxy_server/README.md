@@ -1,0 +1,3 @@
+#usage
+
+make && make install

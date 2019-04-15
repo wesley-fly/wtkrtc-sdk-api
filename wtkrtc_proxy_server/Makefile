@@ -1,7 +1,7 @@
 CC = gcc
 #CFLAGS = -Wall -O -g
 CFLAGS = -Wall -O2
-TARGET = wtk-relayserver
+TARGET = wtkrtc_proxy_server
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -12,7 +12,7 @@ $(TARGET) : $(OBJS)
 	chmod a+x $(TARGET)
 
 install:
-	cp -f wtk-relayserver /usr/local/bin/
+	cp -f wtkrtc_proxy_server /usr/local/bin/
 
 clean:
-	rm -rf *.o wtk-relayserver
+	rm -rf *.o wtkrtc_proxy_server
