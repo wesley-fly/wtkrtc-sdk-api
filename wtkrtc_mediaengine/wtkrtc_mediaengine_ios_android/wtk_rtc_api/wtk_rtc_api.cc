@@ -431,7 +431,7 @@ int libwtk_create_video_send_stream(int rtp_format)
 		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_VideoSendStream is nullprt, so go on!";
 	}
 	
-    webrtc::VideoSendStream::Config video_send_config(g_VideoSendTransport);
+	webrtc::VideoSendStream::Config video_send_config(g_VideoSendTransport);
 	video_send_config.rtp.ssrcs.push_back(SEND_SSRC);
 	video_send_config.rtp.payload_name = "VP8";
 	video_send_config.rtp.payload_type = kPayloadTypeVP8;
@@ -443,20 +443,12 @@ int libwtk_create_video_send_stream(int rtp_format)
 
 	video_send_config.rtp.extensions.clear();
 	if(g_Send_side_bwe){
-		video_send_config.rtp.extensions.push_back(
-			webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri,
-                       	kTransportSequenceNumberExtensionId));
+		video_send_config.rtp.extensions.push_back(webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri,kTransportSequenceNumberExtensionId));
 	}else{
-		video_send_config.rtp.extensions.push_back(
-			webrtc::RtpExtension(webrtc::RtpExtension::kAbsSendTimeUri,
-						kAbsSendTimeExtensionId));
+		video_send_config.rtp.extensions.push_back(webrtc::RtpExtension(webrtc::RtpExtension::kAbsSendTimeUri,kAbsSendTimeExtensionId));
 	}
-	video_send_config.rtp.extensions.push_back(
-        webrtc::RtpExtension(webrtc::RtpExtension::kVideoContentTypeUri,
-                     	kVideoContentTypeExtensionId));
-    video_send_config.rtp.extensions.push_back(
-		webrtc::RtpExtension(webrtc::RtpExtension::kVideoTimingUri, 
-						kVideoTimingExtensionId));
+	video_send_config.rtp.extensions.push_back(webrtc::RtpExtension(webrtc::RtpExtension::kVideoContentTypeUri,kVideoContentTypeExtensionId));
+	video_send_config.rtp.extensions.push_back(webrtc::RtpExtension(webrtc::RtpExtension::kVideoTimingUri,kVideoTimingExtensionId));
 	webrtc::VideoEncoderConfig encoder_config;
 	
 	encoder_config.codec_type = webrtc::kVideoCodecVP8;
@@ -510,9 +502,9 @@ int libwtk_create_video_receive_stream(int rtp_format)
 	{
 		RTC_LOG(LS_INFO) << __FUNCTION__ << " :g_VideoReceiveStream is nullprt, so go on!";
 	}
-    webrtc::VideoReceiveStream::Config video_rev_config(g_VideoSendTransport);
+	webrtc::VideoReceiveStream::Config video_rev_config(g_VideoSendTransport);
 	//video_rev_config.renderer = g_Remote_render.get();
-    video_rev_config.sync_group = AV_SYNC_GROUP;
+	video_rev_config.sync_group = AV_SYNC_GROUP;
 	video_rev_config.rtp.remote_ssrc = SEND_SSRC;
 	video_rev_config.rtp.local_ssrc = RECV_SSRC;
 	video_rev_config.rtp.rtx_ssrc = RTX_SSRC;
@@ -524,27 +516,19 @@ int libwtk_create_video_receive_stream(int rtp_format)
 	
 	video_rev_config.rtp.extensions.clear();
 	if(g_Send_side_bwe){
-		video_rev_config.rtp.extensions.push_back(
-			webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri,
-                       	kTransportSequenceNumberExtensionId));
+		video_rev_config.rtp.extensions.push_back(webrtc::RtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri,kTransportSequenceNumberExtensionId));
 	}else{
-		video_rev_config.rtp.extensions.push_back(
-			webrtc::RtpExtension(webrtc::RtpExtension::kAbsSendTimeUri,
-						kAbsSendTimeExtensionId));
+		video_rev_config.rtp.extensions.push_back(webrtc::RtpExtension(webrtc::RtpExtension::kAbsSendTimeUri,kAbsSendTimeExtensionId));
 	}
-	video_rev_config.rtp.extensions.push_back(
-        webrtc::RtpExtension(webrtc::RtpExtension::kVideoContentTypeUri,
-                     	kVideoContentTypeExtensionId));
-    video_rev_config.rtp.extensions.push_back(
-		webrtc::RtpExtension(webrtc::RtpExtension::kVideoTimingUri, 
-						kVideoTimingExtensionId));
+	video_rev_config.rtp.extensions.push_back(webrtc::RtpExtension(webrtc::RtpExtension::kVideoContentTypeUri,kVideoContentTypeExtensionId));
+  video_rev_config.rtp.extensions.push_back(webrtc::RtpExtension(webrtc::RtpExtension::kVideoTimingUri,kVideoTimingExtensionId));
 	webrtc::VideoReceiveStream::Decoder decoder_config;
 	decoder_config.payload_name = "VP8";
 	decoder_config.payload_type = kPayloadTypeVP8;
 	decoder_config.decoder = webrtc::VP8Decoder::Create().release();
 	video_rev_config.decoders.push_back(decoder_config);
 
-    g_VideoReceiveStream = g_Call->CreateVideoReceiveStream(std::move(video_rev_config));
+	g_VideoReceiveStream = g_Call->CreateVideoReceiveStream(std::move(video_rev_config));
 	if (g_VideoReceiveStream != nullptr)
 	{
 		retval = SUCESS_RET;
@@ -579,9 +563,9 @@ void libwtk_audio_stream_mute(bool mute)
 void libwtk_start_audio_stream(void)
 {	
 	if((g_AudioSendStream != nullptr) && g_AudioReceiveStream != nullptr)
-    {
-    	g_AudioSendStream->Start();
-	    g_AudioReceiveStream->Start();
+	{
+		g_AudioSendStream->Start();
+		g_AudioReceiveStream->Start();
 		g_Call->SignalChannelNetworkState(webrtc::MediaType::AUDIO, webrtc::kNetworkUp);
 	}
 	else
@@ -590,8 +574,8 @@ void libwtk_start_audio_stream(void)
 void libwtk_start_video_stream(void)
 {
 	if((g_VideoSendStream != nullptr) && g_VideoReceiveStream != nullptr)
-    {
-    	g_VideoSendStream->Start();
+	{
+		g_VideoSendStream->Start();
 		g_VideoReceiveStream->Start();
 		g_Call->SignalChannelNetworkState(webrtc::MediaType::VIDEO, webrtc::kNetworkUp);
 	}
@@ -603,10 +587,10 @@ void libwtk_stop_audio_stream(void)
 	RTC_LOG(LS_INFO) << __FUNCTION__ << " , g_AudioSendStream or g_AudioReceiveStream ";
 
 	if((g_AudioSendStream != nullptr) && g_AudioReceiveStream != nullptr)
-    {
-    	RTC_LOG(LS_INFO) << __FUNCTION__ << " , g_AudioReceiveStream stop";
+	{
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " , g_AudioReceiveStream stop";
 		g_AudioReceiveStream->Stop();
-    	RTC_LOG(LS_INFO) << __FUNCTION__ << " , g_AudioSendStream stop";
+		RTC_LOG(LS_INFO) << __FUNCTION__ << " , g_AudioSendStream stop";
 		g_AudioSendStream->Stop();
 		
 		g_Call->SignalChannelNetworkState(webrtc::MediaType::AUDIO, webrtc::kNetworkDown);
@@ -617,7 +601,7 @@ void libwtk_stop_audio_stream(void)
 void libwtk_stop_video_stream(void)
 {
 	if((g_VideoSendStream != nullptr) && g_VideoReceiveStream != nullptr)
-    {
+	{
 		g_VideoSendStream->Stop();
 		g_VideoReceiveStream->Stop();
 		g_Call->SignalChannelNetworkState(webrtc::MediaType::VIDEO, webrtc::kNetworkDown);

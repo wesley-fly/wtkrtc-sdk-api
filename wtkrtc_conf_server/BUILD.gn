@@ -59,7 +59,7 @@ rtc_shared_library("WtkMediaEngineMixer") {
 rtc_executable("wtkrtc_conf_server") {
   sources = [
     "wtkrtc_conf_server/define.h",
-    "wtkrtc_conf_server//misc_lib.c",
+    "wtkrtc_conf_server/misc_lib.c",
     "wtkrtc_conf_server/misc_lib.h",
     "wtkrtc_conf_server/wtk-mixer.c",
     "wtkrtc_conf_server/wtk-mixer.h",

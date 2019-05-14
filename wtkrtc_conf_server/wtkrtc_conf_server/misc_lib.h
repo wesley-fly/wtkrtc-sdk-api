@@ -33,18 +33,16 @@
 
 static inline int inaddrcmp(const struct sockaddr_in *sin1, const struct sockaddr_in *sin2)
 {
-		return ((sin1->sin_addr.s_addr != sin2->sin_addr.s_addr) 
-			|| (sin1->sin_port != sin2->sin_port));
+  return ((sin1->sin_addr.s_addr != sin2->sin_addr.s_addr) || (sin1->sin_port != sin2->sin_port));
 }
 
 struct channel_info {
-	int sock;
-	int channel_num;
-	time_t updateTime;
-	struct sockaddr_in addr;
-	struct channel_info *  next;
+  int sock;
+  int channel_num;
+  time_t updateTime;
+  struct sockaddr_in addr;
+  struct channel_info *  next;
 };
-
 
 extern int traceLevel;
 extern int useSyslog;
