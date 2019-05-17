@@ -21,10 +21,10 @@ config("wtk_mixer_warning"){
 rtc_shared_library("WtkMediaEngineMixer") {
 #rtc_source_set("WtkMediaEngineMixer") {
   sources = [
-    "lib_wtkrtc_conf/wtk_rtc_mixer_api.cc",
-    "lib_wtkrtc_conf/wtk_rtc_mixer_api.h",
-    "lib_wtkrtc_conf/fakeaudiocapturemodule.cc",
-    "lib_wtkrtc_conf/fakeaudiocapturemodule.h",
+    "wtkrtc_mixer_api/wtk_rtc_mixer_api.cc",
+    "wtkrtc_mixer_api/wtk_rtc_mixer_api.h",
+    "wtkrtc_mixer_api/fakeaudiocapturemodule.cc",
+    "wtkrtc_mixer_api/fakeaudiocapturemodule.h",
   ]
   deps = [
     "//call:call",
@@ -56,13 +56,13 @@ rtc_shared_library("WtkMediaEngineMixer") {
   #  ]
 }
 
-rtc_executable("wtkrtc_conf_server") {
+rtc_executable("wtk-mixer") {
   sources = [
-    "wtkrtc_conf_server/define.h",
-    "wtkrtc_conf_server/misc_lib.c",
-    "wtkrtc_conf_server/misc_lib.h",
-    "wtkrtc_conf_server/wtk-mixer.c",
-    "wtkrtc_conf_server/wtk-mixer.h",
+    "wtk-mixserver-1.0/define.h",
+    "wtk-mixserver-1.0/misc_lib.c",
+    "wtk-mixserver-1.0/misc_lib.h",
+    "wtk-mixserver-1.0/wtk-mixer.c",
+    "wtk-mixserver-1.0/wtk-mixer.h",
   ]
 
   deps = [

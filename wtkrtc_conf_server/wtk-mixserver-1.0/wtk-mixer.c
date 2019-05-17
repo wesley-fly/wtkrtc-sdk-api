@@ -349,58 +349,58 @@ static int run_loop( ms_info_t * ms_info )
 }
 int main( int argc, char * const argv[] )
 {
-  ms_info_t ms_info;
-  int bind_any = 1;
-  int opt;
-  init_ms_info( &ms_info );
-  //libvd_delete_video_channel(0);
-  while((opt = getopt_long(argc, argv, "fl:a:vh", long_options, NULL)) != -1) 
-  {
-    switch (opt) 
-    {
-      case 'l': /* local-port */
-        ms_info.mixer_port = atoi(optarg);
-        break; 	  	      	  	    
-      case 'a': /* local-ip */
-        strcpy(ms_info.mixer_ip, optarg);
-        bind_any = 0;
-        break;	  	     	  	             
-      case 'f': /* foreground */
-        ms_info.daemon = 0;
-        break;
-      case 'h': /* help */
-        exit_help(argc, argv);
-        break;
-      case 'v': /* verbose */
-        ++traceLevel;
-        break;
-    }
-  }
+	ms_info_t ms_info;
+	int bind_any = 1;
+	int opt;
+	init_ms_info( &ms_info );
+//libvd_delete_video_channel(0);
+	while((opt = getopt_long(argc, argv, "fl:a:vh", long_options, NULL)) != -1) 
+	{
+		switch (opt) 
+		{
+	  	  	case 'l': /* local-port */
+	  	  	    ms_info.mixer_port = atoi(optarg);
+	  	  	    break; 	  	      	  	    
+	  	  	case 'a': /* local-ip */
+	  	  	    strcpy(ms_info.mixer_ip, optarg);
+	  	  	    bind_any = 0;
+	  	  	    break;	  	     	  	             
+	  	  	case 'f': /* foreground */
+	  	  	    ms_info.daemon = 0;
+	  	  	    break;
+	  	  	case 'h': /* help */
+	  	  	    exit_help(argc, argv);
+	  	  	    break;
+	  	  	case 'v': /* verbose */
+	  	  	    ++traceLevel;
+	  	  	    break;
+		}
+	}
 	if (ms_info.daemon)
-  {
-    useSyslog=1; /* traceEvent output now goes to syslog. */
-    if ( -1 == daemon( 0, 0 ) )
-    {
-      TraceEvent( TRACE_ERROR, "Father(Pid=%u): Failed to become daemon.", getpid() );
-      exit(-5);
-    }
-    else
-    {
-      TraceEvent( TRACE_NORMAL, "Father(Pid=%u): traceLevel is %d", getpid(), traceLevel);
-    }
-  }
-  TraceEvent( TRACE_NORMAL, "Mixer Server version is [%s],data_hdr_len is 28", MS_VERSION_NUM);
+	{
+		useSyslog=1; /* traceEvent output now goes to syslog. */
+		if ( -1 == daemon( 0, 0 ) )
+		{
+			TraceEvent( TRACE_ERROR, "Father(Pid=%u): Failed to become daemon.", getpid() );
+			exit(-5);
+		}
+		else
+		{
+			TraceEvent( TRACE_NORMAL, "Father(Pid=%u): traceLevel is %d", getpid(), traceLevel);
+		}
+	}
+	TraceEvent( TRACE_NORMAL, "Mixer Server version is [%s],data_hdr_len is 28", MS_VERSION_NUM);
 
-  ms_info.mixer_fd = setup_ms_socket(ms_info.mixer_port, ms_info.mixer_ip, bind_any );
-  if ( -1 == ms_info.mixer_fd )
-  {
-    TraceEvent( TRACE_ERROR, "Father(Pid=%u): Failed to open main socket. %s", getpid(), strerror(errno) );
-    exit(-2);
-  }
-  else
-  {
-    TraceEvent( TRACE_NORMAL, "Father(Pid=%u): MixingServer is listening on UDP %u (main)", getpid(), ms_info.mixer_port);
-  }
+	ms_info.mixer_fd = setup_ms_socket(ms_info.mixer_port, ms_info.mixer_ip, bind_any );
+	if ( -1 == ms_info.mixer_fd )
+	{
+		TraceEvent( TRACE_ERROR, "Father(Pid=%u): Failed to open main socket. %s", getpid(), strerror(errno) );
+		exit(-2);
+	}
+	else
+	{
+		TraceEvent( TRACE_NORMAL, "Father(Pid=%u): MixingServer is listening on UDP %u (main)", getpid(), ms_info.mixer_port);
+	}
 	
-  return run_loop(&ms_info);
+	return run_loop(&ms_info);
 }
