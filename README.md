@@ -1,9 +1,10 @@
 # wtkrtc_sdk_api
-This wtkrtc sdk api based WebRTC r67 release version, will update the based WebRTC version from time to time.
-
-This native sdk api written in c/c++, and the files & code directories info as below:
+This wtkrtc sdk api based WebRTC r67 release version, this native sdk api was written by c/c++, and the files & code directories info as below:
 + **README.md<br>**
 This file.
+
++ **webrtc_r67_patch<br>**
+The patch for webrtc r67, include video capture, render, and SW/HW OpenH264 codec.
 
 + **wtkrtc_linux_mac_loopback<br>**
 Loopback test this api at Linux/macOS platform.
