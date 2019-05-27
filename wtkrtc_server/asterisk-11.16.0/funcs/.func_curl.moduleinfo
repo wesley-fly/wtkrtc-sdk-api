@@ -1,0 +1,4 @@
+<member name="func_curl" displayname="Load external URL" remove_on_change="funcs/func_curl.o funcs/func_curl.so">
+	<depend>curl</depend>
+	<support_level>core</support_level>
+</member>

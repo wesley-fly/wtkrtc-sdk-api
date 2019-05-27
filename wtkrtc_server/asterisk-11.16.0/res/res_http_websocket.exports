@@ -1,0 +1,19 @@
+{
+	global:
+		*ast_websocket_add_protocol;
+		*ast_websocket_remove_protocol;
+		*ast_websocket_read;
+		*ast_websocket_write;
+		*ast_websocket_close;
+		*ast_websocket_reconstruct_enable;
+		*ast_websocket_reconstruct_disable;
+		*ast_websocket_ref;
+		*ast_websocket_unref;
+		*ast_websocket_fd;
+		*ast_websocket_remote_address;
+		*ast_websocket_is_secure;
+		*ast_websocket_set_nonblock;
+		*ast_websocket_set_timeout;
+	local:
+		*;
+};

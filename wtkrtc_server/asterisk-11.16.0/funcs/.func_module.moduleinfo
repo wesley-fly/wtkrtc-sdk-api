@@ -1,0 +1,3 @@
+<member name="func_module" displayname="Checks if Asterisk module is loaded in memory" remove_on_change="funcs/func_module.o funcs/func_module.so">
+	<support_level>core</support_level>
+</member>

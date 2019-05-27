@@ -1,0 +1,3 @@
+<member name="app_festival" displayname="Simple Festival Interface" remove_on_change="apps/app_festival.o apps/app_festival.so">
+	<support_level>extended</support_level>
+</member>

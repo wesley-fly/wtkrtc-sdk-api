@@ -1,9 +1,7 @@
-
 #include "tbcp.h"
-
 #ifdef ANDROID 
-	#include <android/log.h>
-	#include<errno.h>
+#include <android/log.h>
+#include<errno.h>
 #endif 
 
 //static TBCP_received_callback  TBCPRecvr = NULL; 
@@ -11,19 +9,14 @@
 int TBCP_recv_callback( int channel, unsigned char subType,
         unsigned int name, const unsigned char* data,
         unsigned short dataLengthInBytes){
-
 	if (subType>15)
 		return -1; 
-	
 }
 
 
 void TBCP_init(){
-
 	//libve_set_PTT_RTCP_callback(TBCP_recv_callback); 
 }
-
-
 
 static int TBCP_generate_ssrc (char * freeppId){
 	int id ; 
@@ -68,7 +61,6 @@ static int  TBCP_create_send_data (char * tbcp_cmd , TBCP_Data * data){
 
 
 void TBCP_reset_data(TBCP_Data *  tbcpData){
-
 	if (tbcpData)
 		memset(tbcpData, 0 , sizeof(TBCP_Data)); 
 }
@@ -76,45 +68,43 @@ void TBCP_reset_data(TBCP_Data *  tbcpData){
 
 
 void  TBCP_fill_data(TBCP_Data *  tbcpData, char * sessionID ,char * freeppID,TBCP_Type type){
+	if (!tbcpData)
+		return ; 
+	STRCPY(tbcpData->sessionid,sessionID, 33);
+	STRCPY(tbcpData->freeppid,freeppID, 31);
 
-		if (!tbcpData)
-			return ; 
-		STRCPY(tbcpData->sessionid,sessionID, 33);
-		STRCPY(tbcpData->freeppid,freeppID, 31);
-	
-		tbcpData->type = type; 
-			
-		switch(tbcpData->type){
-			case TB_Enter :
-			case TB_Release:
-			case TB_Exit:
-			default :
-			break;
-		}
+	tbcpData->type = type; 
+		
+	switch(tbcpData->type){
+		case TB_Enter :
+		case TB_Release:
+		case TB_Exit:
+		default :
+		break;
+	}
 		
 	return; 
 }
 
 
 int TBCP_sendCmd( SOCKET socket , TBCP_Data *  tbcpData ){
+	char tbcp_cmd[512] ; 
+	int ret = 0; 
 
-		char tbcp_cmd[512] ; 
-		int ret = 0; 
+	if (socket <0 || !tbcpData )
+	return -1; 
 
-		if (socket <0 || !tbcpData )
-		return -1; 
+	TBCP_create_send_data(tbcp_cmd, tbcpData); 
+	ret = send (socket,tbcp_cmd,TBCP_HEAD_LEN+2+sizeof(TBCP_Data),0) ;
+	if (ret <= 0){
+		//int error = 0;
+		
+		//error = WSAGetLastError();
 
-		TBCP_create_send_data(tbcp_cmd, tbcpData); 
-		ret = send (socket,tbcp_cmd,TBCP_HEAD_LEN+2+sizeof(TBCP_Data),0) ;
-		if (ret <= 0){
-			//int error = 0;
-			
-			//error = WSAGetLastError();
-
-			return -1;
-		}
-		//TBCP_reset_data(tbcpData); 
-		return ret;
+		return -1;
+	}
+	//TBCP_reset_data(tbcpData); 
+	return ret;
 }
 
 
@@ -129,15 +119,15 @@ int TBCP_getInfo(TBCP_Info *info ,char * data ,int length){
 	header = ntohl(((unsigned int *)(data))[0]);
 
 	version = (header & 0xa0000000)>>30;
-    	subtype = (header & 0x1f000000)>>24;
-    	pt = (header & 0xff0000)>>16;
+	subtype = (header & 0x1f000000)>>24;
+	pt = (header & 0xff0000)>>16;
 
-		info->type = (TBCP_Type)subtype;
-		info->length  = length-TBCP_HEAD_LEN; 
+	info->type = (TBCP_Type)subtype;
+	info->length  = length-TBCP_HEAD_LEN; 
 
-		if (info->length>0)
-			memcpy(info->data , data+TBCP_HEAD_LEN,info->length);
-    return 0;
+	if (info->length>0)
+		memcpy(info->data , data+TBCP_HEAD_LEN,info->length);
+	return 0;
 }
 
 

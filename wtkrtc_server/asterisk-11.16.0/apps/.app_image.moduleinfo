@@ -1,0 +1,3 @@
+<member name="app_image" displayname="Image Transmission Application" remove_on_change="apps/app_image.o apps/app_image.so">
+	<support_level>extended</support_level>
+</member>

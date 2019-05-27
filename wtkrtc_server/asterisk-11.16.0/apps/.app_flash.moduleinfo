@@ -1,0 +1,4 @@
+<member name="app_flash" displayname="Flash channel application" remove_on_change="apps/app_flash.o apps/app_flash.so">
+	<depend>dahdi</depend>
+	<support_level>core</support_level>
+</member>

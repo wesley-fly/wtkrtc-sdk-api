@@ -1,0 +1,3 @@
+<member name="func_base64" displayname="base64 encode/decode dialplan functions" remove_on_change="funcs/func_base64.o funcs/func_base64.so">
+	<support_level>core</support_level>
+</member>

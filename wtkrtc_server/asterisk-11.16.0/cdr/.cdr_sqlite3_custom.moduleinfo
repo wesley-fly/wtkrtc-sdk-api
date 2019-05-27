@@ -1,0 +1,4 @@
+<member name="cdr_sqlite3_custom" displayname="SQLite3 Custom CDR Module" remove_on_change="cdr/cdr_sqlite3_custom.o cdr/cdr_sqlite3_custom.so">
+	<depend>sqlite3</depend>
+	<support_level>extended</support_level>
+</member>

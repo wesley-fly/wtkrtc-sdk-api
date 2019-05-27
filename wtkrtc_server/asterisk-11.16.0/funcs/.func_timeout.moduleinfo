@@ -1,0 +1,3 @@
+<member name="func_timeout" displayname="Channel timeout dialplan functions" remove_on_change="funcs/func_timeout.o funcs/func_timeout.so">
+	<support_level>core</support_level>
+</member>

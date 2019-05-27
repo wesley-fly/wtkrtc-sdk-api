@@ -98,46 +98,21 @@ pthread_create(&thread, NULL, func, args)
 #endif
 //Xiaofan start
 #define	WTKCALL_AUDIO_CODECS         	( IAXC_FORMAT_OPUS)
-#define WTKCALL_AUDIO_PREFERED       	( IAXC_FORMAT_OPUS )
-#define	WTKCALL_VIDEO_CODECS	   		( IAXC_FORMAT_H264 )
-#define WTKCALL_VIDEO_PREFERED  		( IAXC_FORMAT_H264 )
-#define RTP_HEADER_VERSION 				2
-#define RTP_HEADER_SIZE    				12
-#define RTP_PADDING         			0x20
-#define RTP_PADDING_PARTCB  			0x40
-#define RTP_PADDING_ENCRYPT 			0x80
-#define PKTSIZE_ILBC_DEFAULT  			50
-#define PKTSIZE_G729A_DEFAULT 			30
-#define FORMAT_G729A_PT					18
-#define FORMAT_OPUS_PT					109
-#define FORMAT_ILBC_PT					102
-
-#define IAXC_MEDIA_STATE_NONE					0  /* None effect*/
-#define IAXC_MEDIA_STATE_MUTEMULTIPARTY			(1<<1)  /* Muted by the presider of a multiparty call*/
-#define IAXC_MEDIA_STATE_MIXED                  (1<<2)  /* multiparty call */
-#define IAXC_MEDIA_STATE_RECAUDIO               (1<<3)  /* audio stream recorded */
-#define IAXC_MEDIA_STATE_RECVIDEO               (1<<4)  /* video stream recorded */
-#define IAXC_MEDIA_STATE_HOLD                   (1<<5)  /* call hold */
-#define IAXC_MEDIA_STATE_MUTE                   (1<<6)  /* call muted */ 
-#define IAXC_MEDIA_STATE_REMOTEVIDEO            (1<<7)  /* receive remote video */
-#define IAXC_MEDIA_STATE_LOCALVIDEO             (1<<8)  /* send local video */
-#define IAXC_MEDIA_STATE_NORTP					(1<<9)  /* send voice data w/o RTP header */
-#define IAXC_MEDIA_STATE_FORWARD				(1<<10) /* forward-dir call */
+#define WTKCALL_AUDIO_PREFERED       	( IAXC_FORMAT_OPUS)
+#define	WTKCALL_VIDEO_CODECS	   		( IAXC_FORMAT_VP8 )
+#define WTKCALL_VIDEO_PREFERED  		( IAXC_FORMAT_VP8 )
 
 #define MAX_SHORT          				65536
 
-enum _RTP_Audio_Format
-{
-    RTP_FORMAT_ILBC=0,	/* iLBC Audio with SN and TS extension */
-    RTP_FORMAT_G729A=1,	/* ITU-T G.729 */
-    RTP_FORMAT_OPUS=2, /* OPUS codec*/
-};
+#define HANGUP_SELF		    (1<<0)
+#define HANGUP_TIMEOUT      (1<<1)
+
 #define IAXC_ERROR  IAXC_TEXT_TYPE_ERROR
 #define IAXC_STATUS IAXC_TEXT_TYPE_STATUS
 #define IAXC_NOTICE IAXC_TEXT_TYPE_NOTICE
 
-#define DEFAULT_CALLERID_NAME    "Wattertek Custom"
-#define DEFAULT_CALLERID_NUMBER  "1234567890"
+#define DEFAULT_CALLERID_NAME    "lixiaofan0122@gmail.com"
+#define DEFAULT_CALLERID_NUMBER  "+8618629586538"
 
 //Xiaofan end
 int selected_call; // XXX to be protected by mutex?
@@ -149,7 +124,6 @@ uint64_t video_format_capability;
 uint64_t video_format_preferred;
 //int new_callid; 
 
-
 void os_init(void);
 void iaxci_usermsg(int type, const char *fmt, ...);
 void iaxci_do_levels_callback(float input, float output);
@@ -158,6 +132,7 @@ void iaxci_do_audio_callback(int callNo, unsigned int ts, int remote,
 
 #include "iaxclient.h"
 #include "../wtkcall_lib.h"
+#include "../../wtk_rtc_api/wtk_rtc_api.h"
 
 #define MAX_TRUNK_LEN	(1<<16)
 #define MAX_NO_SLICES	32
@@ -174,6 +149,8 @@ struct wtkState
 	int reason;
 	short hangup;			  // whether the hangup activity is invoked by self, and why hangup
 };
+
+//extern struct iax_session;
 
 struct iaxc_call {
 	/* the "state" of this call */
@@ -202,6 +179,13 @@ struct iaxc_call {
 	
 	//WTK
 	struct wtkState sm;
+	int	 mstate;	   // state of media stream's transport, e.g. mixed, hold, resume, mute, recording...
+	// for call center
+	unsigned short	rtp_seqno;
+	unsigned int	rtp_ts;
+
+	unsigned short	vrtp_seqno;
+	unsigned int	vrtp_ts;
 };
 
 /* post an event to the application */
@@ -214,12 +198,18 @@ extern int iaxci_prioboostend(void);
 long iaxci_usecdiff(struct timeval *t0, struct timeval *t1);
 long iaxci_msecdiff(struct timeval *t0, struct timeval *t1);
 
-extern void  wtkcall_set_jni_event_callback( wtkcall_jni_event_callback_t func );
+extern void  wtkcall_set_iax_event_callback( wtkcall_iax_event_callback_t func );
 extern void  wtkcall_perform_registration_callback(int id, int reply);
 extern void  wtkcall_perform_state_callback(struct wtkState* call, int callNo, int state, char* name, char* number);
-extern void  wtkcall_perform_message_callback(struct wtkState* call, char *message);
+extern void  wtkcall_perform_message_callback(int callNo,char *message);
 extern void  wtkcall_perform_text_callback(char* text);
-//extern int   get_new_callid();
+extern int iaxc_remove_registration_by_id(int id);
+extern void iaxc_clear_call(int toDump);
+extern void iaxc_dump_one_call(int callNo);
+extern void iaxc_note_activity(int callNo);
+extern void put_iaxc_lock(void);
+extern void iaxci_usermsg(int type, const char *fmt, ...);
+extern int iaxc_push_audio(void *data, unsigned int size, unsigned int samples);
 
 #ifdef __cplusplus
 }

@@ -1,0 +1,3 @@
+<member name="func_jitterbuffer" displayname="Jitter buffer for read side of channel." remove_on_change="funcs/func_jitterbuffer.o funcs/func_jitterbuffer.so">
+	<support_level>core</support_level>
+</member>

@@ -1,0 +1,4 @@
+<member name="test_format_api" displayname="ast_format API Tests" remove_on_change="tests/test_format_api.o tests/test_format_api.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

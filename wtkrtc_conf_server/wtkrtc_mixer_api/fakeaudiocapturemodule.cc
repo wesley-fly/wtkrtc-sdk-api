@@ -270,7 +270,7 @@ wav_writer_2.WriteSamples((int16_t*)volume,1 * 480);
 */
 /*
 NOTE:::::
-Re-write this function and use this by transport mixed frame@xiaofan.lee@wattertek.com
+Re-write this function and use this by transport mixed frame@lixiaofan0122@gmail.com
 */
 int32_t FakeAudioCaptureModule::SpeakerVolume(uint32_t* volume) const {
   //RTC_NOTREACHED();

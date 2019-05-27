@@ -1,0 +1,4 @@
+<member name="test_linkedlists" displayname="Test Linked Lists" remove_on_change="tests/test_linkedlists.o tests/test_linkedlists.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

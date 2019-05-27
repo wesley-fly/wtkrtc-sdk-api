@@ -1,0 +1,3 @@
+<member name="app_playtones" displayname="Playtones Application" remove_on_change="apps/app_playtones.o apps/app_playtones.so">
+	<support_level>core</support_level>
+</member>

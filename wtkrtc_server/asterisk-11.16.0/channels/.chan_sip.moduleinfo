@@ -1,0 +1,6 @@
+<member name="chan_sip" displayname="Session Initiation Protocol (SIP)" remove_on_change="channels/chan_sip.o channels/chan_sip.so">
+	<use type="module">res_crypto</use>
+	<use type="module">res_http_websocket</use>
+	<depend>chan_local</depend>
+	<support_level>core</support_level>
+</member>

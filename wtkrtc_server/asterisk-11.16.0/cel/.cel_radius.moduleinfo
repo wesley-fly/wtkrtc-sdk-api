@@ -1,0 +1,4 @@
+<member name="cel_radius" displayname="RADIUS CEL Backend" remove_on_change="cel/cel_radius.o cel/cel_radius.so">
+	<depend>radius</depend>
+	<support_level>extended</support_level>
+</member>

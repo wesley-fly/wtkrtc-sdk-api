@@ -353,27 +353,27 @@ int main( int argc, char * const argv[] )
 	int bind_any = 1;
 	int opt;
 	init_ms_info( &ms_info );
-//libvd_delete_video_channel(0);
+	//libvd_delete_video_channel(0);
 	while((opt = getopt_long(argc, argv, "fl:a:vh", long_options, NULL)) != -1) 
 	{
 		switch (opt) 
 		{
-	  	  	case 'l': /* local-port */
-	  	  	    ms_info.mixer_port = atoi(optarg);
-	  	  	    break; 	  	      	  	    
-	  	  	case 'a': /* local-ip */
-	  	  	    strcpy(ms_info.mixer_ip, optarg);
-	  	  	    bind_any = 0;
-	  	  	    break;	  	     	  	             
-	  	  	case 'f': /* foreground */
-	  	  	    ms_info.daemon = 0;
-	  	  	    break;
-	  	  	case 'h': /* help */
-	  	  	    exit_help(argc, argv);
-	  	  	    break;
-	  	  	case 'v': /* verbose */
-	  	  	    ++traceLevel;
-	  	  	    break;
+	  	case 'l': /* local-port */
+	  	    ms_info.mixer_port = atoi(optarg);
+	  	    break; 	  	      	  	    
+	  	case 'a': /* local-ip */
+	  	    strcpy(ms_info.mixer_ip, optarg);
+	  	    bind_any = 0;
+	  	    break;	  	     	  	             
+	  	case 'f': /* foreground */
+	  	    ms_info.daemon = 0;
+	  	    break;
+	  	case 'h': /* help */
+	  	    exit_help(argc, argv);
+	  	    break;
+	  	case 'v': /* verbose */
+	  	    ++traceLevel;
+	  	    break;
 		}
 	}
 	if (ms_info.daemon)

@@ -1,0 +1,6 @@
+<member name="cdr_mysql" displayname="MySQL CDR Backend" remove_on_change="addons/cdr_mysql.o addons/cdr_mysql.so">
+	<depend>mysqlclient</depend>
+	<defaultenabled>no</defaultenabled>
+	<support_level>deprecated</support_level>
+	<replacement>cdr_adaptive_odbc</replacement>
+</member>

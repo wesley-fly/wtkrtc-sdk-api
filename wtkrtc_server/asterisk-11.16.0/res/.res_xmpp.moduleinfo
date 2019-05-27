@@ -1,0 +1,5 @@
+<member name="res_xmpp" displayname="Asterisk XMPP Interface" remove_on_change="res/res_xmpp.o res/res_xmpp.so">
+	<depend>iksemel</depend>
+	<use type="external">openssl</use>
+	<support_level>core</support_level>
+</member>

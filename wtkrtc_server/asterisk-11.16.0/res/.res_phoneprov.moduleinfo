@@ -1,0 +1,3 @@
+<member name="res_phoneprov" displayname="HTTP Phone Provisioning" remove_on_change="res/res_phoneprov.o res/res_phoneprov.so">
+	<support_level>extended</support_level>
+</member>

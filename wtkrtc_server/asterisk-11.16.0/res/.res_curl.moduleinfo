@@ -1,0 +1,4 @@
+<member name="res_curl" displayname="cURL Resource Module" remove_on_change="res/res_curl.o res/res_curl.so">
+	<depend>curl</depend>
+	<support_level>core</support_level>
+</member>

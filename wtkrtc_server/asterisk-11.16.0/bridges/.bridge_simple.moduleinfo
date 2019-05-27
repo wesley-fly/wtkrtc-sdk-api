@@ -1,0 +1,3 @@
+<member name="bridge_simple" displayname="Simple two channel bridging module" remove_on_change="bridges/bridge_simple.o bridges/bridge_simple.so">
+	<support_level>core</support_level>
+</member>

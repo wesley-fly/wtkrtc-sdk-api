@@ -1,0 +1,4 @@
+<member name="app_saycounted" displayname="Decline words according to channel language" remove_on_change="apps/app_saycounted.o apps/app_saycounted.so">
+	<defaultenabled>no</defaultenabled>
+	<support_level>extended</support_level>
+</member>

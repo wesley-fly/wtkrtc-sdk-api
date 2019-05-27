@@ -1,0 +1,4 @@
+<member name="cdr_radius" displayname="RADIUS CDR Backend" remove_on_change="cdr/cdr_radius.o cdr/cdr_radius.so">
+	<depend>radius</depend>
+	<support_level>extended</support_level>
+</member>

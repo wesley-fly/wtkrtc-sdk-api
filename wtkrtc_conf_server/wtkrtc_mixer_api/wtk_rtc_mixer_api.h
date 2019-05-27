@@ -8,19 +8,19 @@
 #define MAX_VIDEO_PARTICIPANT 4
 
 enum videoCodec{
-    kWtkVideoCodecVP8 = 0,
-    kWtkVideoCodecVP9 = 1,
-    kWtkVideoCodecH264 = 2,
-    kWtkVideoCodecH264Auto = 3,
+	kWtkVideoCodecVP8 = 0,
+	kWtkVideoCodecVP9 = 1,
+	kWtkVideoCodecH264 = 2,
+	kWtkVideoCodecH264Auto = 3,
 };
 
 enum classPayloadTypes{
 	kWtkPayloadTypeRtx = 98,
-    kWtkPayloadTypeIlbc = 97,
-    kWtkPayloadTypeOpus = 107,
-    kWtkPayloadTypeH264 = 99,
-    kWtkPayloadTypeVP8 = 100,
-    kWtkPayloadTypeVP9 = 108,
+	kWtkPayloadTypeIlbc = 97,
+	kWtkPayloadTypeOpus = 107,
+	kWtkPayloadTypeH264 = 99,
+	kWtkPayloadTypeVP8 = 100,
+	kWtkPayloadTypeVP9 = 108,
 };
 
 #define RTC_EXPORT __attribute__((visibility("default")))
@@ -32,7 +32,7 @@ extern "C" {
 #endif
 RTC_EXPORT extern void 	libwtk_set_mixer_audio_transport(audio_transport_mixer_callback_t func);
 RTC_EXPORT extern void 	libwtk_set_mixer_video_transport(video_transport_mixer_callback_t func);
-RTC_EXPORT extern int	libwtk_mixer_decode_audio(uint8_t* buf, int buflen,int channel);
+RTC_EXPORT extern int		libwtk_mixer_decode_audio(uint8_t* buf, int buflen,int channel);
 RTC_EXPORT extern int 	libwtk_mixer_decode_video(uint8_t* buf, int buflen,int channel);
 RTC_EXPORT extern void	libwtk_mixer_init(void);
 RTC_EXPORT extern void	libwtk_mixer_deinit(void);

@@ -1,0 +1,3 @@
+<member name="res_mutestream" displayname="Mute audio stream resources" remove_on_change="res/res_mutestream.o res/res_mutestream.so">
+	<support_level>core</support_level>
+</member>

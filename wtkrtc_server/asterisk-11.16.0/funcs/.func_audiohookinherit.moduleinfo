@@ -1,0 +1,3 @@
+<member name="func_audiohookinherit" displayname="Audiohook inheritance function" remove_on_change="funcs/func_audiohookinherit.o funcs/func_audiohookinherit.so">
+	<support_level>core</support_level>
+</member>

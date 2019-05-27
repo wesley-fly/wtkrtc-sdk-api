@@ -1,0 +1,4 @@
+<member name="test_netsock2" displayname="Netsock2 test module" remove_on_change="tests/test_netsock2.o tests/test_netsock2.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

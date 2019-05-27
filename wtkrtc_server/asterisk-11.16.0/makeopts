@@ -1,0 +1,331 @@
+# NOTE: Names of _INCLUDE and _LIB entries in this file must be
+#       the exact uppercase equivalents of the names used for
+#       dependencies in menuselect for the same package.
+
+CC=gcc
+HOST_CC=cc
+BUILD_CC=cc
+CXX=g++
+
+INSTALL=/usr/bin/install -c
+AWK=gawk
+BISON=/usr/bin/bison
+FLEX=/usr/bin/flex
+GREP=/usr/bin/grep
+PYTHON=/usr/bin/python
+MAKE=make
+AR=ar
+RANLIB=ranlib
+FIND=/usr/bin/find
+COMPRESS=/usr/bin/compress
+BASENAME=/usr/bin/basename
+SHELL=/bin/sh
+LN=/usr/bin/ln
+DOT=/usr/bin/dot
+STRIP=strip
+WGET=/usr/bin/wget
+FETCH=
+DOWNLOAD=/usr/bin/wget
+SOUNDS_CACHE_DIR=
+RUBBER=:
+CATDVI=:
+KPATHSEA=/usr/bin/kpsewhich
+XMLLINT=/usr/bin/xmllint
+XMLSTARLET=/usr/bin/xmlstarlet
+MD5=md5sum
+SHA1SUM=/usr/bin/sha1sum
+OPENSSL=/usr/bin/openssl
+LDCONFIG=/usr/sbin/ldconfig
+GIT=/usr/bin/git
+
+BUILD_PLATFORM=x86_64-unknown-linux-gnu
+BUILD_CPU=x86_64
+BUILD_VENDOR=unknown
+BUILD_OS=linux-gnu
+
+HOST_PLATFORM=x86_64-unknown-linux-gnu
+HOST_CPU=x86_64
+HOST_VENDOR=unknown
+HOST_OS=linux-gnu
+
+OSARCH=linux-gnu
+OSREV=3.10.0-957.12.2.el7.x86_64
+
+GC_CFLAGS=-ffunction-sections
+GC_LDFLAGS=-Wl,--gc-sections
+
+PTHREAD_CFLAGS=-pthread
+PTHREAD_LIBS=
+
+CONFIG_CFLAGS=
+CONFIG_LDFLAGS=
+
+GNU_LD=1
+WEAKREF=0
+HAVE_DYNAMIC_LIST=1
+
+prefix = /var/lib64/asterisk-11.16.0-wtkrtc
+exec_prefix = ${prefix}
+
+datarootdir = ${prefix}/share
+datadir = ${datarootdir}
+includedir = ${prefix}/include
+infodir = ${datarootdir}/info
+libdir = ${exec_prefix}/lib
+libexecdir = ${exec_prefix}/libexec
+localstatedir = ${prefix}/var
+mandir = ${datarootdir}/man
+sbindir = ${exec_prefix}/sbin
+sharedstatedir = ${prefix}/com
+sysconfdir = ${prefix}/etc
+
+ASTSBINDIR = ${sbindir}
+ASTETCDIR = ${sysconfdir}/asterisk
+ASTHEADERDIR = ${includedir}/asterisk
+ASTLIBDIR = ${libdir}
+ASTMODDIR = ${libdir}/asterisk/modules
+ASTMANDIR = ${mandir}
+astvarlibdir = ${localstatedir}/lib/asterisk
+ASTVARLIBDIR = ${localstatedir}/lib/asterisk
+ASTDATADIR = ${astvarlibdir}
+ASTDBDIR = ${astvarlibdir}
+ASTKEYDIR = ${astvarlibdir}
+ASTSPOOLDIR = ${localstatedir}/spool/asterisk
+ASTLOGDIR = ${localstatedir}/log/asterisk
+ASTVARRUNDIR = ${localstatedir}/run/asterisk
+
+AST_DEVMODE=
+AST_DEVMODE_STRICT=
+NOISY_BUILD=
+
+AST_CODE_COVERAGE=no
+
+AST_ASTERISKSSL=yes
+
+AST_DECLARATION_AFTER_STATEMENT=-Wdeclaration-after-statement
+AST_TRAMPOLINES=-Wtrampolines
+AST_NO_STRICT_OVERFLOW=-fno-strict-overflow
+AST_SHADOW_WARNINGS=-Wshadow
+AST_NESTED_FUNCTIONS=
+AST_RPATH=-Wl,-rpath,${exec_prefix}/lib
+AST_FORTIFY_SOURCE=-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
+AST_MARCH_NATIVE=@AST_MARCH_NATIVE@
+
+ALSA_INCLUDE= 
+ALSA_LIB= -lasound -lm -ldl
+
+BFD_INCLUDE= 
+BFD_LIB= -lbfd 
+
+BLUETOOTH_INCLUDE= 
+BLUETOOTH_LIB= -lbluetooth 
+
+CURL_INCLUDE=
+CURL_LIB=-lcurl  
+
+CURSES_INCLUDE= 
+CURSES_LIB= -lcurses 
+CURSES_DIR=
+
+EDITLINE_LIB= -ltermcap 
+
+FREETDS_INCLUDE= 
+FREETDS_LIB= -lsybdb 
+
+GENERIC_ODBC_INCLUDE=
+GENERIC_ODBC_LIB=
+
+GMIME_INCLUDE=-D_LARGEFILE64_SOURCE -pthread -I/usr/include/gmime-2.6 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include  
+GMIME_LIB=-lgmime-2.6 -lgio-2.0 -lgobject-2.0 -lglib-2.0  
+
+HOARD_LIB=
+
+GSM_INTERNAL=yes
+GSM_INCLUDE=
+GSM_LIB=
+
+ILBC_INTERNAL=yes
+ILBC_INCLUDE=
+ILBC_LIB=
+
+GTK2_INCLUDE=-pthread -I/usr/include/gtk-2.0 -I/usr/lib64/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/pango-1.0 -I/usr/include/fribidi -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/harfbuzz -I/usr/include/freetype2 -I/usr/include/libpng15 -I/usr/include/uuid -I/usr/include/pixman-1 -I/usr/include/libdrm  
+GTK2_LIB=-lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgio-2.0 -lpangoft2-1.0 -lpangocairo-1.0 -lgdk_pixbuf-2.0 -lcairo -lpango-1.0 -lfontconfig -lgobject-2.0 -lglib-2.0 -lfreetype  
+
+ICAL_INCLUDE= -pthread
+ICAL_LIB= -lical 
+
+ICONV_INCLUDE= 
+ICONV_LIB= -liconv 
+
+IKSEMEL_INCLUDE=
+IKSEMEL_LIB=
+
+IMAP_TK_INCLUDE=-DUSE_SYSTEM_IMAP
+IMAP_TK_LIB=-lc-client 
+
+IODBC_INCLUDE=
+IODBC_LIB=
+
+JACK_INCLUDE= 
+JACK_LIB= -ljack 
+
+LDAP_INCLUDE= 
+LDAP_LIB= -lldap 
+
+LIBEDIT_INTERNAL=no
+LIBEDIT_INCLUDE=-I/usr/include/editline  
+LIBEDIT_LIB=-ledit -ltinfo  
+
+LUA_INCLUDE= 
+LUA_LIB= -llua -lm
+
+MYSQLCLIENT_INCLUDE=-I/usr/include/mysql -g -m64 -fPIC -g -fabi-version=2 -fno-omit-frame-pointer -fno-strict-aliasing
+MYSQLCLIENT_LIB=-L/usr/lib64/mysql -lmysqlclient -lpthread -lm -ldl
+
+NBS_INCLUDE= 
+NBS_LIB= -lnbs 
+
+NCURSES_INCLUDE= 
+NCURSES_LIB= -lncurses 
+NCURSES_DIR=
+
+NEON_INCLUDE=-I/usr/include/neon
+NEON_LIB=-Wl,-z,relro -lneon
+NEON29_INCLUDE=-I/usr/include/neon
+NEON29_LIB=-Wl,-z,relro -lneon
+
+NETSNMP_INCLUDE=-DNETSNMP_ENABLE_IPV6 -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_RPM_4_4_COMPAT -Ulinux -Dlinux=linux -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -fstack-protector -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/lib64/perl5/CORE -I. -I/usr/include
+NETSNMP_LIB=-Wl,-z,relro -Wl,-z,now -L/usr/lib64 -lnetsnmpmibs -lsensors -ldl -lrpm -lrpmio -lnetsnmpagent -lwrap -Wl,--enable-new-dtags -Wl,-rpath,/usr/lib64/perl5/CORE -lnetsnmp -lssl -lssl -lcrypto -lm
+
+NEWT_INCLUDE= 
+NEWT_LIB= -lnewt 
+
+OGG_INCLUDE= 
+OGG_LIB= -logg 
+
+OSPTK_INCLUDE=
+OSPTK_LIB=
+
+# ossaudio can optionally use ffmpeg, x11, sdl and sdl_image.
+# Because sdl_image in turn depends on sdl, we don't duplicate the include
+OSS_INCLUDE=   -I/usr/local/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT  
+OSS_LIB=  -L/usr/local/lib -Wl,-rpath,/usr/local/lib -lSDL -lpthread   -lX11 
+
+PGSQL_INCLUDE=-I/usr/include
+PGSQL_LIB=-L/usr/lib64 -lpq -lz
+
+POPT_INCLUDE= 
+POPT_LIB= -lpopt 
+
+PORTAUDIO_INCLUDE= 
+PORTAUDIO_LIB= -lportaudio 
+
+PRI_INCLUDE=
+PRI_LIB=
+
+RESAMPLE_INCLUDE= 
+RESAMPLE_LIB= -lresample -lm
+
+SS7_INCLUDE=
+SS7_LIB=
+
+OPENR2_INCLUDE=
+OPENR2_LIB=
+
+PWLIB_INCLUDE=
+PWLIB_LIB=
+
+COROSYNC_INCLUDE= 
+COROSYNC_LIB= -lcpg -lcfg
+
+RADIUS_INCLUDE=
+RADIUS_LIB=
+
+FFMPEG_INCLUDE=
+FFMPEG_LIB=
+
+X11_INCLUDE= 
+X11_LIB= -lX11 
+
+SDL_INCLUDE=-I/usr/local/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT
+SDL_LIB=-L/usr/local/lib -Wl,-rpath,/usr/local/lib -lSDL -lpthread
+
+SDL_IMAGE_INCLUDE=
+SDL_IMAGE_LIB=
+
+SPANDSP_INCLUDE=  
+SPANDSP_LIB= -lspandsp -ltiff
+
+SPEEX_INCLUDE= 
+SPEEX_LIB= -lspeex -lm
+
+SPEEXDSP_INCLUDE= 
+SPEEXDSP_LIB= -lspeexdsp -lm
+
+OPUS_INCLUDE= 
+OPUS_LIB= -lopus 
+
+SQLITE_INCLUDE=
+SQLITE_LIB=
+
+SQLITE3_INCLUDE= -pthread
+SQLITE3_LIB= -lsqlite3 
+
+SRTP_LIB= -lsrtp 
+SRTP_INCLUDE= 
+
+OPENSSL_INCLUDE= 
+OPENSSL_LIB= -lssl -lcrypto
+
+CRYPTO_INCLUDE= 
+CRYPTO_LIB= -lcrypto 
+
+TONEZONE_INCLUDE=
+TONEZONE_LIB=
+
+UNIXODBC_INCLUDE=
+UNIXODBC_LIB=
+
+UUID_INCLUDE= 
+UUID_LIB= -luuid 
+
+VORBIS_INCLUDE= 
+VORBIS_LIB= -lvorbis -lm -lvorbisenc -lvorbisfile
+
+VPB_INCLUDE=
+VPB_LIB=
+
+DAHDI_INCLUDE=
+
+ZLIB_INCLUDE= 
+ZLIB_LIB= -lz 
+
+ISDNNET_INCLUDE=
+ISDNNET_LIB=
+
+MISDN_INCLUDE=
+MISDN_LIB=
+
+SUPPSERV_INCLUDE=
+SUPPSERV_LIB=
+
+CAP_LIB=
+CAP_INCLUDE=
+
+BKTR_INCLUDE= 
+BKTR_LIB= -lc 
+
+TERMCAP_INCLUDE= 
+TERMCAP_LIB= -ltermcap 
+TERMCAP_DIR=
+
+LIBXML2_INCLUDE=
+LIBXML2_LIB=
+
+TINFO_INCLUDE= 
+TINFO_LIB= -ltinfo 
+TINFO_DIR=
+
+# if poll is not present, let the makefile know.
+POLL_AVAILABLE=1
+TIMERFD_INCLUDE=

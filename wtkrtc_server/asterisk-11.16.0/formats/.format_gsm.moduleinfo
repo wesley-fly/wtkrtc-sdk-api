@@ -1,0 +1,3 @@
+<member name="format_gsm" displayname="Raw GSM data" remove_on_change="formats/format_gsm.o formats/format_gsm.so">
+	<support_level>core</support_level>
+</member>

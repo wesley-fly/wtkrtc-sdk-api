@@ -1,0 +1,3 @@
+<member name="app_waitforring" displayname="Waits until first ring after time" remove_on_change="apps/app_waitforring.o apps/app_waitforring.so">
+	<support_level>extended</support_level>
+</member>

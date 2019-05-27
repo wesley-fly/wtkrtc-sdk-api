@@ -1,0 +1,3 @@
+<member name="app_senddtmf" displayname="Send DTMF digits Application" remove_on_change="apps/app_senddtmf.o apps/app_senddtmf.so">
+	<support_level>core</support_level>
+</member>

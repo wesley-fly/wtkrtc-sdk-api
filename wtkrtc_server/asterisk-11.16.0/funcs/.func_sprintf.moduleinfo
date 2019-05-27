@@ -1,0 +1,3 @@
+<member name="func_sprintf" displayname="SPRINTF dialplan function" remove_on_change="funcs/func_sprintf.o funcs/func_sprintf.so">
+	<support_level>core</support_level>
+</member>

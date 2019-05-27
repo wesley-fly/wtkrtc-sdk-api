@@ -1,0 +1,4 @@
+<member name="test_abstract_jb" displayname="Abstract JitterBuffer API Tests" remove_on_change="tests/test_abstract_jb.o tests/test_abstract_jb.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

@@ -1,0 +1,3 @@
+<member name="chan_multicast_rtp" displayname="Multicast RTP Paging Channel" remove_on_change="channels/chan_multicast_rtp.o channels/chan_multicast_rtp.so">
+	<support_level>core</support_level>
+</member>

@@ -1,0 +1,4 @@
+<member name="cel_pgsql" displayname="PostgreSQL CEL Backend" remove_on_change="cel/cel_pgsql.o cel/cel_pgsql.so">
+	<depend>pgsql</depend>
+	<support_level>extended</support_level>
+</member>

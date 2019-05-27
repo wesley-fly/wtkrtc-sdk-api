@@ -1,0 +1,8 @@
+<member name="chan_gtalk" displayname="Gtalk Channel Driver" remove_on_change="channels/chan_gtalk.o channels/chan_gtalk.so">
+        <defaultenabled>no</defaultenabled>
+	<depend>iksemel</depend>
+	<depend>res_jabber</depend>
+	<use type="external">openssl</use>
+	<support_level>deprecated</support_level>
+	<replacement>chan_motif</replacement>
+</member>

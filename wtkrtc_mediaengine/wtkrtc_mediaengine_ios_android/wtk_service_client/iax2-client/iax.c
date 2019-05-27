@@ -42,7 +42,7 @@
 #endif
 #endif
 
-#else //Linux
+#else //Linux & iOS
 
 #include <netdb.h>
 #include <sys/socket.h>
@@ -77,10 +77,12 @@
 #endif
 
 #include "iax-client.h"
-#include "md5.h"
+#include "iaxclient_lib.h"
 
-/* Define socket options for IAX2 sockets, based on platform
- * availability of flags */
+#include "md5.h"
+#include "../../wtk_rtc_api/wtk_rtc_api.h"
+
+/* Define socket options for IAX2 sockets, based on platform availability of flags */
 #if defined(WIN32)  ||  defined(_WIN32_WCE)
 #define IAX_SOCKOPTS 0
 #else
@@ -110,7 +112,6 @@
 /* Voice TS Prediction causes libiax2 to clean up the timestamps on
  * outgoing frames.  It works best with either continuous voice, or
  * callers who call iax_send_cng to indicate DTX for silence */
-#define USE_VOICE_TS_PREDICTION
 
 #define MIN_RETRY_TIME 10
 #define MAX_RETRY_TIME 4000
@@ -237,6 +238,10 @@ struct iax_session {
 
 	/* For linking if there are multiple connections */
 	struct iax_session *next;
+
+	int      rtpfd;       /* IPv4/IPv6 socket for rtp */
+    struct SOCKADDR_ST rtp_addr;
+	int      rtpbeatid; /* RTP heart-beat for long connection*/
 };
 
 char iax_errstr[256];
@@ -274,7 +279,7 @@ static int __debug(const char *file, int lineno, const char *func, const char *f
 	vsnprintf(error, 256, fmt, args);
     
 	va_end(args);
-    iaxci_usermsg(3, "%s line %d: %s", file, lineno, error);
+    iaxci_usermsg(3, "%s line %d: %s", func, lineno, error);  
 #endif
 	return 0;
 }
@@ -433,9 +438,10 @@ int iax_time_to_next_event(void)
 
 struct iax_session *iax_session_new(void)
 {
-	struct iax_session *s;
-	s = calloc(1, sizeof(struct iax_session));
+	struct iax_session* s = NULL;
+	s = (struct iax_session*)calloc(1, sizeof(struct iax_session));
 	if (s) {
+		memset(s,0,sizeof(struct iax_session));
 		/* Initialize important fields */
 		s->voiceformat = -1;
 		s->svoiceformat = -1;
@@ -456,11 +462,17 @@ struct iax_session *iax_session_new(void)
 		s->pingid = -1;
 		s->sindex = -1;
 		s->transfer_heartbeatid = -1;
+		s->rtpfd = -1;
+		s->rtpbeatid = -1;
 
 #ifdef USE_VOICE_TS_PREDICTION
 		s->nextpred = 0;
 #endif
 		sessions = s;
+	}
+	else
+	{
+		fprintf(stderr, "WTK-IAXCLIENT: iax_session_new FAILED !!!\n");
 	}
 	return s;
 }
@@ -505,7 +517,7 @@ static void add_ms(struct timeval *tv, int ms)
 
 static int calc_timestamp(struct iax_session *session, unsigned int ts, struct ast_frame *f)
 {
-	int ms;
+	unsigned int ms;
 	struct timeval tv;
 	int voice = 0;
 	int video = 0;
@@ -859,7 +871,7 @@ void iax_set_networking(iax_sendto_t st, iax_recvfrom_t rf)
 int iax_init(int preferredportno)
 {
 	int portno = preferredportno;
-
+	
 	if (iax_recvfrom == (iax_recvfrom_t)recvfrom)
 	{
 		struct sockaddr_in sin;
@@ -869,9 +881,6 @@ int iax_init(int preferredportno)
 
 		if (netfd > -1)
 		{
-			/* Okay, just don't do anything */
-			/*DEBU(G "Already initialized.");
-			return 0;*/
 			close(netfd);
 			netfd = -1;
 		}
@@ -1712,6 +1721,11 @@ static void destroy_session(struct iax_session *session)
 				prev->next = session->next;
 			else
 				sessions = session->next;
+			
+			if(session->rtpfd>0)  {
+				close(session->rtpfd);
+				session->rtpfd = -1;
+			}
 
 			free(session);
 			return;
@@ -1792,7 +1806,18 @@ int iax_send_voice(struct iax_session *session, uint64_t format, unsigned char *
 {
 	/* Send a (possibly compressed) voice frame */
 	if (!session->quelch)
-		return send_command_samples(session, AST_FRAME_VOICE, format, 0, data, datalen, -1, samples);
+	{
+		if(session->rtpfd>0)
+        {
+            //iaxci_usermsg(3, "Send RTP audio to [%s:%d] length = %d", inet_ntoa(session->rtp_addr.sin_addr), ntohs(session->rtp_addr.sin_port), datalen);
+            return session->sendto( session->rtpfd, (const char *)data, datalen, IAX_SOCKOPTS,
+                            (struct sockaddr *)&session->rtp_addr, sizeof(session->rtp_addr));
+        }
+        else
+    	{
+			return send_command_samples(session, AST_FRAME_VOICE, format, 0, data, datalen, -1, samples);
+    	}
+	}
 	return 0;
 }
 
@@ -1817,9 +1842,16 @@ int iax_send_video(struct iax_session *session, int format, unsigned char *data,
 {
 	if (!session->quelch)
 	{
-		int res = send_command_video(session, AST_FRAME_VIDEO, format,
-				0, data, datalen, -1, fullframe);
-		return res;
+		if(session->rtpfd>0)
+	    {
+            /* Send video to RTP Relay directly */
+            return session->sendto( session->rtpfd, (const char *)data, datalen, IAX_SOCKOPTS,
+	                            (struct sockaddr *)&session->rtp_addr, sizeof(session->rtp_addr));
+        }
+        else
+    	{
+			return send_command_video(session, AST_FRAME_VIDEO, format,0, data, datalen, -1, fullframe);
+    	}
 	}
 	return 0;
 }
@@ -1971,6 +2003,10 @@ int iax_sendurl(struct iax_session *session, char *url)
 {
 	return send_command(session, AST_FRAME_HTML, AST_HTML_URL, 0,
 			(unsigned char *)url, (int)strlen(url), -1);
+}
+int iax_vid_update(struct iax_session *session)
+{
+	return send_command(session, AST_FRAME_CONTROL, 18, 0, NULL, 0, -1);
 }
 
 int iax_ring_announce(struct iax_session *session)
@@ -2171,6 +2207,8 @@ static int iax_regauth_reply(struct iax_session *session, char *password, char *
 		return send_command(session, AST_FRAME_IAX, IAX_COMMAND_REGREL, 0, ied.buf, ied.pos, -1);
 	} else {
 		iax_ie_append_short(&ied, IAX_IE_REFRESH, session->refresh);
+		if (session->sindex>=0)
+            iax_ie_append_short(&ied, IAX_IE_SECRET_INDEX, session->sindex);
 		return send_command(session, AST_FRAME_IAX, IAX_COMMAND_REGREQ, 0, ied.buf, ied.pos, -1);
 	}
 }
@@ -2272,7 +2310,7 @@ int iax_call(struct iax_session *session, const char *cidnum, const char *cidnam
 		iax_ie_append_str(&ied, IAX_IE_CALLING_NUMBER, cidnum);
 	if (cidname)
 		iax_ie_append_str(&ied, IAX_IE_CALLING_NAME, cidname);
-    
+	
 	session->capability = capabilities;
 
 	/* XXX We should have a preferred format XXX */
@@ -2590,6 +2628,98 @@ static void iax_handle_vnak(struct iax_session *session, struct ast_iax2_full_hd
 		free(tmp);
 	}
 }
+static int SOCKET_set_nonblock( int fd, int nonblock )
+{
+#if defined(WIN32) || defined(_WIN32_WCE)
+	return ioctlsocket( fd, FIONBIO, (unsigned long *)&nonblock );
+#else
+	int flags;
+
+	if( ( flags = fcntl( fd, F_GETFL ) ) < 0 )
+		return -1;
+
+	if( nonblock )
+		flags |= O_NONBLOCK;
+	else
+		flags &= ~O_NONBLOCK;
+
+	return fcntl( fd, F_SETFL, flags );
+#endif
+}
+
+static int iax_new_rtpsocket(struct iax_session *session)
+{
+    struct SOCKADDR_ST sin;
+    unsigned char packet[42] = {0};
+    int family = AF_INET;
+    
+    int bufsize = 512 * 1024;
+
+    if(session->rtpfd>0)
+    {
+        close(session->rtpfd);
+        session->rtpfd = -1;
+    }
+    
+	if ( session->rtp_addr.sin_family == AF_INET 
+#ifdef MACOSX
+		||  (session->rtp_addr.sin_family == 0 && session->rtp_addr.sin_len == AF_INET)
+#endif
+		)
+	{
+		family = AF_INET;
+		((struct sockaddr_in*)(&sin))->sin_family = AF_INET;
+		((struct sockaddr_in*)(&sin))->sin_addr.s_addr = 0;
+		((struct sockaddr_in*)(&sin))->sin_port = htons((short)0);
+	}
+	else
+		return -1;
+
+    int fd = (int)socket(family, SOCK_DGRAM, IPPROTO_IP);
+    if (fd < 0)
+    {
+        DEBU(G "Unable to allocate RTP/UDP socket\n");
+        return -1;
+    }
+    
+    if(bind(fd, (struct sockaddr *) &sin, sizeof(sin)) < 0)
+    {
+#if defined(WIN32)  ||  defined(_WIN32_WCE)
+        if (WSAGetLastError() == WSAEADDRINUSE)
+#else
+        if (errno == EADDRINUSE)
+#endif
+        {
+            DEBU(G "Unable to bind RTP/UDP socket\n");
+            close(fd);
+            return -1;
+        }
+    }
+
+    SOCKET_set_nonblock(fd, 1);
+    
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize,
+                   sizeof(bufsize)) < 0)
+    {
+        DEBU(G "Unable to set receive buffer size.");
+    }
+    
+    /* set send buffer size too */
+    if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize,
+                   sizeof(bufsize)) < 0)
+    {
+        DEBU(G "Unable to set send buffer size.");
+    }
+    
+    session->rtpfd = fd;
+    
+    iaxci_usermsg(3, "Create RTP Socket for transceiving RTP packets.");
+    
+    memset(packet, 0, sizeof(packet));
+    //iax_send_voice(session, IAXC_FORMAT_OPUS, packet, sizeof(packet), 240);
+    iaxc_push_audio(packet, sizeof(packet), 48000);
+    return 0;
+}
 
 static struct iax_event *iax_header_to_event(struct iax_session *session, struct ast_iax2_full_hdr *fh, int datalen, struct sockaddr_in *sin)
 {
@@ -2746,6 +2876,7 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 			e->ts = ts;
 			session->voiceformat = subclass;
 			if (datalen) {
+				DEBU(G "AST_FRAME_VOICE datalen = %d",datalen);
 				memcpy(e->data, fh->iedata, datalen);
 				e->datalen = datalen;
 			}
@@ -2891,8 +3022,7 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 		                memset(session->relay_token, 0, MAXSTRLEN);
 		                memcpy(session->relay_token, e->ies.relay_token, strlen(e->ies.relay_token));
 		            }
-					/* so a full voice frame is sent on the
-					   next voice output */
+					/* so a full voice frame is sent on the next voice output */
 					session->svoiceformat = -1;
 					session->transfer = *e->ies.apparent_addr;
 					session->transfer.sin_family = AF_INET;
@@ -3046,6 +3176,26 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 			switch(subclass) {
 			case AST_CONTROL_ANSWER:
 				e->etype = IAX_EVENT_ANSWER;
+				if (datalen)
+				{
+					memcpy(e->data, fh->iedata, datalen);
+					e->datalen = datalen;
+
+					if (iax_parse_ies(&e->ies, e->data, e->datalen)==0)
+					{
+						/* Get RTP Relay Address */
+	                    if(e->ies.mixer_addr!=NULL && session->rtpfd<0 )
+	                    {
+	                        /* RTP Relay Address */
+	                        GET_TRANSFER_ADDR(&session->rtp_addr, e->ies.mixer_addr);
+	                        /* create rtp socket for the session */
+	                        if(iax_new_rtpsocket(session)<0) {
+	                            DEBU(G "Failed to create RTP socket when ANSWER ");
+	                        }
+	                    }
+					}
+				}
+				
 				e = schedule_delivery(e, ts, updatehistory);
 				break;
 			case AST_CONTROL_CONGESTION:
@@ -3056,6 +3206,9 @@ static struct iax_event *iax_header_to_event(struct iax_session *session, struct
 			case AST_CONTROL_RINGING:
 				e->etype = IAX_EVENT_RINGA;
 				e = schedule_delivery(e, ts, updatehistory);
+				break;
+			case 18://For webrtc video web
+				iax_vid_update(session);
 				break;
 			default:
 				DEBU(G "Don't know what to do with AST control %d\n", subclass);
@@ -3142,12 +3295,13 @@ static struct iax_event *iax_videoheader_to_event(struct iax_session *session,
 {
 	struct iax_event * e;
 
-	if ( session->videoformat <= 0 )
+	//Mark these line only for old asterisk and new sdk
+	/*if ( session->videoformat <= 0 )
 	{
 		DEBU(G "No last video format received on session %d\n",
 				session->callno);
 		return 0;
-	}
+	}*/
 
 	e = (struct iax_event *)malloc(sizeof(struct iax_event) + datalen);
 
@@ -3204,30 +3358,80 @@ void iax_destroy(struct iax_session *session)
 static struct iax_event *iax_net_read(void)
 {
 	unsigned char buf[65536];
-	int res;
+	int res = -1;
 	struct sockaddr_in sin;
 	socklen_t sinlen;
 	struct iax_event *event;
+	//Add rec rtp data event start
+	struct iax_session* session=NULL;
+	for(session = sessions; session!=NULL && res<0; session = session->next)
+	{
+		if(session->rtpfd>0 && res<0 )
+		{
+			sinlen = sizeof(sin);
+			res = iax_recvfrom(session->rtpfd, (char *)buf, sizeof(buf), 0, (struct sockaddr *) &sin, &sinlen);
+			
+			if(res>0 && inaddrcmp(&sin, (struct sockaddr_in*)(&session->rtp_addr))==0)
+            {
+            	//iaxci_usermsg(3, "Receive RTP packet from [%s:%d] Length = %d", inet_ntoa(sin.sin_addr), ntohs(session->rtp_addr.sin_port),res);
+            	event = (struct iax_event *)calloc(1, sizeof(struct iax_event) + res);
+				if (!event )
+                {
+                    DEBU(G "Out of memory\n");
+                    return NULL;
+                }
+				event->session = session;
+				switch(buf[1]&0x7f)
+			  	{
+                    case kWtkPayloadTypeOpus:
+                        event->etype = IAX_EVENT_VOICE;
+                        event->subclass = session->voiceformat;
+                        break;
 
-	sinlen = sizeof(sin);
-	res = iax_recvfrom(netfd, (char *)buf, sizeof(buf), 0, (struct sockaddr *) &sin, &sinlen);
-	if (res < 0) {
-#if defined(_WIN32_WCE)
-		if (WSAGetLastError() != WSAEWOULDBLOCK) {
-			DEBU(G "Error on read: %d\n", WSAGetLastError());
+                    /*case kWtkPayloadTypeVP8:
+					case kWtkPayloadTypeVP9:
+					case kWtkPayloadTypeH264:
+                        event->etype = IAX_EVENT_VIDEO;
+                        event->subclass = session->videoformat;
+                        break;
+					default:
+						break;*/
+					default:
+						event->etype = IAX_EVENT_VIDEO;
+                        event->subclass = session->videoformat;
+                        break;
+                }
+                event->datalen = res;
+                memcpy(event->data, buf, res);
+               
+                event->ts = session->last_ts + 20;
+ 
+                // last time stamp received
+                session->last_ts = event->ts;
+                return event;
+			}
 		}
-#elif defined(WIN32)  ||  defined(_WIN32_WCE)
-		if (WSAGetLastError() != WSAEWOULDBLOCK) {
-			DEBU(G "Error on read: %d\n", WSAGetLastError());
-		}
-#else
-		if (errno != EAGAIN) {
-			DEBU(G "Error on read: %s\n", strerror(errno));
-		}
-#endif
-		return NULL;
 	}
-	event = iax_net_process(buf, res, &sin);
+	
+	//Add rec rtp data event end
+	if(res<0)
+	{
+		sinlen = sizeof(sin);
+		res = iax_recvfrom(netfd, (char *)buf, sizeof(buf), 0, (struct sockaddr *) &sin, &sinlen);
+		if (res < 0) {
+#if defined(WIN32)  ||  defined(_WIN32_WCE)
+            if (WSAGetLastError() != WSAEWOULDBLOCK) {
+                //DEBU(G "Error on read: %d\n", WSAGetLastError());
+            }
+#else
+            if (errno != EAGAIN) {
+                //DEBU(G "Error on read: %s\n", strerror(errno));
+            }
+#endif
+            return NULL;
+        }
+	}
+	event = iax_net_process(buf, res, (struct SOCKADDR_ST*)&sin);
 	if ( event == NULL )
 	{
 		// We have received a frame. The corresponding event is queued

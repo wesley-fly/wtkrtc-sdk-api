@@ -1,0 +1,3 @@
+<member name="func_callcompletion" displayname="Call Control Configuration Function" remove_on_change="funcs/func_callcompletion.o funcs/func_callcompletion.so">
+	<support_level>core</support_level>
+</member>

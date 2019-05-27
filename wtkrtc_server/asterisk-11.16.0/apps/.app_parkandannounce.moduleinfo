@@ -1,0 +1,3 @@
+<member name="app_parkandannounce" displayname="Call Parking and Announce Application" remove_on_change="apps/app_parkandannounce.o apps/app_parkandannounce.so">
+	<support_level>core</support_level>
+</member>

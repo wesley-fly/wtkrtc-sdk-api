@@ -1,0 +1,3 @@
+<member name="app_softhangup" displayname="Hangs up the requested channel" remove_on_change="apps/app_softhangup.o apps/app_softhangup.so">
+	<support_level>core</support_level>
+</member>

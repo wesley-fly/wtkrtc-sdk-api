@@ -1,0 +1,4 @@
+<member name="test_callerid" displayname="Callerid Parse Tests" remove_on_change="tests/test_callerid.o tests/test_callerid.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

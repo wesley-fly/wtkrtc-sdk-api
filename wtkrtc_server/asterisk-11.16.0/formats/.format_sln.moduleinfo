@@ -1,0 +1,3 @@
+<member name="format_sln" displayname="Raw Signed Linear Audio support (SLN) 8khz-192khz" remove_on_change="formats/format_sln.o formats/format_sln.so">
+	<support_level>core</support_level>
+</member>

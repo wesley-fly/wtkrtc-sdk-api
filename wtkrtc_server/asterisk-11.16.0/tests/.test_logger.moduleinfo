@@ -1,0 +1,4 @@
+<member name="test_logger" displayname="Logger Test Module" remove_on_change="tests/test_logger.o tests/test_logger.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

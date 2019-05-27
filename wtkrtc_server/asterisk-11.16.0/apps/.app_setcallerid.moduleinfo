@@ -1,0 +1,5 @@
+<member name="app_setcallerid" displayname="Set CallerID Presentation Application" remove_on_change="apps/app_setcallerid.o apps/app_setcallerid.so">
+	<defaultenabled>no</defaultenabled>
+	<support_level>deprecated</support_level>
+	<replacement>func_callerid</replacement>
+</member>

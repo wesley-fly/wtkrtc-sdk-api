@@ -1,0 +1,80 @@
+import("//webrtc.gni")
+
+if (is_android) {
+  import("//build/config/android/config.gni")
+  import("//build/config/android/rules.gni")
+}
+
+config("wtk_iax_warning"){
+  if (is_clang) {
+    cflags = [
+      "-Wno-absolute-value",
+      "-Wno-strict-prototypes",
+      "-Wno-undef",
+      "-Wno-sizeof-pointer-memaccess",
+      "-Wno-undefined-bool-conversion",
+      "-Wno-format-security",
+      "-Wno-unused-function",
+      "-Wno-implicit-function-declaration",
+      "-Wno-unused-variable",
+      "-Wno-int-conversion",
+      "-Wno-incompatible-pointer-types",
+      #"-Wno-#warnings",
+      "-Wno-implicit-int",
+      "-Wno-visibility",
+      "-Wno-constant-conversion",
+      "-Wno-tautological-constant-out-of-range-compare",
+      #ios add
+      "-Wno-address-of-packed-member",
+      "-Wno-builtin-memcpy-chk-size",
+    ]
+  }
+}
+
+rtc_source_set("wtk_service_api") {
+  sources = [
+    "wtkcall_lib.c",
+    "wtkcall_lib.h",
+  ]
+  sources += [
+    "iax2-client/frame.h",
+    "iax2-client/iax-client.h",
+    "iax2-client/iax.c",
+    "iax2-client/iax2-parser.c",
+    "iax2-client/iax2-parser.h",
+    "iax2-client/iax2.h",
+    "iax2-client/iaxclient.h",   
+    "iax2-client/iaxclient_lib.c",
+    "iax2-client/iaxclient_lib.h",
+    "iax2-client/md5.c",
+    "iax2-client/md5.h",
+    "iax2-client/unixfuncs.c",    
+  ]
+  defines = [
+    #"USE_VOICE_TS_PREDICTION",
+    "HAVE_GETTIMEOFDAY",
+    #"IAX_DEBUG",
+  ]
+  if (is_android) {
+    defines += [
+      "ANDROID",
+      "_GNU_SOURCE",
+      "_POSIX_SOURCE",
+    ]
+  }
+  if (is_ios) {
+    defines += [
+      "MACOSX",
+      "__APPLE__",
+    ]
+  }
+  deps = [
+    "../wtk_rtc_api:wtk_rtc_api",
+  ]
+  
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    "//build/config/compiler:no_incompatible_pointer_warnings",#must after no_chromium_code
+    ":wtk_iax_warning",
+  ]
+}

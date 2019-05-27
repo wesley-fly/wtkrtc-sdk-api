@@ -144,7 +144,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         {
             mRemoteLinearLayout.addView(mRemoteSurfaceView);
         }
-        WtkMediaJNIKit.getInstance().SetVideoView(mRemoteSurfaceView);
+        WtkMediaJNIKit.getInstance().SetVideoView(mLocalSurfaceView, mRemoteSurfaceView);
     }
     private class HangupReceiver extends BroadcastReceiver {
         @Override

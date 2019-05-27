@@ -1,0 +1,264 @@
+<category name="MENUSELECT_APPS" displayname="Applications" remove_on_change="apps/modules.link">
+<member name="app_adsiprog" displayname="Asterisk ADSI Programming Application" remove_on_change="apps/app_adsiprog.o apps/app_adsiprog.so">
+	<depend>res_adsi</depend>
+	<support_level>extended</support_level>
+</member>
+<member name="app_alarmreceiver" displayname="Alarm Receiver for Asterisk" remove_on_change="apps/app_alarmreceiver.o apps/app_alarmreceiver.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_amd" displayname="Answering Machine Detection Application" remove_on_change="apps/app_amd.o apps/app_amd.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_authenticate" displayname="Authentication Application" remove_on_change="apps/app_authenticate.o apps/app_authenticate.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_cdr" displayname="Tell Asterisk to not maintain a CDR for the current call" remove_on_change="apps/app_cdr.o apps/app_cdr.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_celgenuserevent" displayname="Generate an User-Defined CEL event" remove_on_change="apps/app_celgenuserevent.o apps/app_celgenuserevent.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_chanisavail" displayname="Check channel availability" remove_on_change="apps/app_chanisavail.o apps/app_chanisavail.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_channelredirect" displayname="Redirects a given channel to a dialplan target" remove_on_change="apps/app_channelredirect.o apps/app_channelredirect.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_chanspy" displayname="Listen to the audio of an active channel" remove_on_change="apps/app_chanspy.o apps/app_chanspy.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_confbridge" displayname="Conference Bridge Application" remove_on_change="apps/app_confbridge.o apps/app_confbridge.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_controlplayback" displayname="Control Playback Application" remove_on_change="apps/app_controlplayback.o apps/app_controlplayback.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_dahdibarge" displayname="Barge in on DAHDI channel application" remove_on_change="apps/app_dahdibarge.o apps/app_dahdibarge.so">
+	<depend>dahdi</depend>
+	<defaultenabled>no</defaultenabled>
+	<support_level>deprecated</support_level>
+	<replacement>app_chanspy</replacement>
+</member>
+<member name="app_dahdiras" displayname="DAHDI ISDN Remote Access Server" remove_on_change="apps/app_dahdiras.o apps/app_dahdiras.so">
+	<depend>dahdi</depend>
+	<support_level>extended</support_level>
+</member>
+<member name="app_db" displayname="Database Access Functions" remove_on_change="apps/app_db.o apps/app_db.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_dial" displayname="Dialing Application" remove_on_change="apps/app_dial.o apps/app_dial.so">
+	<depend>chan_local</depend>
+	<support_level>core</support_level>
+</member>
+<member name="app_dictate" displayname="Virtual Dictation Machine" remove_on_change="apps/app_dictate.o apps/app_dictate.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_directed_pickup" displayname="Directed Call Pickup Application" remove_on_change="apps/app_directed_pickup.o apps/app_directed_pickup.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_directory" displayname="Extension Directory" remove_on_change="apps/app_directory.o apps/app_directory.so">
+	<depend>app_voicemail</depend>
+	<support_level>core</support_level>
+</member>
+<member name="app_disa" displayname="DISA (Direct Inward System Access) Application" remove_on_change="apps/app_disa.o apps/app_disa.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_dumpchan" displayname="Dump Info About The Calling Channel" remove_on_change="apps/app_dumpchan.o apps/app_dumpchan.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_echo" displayname="Simple Echo Application" remove_on_change="apps/app_echo.o apps/app_echo.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_exec" displayname="Executes dialplan applications" remove_on_change="apps/app_exec.o apps/app_exec.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_externalivr" displayname="External IVR Interface Application" remove_on_change="apps/app_externalivr.o apps/app_externalivr.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_fax" displayname="Simple FAX Application" remove_on_change="apps/app_fax.o apps/app_fax.so">
+	<defaultenabled>no</defaultenabled>
+	<depend>spandsp</depend>
+	<conflict>res_fax</conflict>
+	<support_level>extended</support_level>
+</member>
+<member name="app_festival" displayname="Simple Festival Interface" remove_on_change="apps/app_festival.o apps/app_festival.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_flash" displayname="Flash channel application" remove_on_change="apps/app_flash.o apps/app_flash.so">
+	<depend>dahdi</depend>
+	<support_level>core</support_level>
+</member>
+<member name="app_followme" displayname="Find-Me/Follow-Me Application" remove_on_change="apps/app_followme.o apps/app_followme.so">
+	<depend>chan_local</depend>
+	<support_level>core</support_level>
+</member>
+<member name="app_forkcdr" displayname="Fork The CDR into 2 separate entities" remove_on_change="apps/app_forkcdr.o apps/app_forkcdr.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_getcpeid" displayname="Get ADSI CPE ID" remove_on_change="apps/app_getcpeid.o apps/app_getcpeid.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_ices" displayname="Encode and Stream via icecast and ices" remove_on_change="apps/app_ices.o apps/app_ices.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_image" displayname="Image Transmission Application" remove_on_change="apps/app_image.o apps/app_image.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_ivrdemo" displayname="IVR Demo Application" remove_on_change="apps/app_ivrdemo.o apps/app_ivrdemo.so">
+	<defaultenabled>no</defaultenabled>
+	<support_level>extended</support_level>
+</member>
+<member name="app_jack" displayname="JACK Interface" remove_on_change="apps/app_jack.o apps/app_jack.so">
+	<depend>jack</depend>
+	<depend>resample</depend>
+	<support_level>extended</support_level>
+</member>
+<member name="app_macro" displayname="Extension Macros" remove_on_change="apps/app_macro.o apps/app_macro.so">
+	<support_level>core</support_level>
+	<replacement>app_stack (GoSub)</replacement>
+</member>
+<member name="app_meetme" displayname="MeetMe conference bridge" remove_on_change="apps/app_meetme.o apps/app_meetme.so">
+	<depend>dahdi</depend>
+	<defaultenabled>no</defaultenabled>
+	<support_level>extended</support_level>
+	<replacement>app_confbridge</replacement>
+</member>
+<member name="app_milliwatt" displayname="Digital Milliwatt (mu-law) Test Application" remove_on_change="apps/app_milliwatt.o apps/app_milliwatt.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_minivm" displayname="Mini VoiceMail (A minimal Voicemail e-mail System)" remove_on_change="apps/app_minivm.o apps/app_minivm.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_mixmonitor" displayname="Mixed Audio Monitoring Application" remove_on_change="apps/app_mixmonitor.o apps/app_mixmonitor.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_morsecode" displayname="Morse code" remove_on_change="apps/app_morsecode.o apps/app_morsecode.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_mp3" displayname="Silly MP3 Application" remove_on_change="apps/app_mp3.o apps/app_mp3.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_nbscat" displayname="Silly NBS Stream Application" remove_on_change="apps/app_nbscat.o apps/app_nbscat.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_originate" displayname="Originate call" remove_on_change="apps/app_originate.o apps/app_originate.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_osplookup" displayname="Open Settlement Protocol Applications" remove_on_change="apps/app_osplookup.o apps/app_osplookup.so">
+	<depend>osptk</depend>
+	<depend>openssl</depend>
+	<support_level>extended</support_level>
+</member>
+<member name="app_page" displayname="Page Multiple Phones" remove_on_change="apps/app_page.o apps/app_page.so">
+	<depend>app_confbridge</depend>
+	<support_level>core</support_level>
+</member>
+<member name="app_parkandannounce" displayname="Call Parking and Announce Application" remove_on_change="apps/app_parkandannounce.o apps/app_parkandannounce.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_playback" displayname="Sound File Playback Application" remove_on_change="apps/app_playback.o apps/app_playback.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_playtones" displayname="Playtones Application" remove_on_change="apps/app_playtones.o apps/app_playtones.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_privacy" displayname="Require phone number to be entered, if no CallerID sent" remove_on_change="apps/app_privacy.o apps/app_privacy.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_queue" displayname="True Call Queueing" remove_on_change="apps/app_queue.o apps/app_queue.so">
+	<use type="module">res_monitor</use>
+	<support_level>core</support_level>
+</member>
+<member name="app_read" displayname="Read Variable Application" remove_on_change="apps/app_read.o apps/app_read.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_readexten" displayname="Read and evaluate extension validity" remove_on_change="apps/app_readexten.o apps/app_readexten.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_readfile" displayname="Stores output of file into a variable" remove_on_change="apps/app_readfile.o apps/app_readfile.so">
+	<defaultenabled>no</defaultenabled>
+	<support_level>deprecated</support_level>
+	<replacement>func_env (FILE())</replacement>
+</member>
+<member name="app_record" displayname="Trivial Record Application" remove_on_change="apps/app_record.o apps/app_record.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_saycounted" displayname="Decline words according to channel language" remove_on_change="apps/app_saycounted.o apps/app_saycounted.so">
+	<defaultenabled>no</defaultenabled>
+	<support_level>extended</support_level>
+</member>
+<member name="app_sayunixtime" displayname="Say time" remove_on_change="apps/app_sayunixtime.o apps/app_sayunixtime.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_senddtmf" displayname="Send DTMF digits Application" remove_on_change="apps/app_senddtmf.o apps/app_senddtmf.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_sendtext" displayname="Send Text Applications" remove_on_change="apps/app_sendtext.o apps/app_sendtext.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_setcallerid" displayname="Set CallerID Presentation Application" remove_on_change="apps/app_setcallerid.o apps/app_setcallerid.so">
+	<defaultenabled>no</defaultenabled>
+	<support_level>deprecated</support_level>
+	<replacement>func_callerid</replacement>
+</member>
+<member name="app_skel" displayname="Skeleton (sample) Application" remove_on_change="apps/app_skel.o apps/app_skel.so">
+	<defaultenabled>no</defaultenabled>
+	<support_level>core</support_level>
+</member>
+<member name="app_sms" displayname="SMS/PSTN handler" remove_on_change="apps/app_sms.o apps/app_sms.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_softhangup" displayname="Hangs up the requested channel" remove_on_change="apps/app_softhangup.o apps/app_softhangup.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_speech_utils" displayname="Dialplan Speech Applications" remove_on_change="apps/app_speech_utils.o apps/app_speech_utils.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_stack" displayname="Dialplan subroutines (Gosub, Return, etc)" remove_on_change="apps/app_stack.o apps/app_stack.so">
+	<use type="module">res_agi</use>
+	<support_level>core</support_level>
+</member>
+<member name="app_statectl" displayname="StateCtl conference bridge" remove_on_change="apps/app_statectl.o apps/app_statectl.so">
+</member>
+<member name="app_system" displayname="Generic System() application" remove_on_change="apps/app_system.o apps/app_system.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_talkdetect" displayname="Playback with Talk Detection" remove_on_change="apps/app_talkdetect.o apps/app_talkdetect.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_test" displayname="Interface Test Application" remove_on_change="apps/app_test.o apps/app_test.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_transfer" displayname="Transfers a caller to another extension" remove_on_change="apps/app_transfer.o apps/app_transfer.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_url" displayname="Send URL Applications" remove_on_change="apps/app_url.o apps/app_url.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_userevent" displayname="Custom User Event Application" remove_on_change="apps/app_userevent.o apps/app_userevent.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_verbose" displayname="Send verbose output" remove_on_change="apps/app_verbose.o apps/app_verbose.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_voicemail" displayname="Comedian Mail (Voicemail System)" remove_on_change="apps/app_voicemail.o apps/app_voicemail.so">
+	<use type="module">res_adsi</use>
+	<use type="module">res_smdi</use>
+	<support_level>core</support_level>
+</member>
+<member name="app_waitforring" displayname="Waits until first ring after time" remove_on_change="apps/app_waitforring.o apps/app_waitforring.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_waitforsilence" displayname="Wait For Silence" remove_on_change="apps/app_waitforsilence.o apps/app_waitforsilence.so">
+	<support_level>extended</support_level>
+</member>
+<member name="app_waituntil" displayname="Wait until specified time" remove_on_change="apps/app_waituntil.o apps/app_waituntil.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_while" displayname="While Loops and Conditional Execution" remove_on_change="apps/app_while.o apps/app_while.so">
+	<support_level>core</support_level>
+</member>
+<member name="app_zapateller" displayname="Block Telemarketers with Special Information Tone" remove_on_change="apps/app_zapateller.o apps/app_zapateller.so">
+	<support_level>extended</support_level>
+</member>
+</category>

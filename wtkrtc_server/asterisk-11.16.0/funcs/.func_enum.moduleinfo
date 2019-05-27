@@ -1,0 +1,3 @@
+<member name="func_enum" displayname="ENUM related dialplan functions" remove_on_change="funcs/func_enum.o funcs/func_enum.so">
+	<support_level>core</support_level>
+</member>

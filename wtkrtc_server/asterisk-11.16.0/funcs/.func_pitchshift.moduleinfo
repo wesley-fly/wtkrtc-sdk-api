@@ -1,0 +1,3 @@
+<member name="func_pitchshift" displayname="Audio Effects Dialplan Functions" remove_on_change="funcs/func_pitchshift.o funcs/func_pitchshift.so">
+	<support_level>extended</support_level>
+</member>

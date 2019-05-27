@@ -1,0 +1,3 @@
+<member name="func_md5" displayname="MD5 digest dialplan functions" remove_on_change="funcs/func_md5.o funcs/func_md5.so">
+	<support_level>core</support_level>
+</member>

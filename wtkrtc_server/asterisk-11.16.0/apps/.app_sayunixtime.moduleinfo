@@ -1,0 +1,3 @@
+<member name="app_sayunixtime" displayname="Say time" remove_on_change="apps/app_sayunixtime.o apps/app_sayunixtime.so">
+	<support_level>core</support_level>
+</member>

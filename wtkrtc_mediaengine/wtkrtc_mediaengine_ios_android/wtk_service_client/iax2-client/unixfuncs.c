@@ -33,13 +33,14 @@
 
 
 #ifdef ANDROID
- #include <signal.h>
- #define IAXC_NOTICE	IAXC_TEXT_TYPE_NOTICE
-#endif 
-
-#ifndef NULL
-#define NULL (0)
+#include <signal.h>
 #endif
+
+#define IAXC_NOTICE	IAXC_TEXT_TYPE_NOTICE
+
+/*#ifndef NULL
+#define NULL (0)
+#endif*/
 
 /* Unix-specific functions */
 
@@ -53,7 +54,7 @@ void iaxc_millisleep(long ms)
 #if 0
 	req.tv_nsec = (ms%1000)*1000*1000;
 	req.tv_sec = ms/1000;
-#else /* we can make sure ms less than 1000 in FreePP */
+#else /* we can make sure ms less than 1000 in WtkMedia*/
     req.tv_sec = 0;
     req.tv_nsec = ms*1000*1000;
 #endif

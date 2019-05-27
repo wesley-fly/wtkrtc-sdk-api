@@ -1,0 +1,3 @@
+<member name="app_waitforsilence" displayname="Wait For Silence" remove_on_change="apps/app_waitforsilence.o apps/app_waitforsilence.so">
+	<support_level>extended</support_level>
+</member>

@@ -1,0 +1,3 @@
+<member name="res_speech" displayname="Generic Speech Recognition API" remove_on_change="res/res_speech.o res/res_speech.so">
+	<support_level>core</support_level>
+</member>

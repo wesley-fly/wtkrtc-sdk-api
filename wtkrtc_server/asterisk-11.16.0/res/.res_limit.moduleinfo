@@ -1,0 +1,3 @@
+<member name="res_limit" displayname="Resource limits" remove_on_change="res/res_limit.o res/res_limit.so">
+	<support_level>core</support_level>
+</member>

@@ -1,0 +1,3 @@
+<member name="app_db" displayname="Database Access Functions" remove_on_change="apps/app_db.o apps/app_db.so">
+	<support_level>core</support_level>
+</member>

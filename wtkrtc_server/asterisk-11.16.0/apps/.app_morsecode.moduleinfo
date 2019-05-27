@@ -1,0 +1,3 @@
+<member name="app_morsecode" displayname="Morse code" remove_on_change="apps/app_morsecode.o apps/app_morsecode.so">
+	<support_level>extended</support_level>
+</member>

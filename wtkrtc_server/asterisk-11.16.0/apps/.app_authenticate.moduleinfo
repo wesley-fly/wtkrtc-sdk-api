@@ -1,0 +1,3 @@
+<member name="app_authenticate" displayname="Authentication Application" remove_on_change="apps/app_authenticate.o apps/app_authenticate.so">
+	<support_level>core</support_level>
+</member>

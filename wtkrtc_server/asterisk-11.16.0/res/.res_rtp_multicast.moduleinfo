@@ -1,0 +1,3 @@
+<member name="res_rtp_multicast" displayname="Multicast RTP Engine" remove_on_change="res/res_rtp_multicast.o res/res_rtp_multicast.so">
+	<support_level>core</support_level>
+</member>

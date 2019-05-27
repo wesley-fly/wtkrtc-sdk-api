@@ -1,0 +1,3 @@
+<member name="format_vp8" displayname="Raw VP8 data" remove_on_change="formats/format_vp8.o formats/format_vp8.so">
+	<support_level>core</support_level>
+</member>

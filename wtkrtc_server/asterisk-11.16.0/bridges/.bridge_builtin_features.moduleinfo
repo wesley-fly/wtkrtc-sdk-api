@@ -1,0 +1,3 @@
+<member name="bridge_builtin_features" displayname="Built in bridging features" remove_on_change="bridges/bridge_builtin_features.o bridges/bridge_builtin_features.so">
+	<support_level>core</support_level>
+</member>

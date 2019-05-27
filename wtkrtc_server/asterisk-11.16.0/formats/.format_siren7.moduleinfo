@@ -1,0 +1,3 @@
+<member name="format_siren7" displayname="ITU G.722.1 (Siren7, licensed from Polycom)" remove_on_change="formats/format_siren7.o formats/format_siren7.so">
+	<support_level>core</support_level>
+</member>

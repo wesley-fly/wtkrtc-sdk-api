@@ -45,7 +45,7 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener{
         WtkMediaJNIKit.getInstance().IaxInitialize(LoginActivity.this);
 //        WtkMediaJNIKit.getInstance().ConfigVideoParams(VIDEO_CODEC_H264,640,480,15,50);
         WtkMediaJNIKit.getInstance().ConfigVideoParams(VIDEO_CODEC_H264_AUTO,640,480,15,50);
-        WtkMediaJNIKit.getInstance().ConfigStreamBitrate(100*1000,200*1000,400*1000,800*1000);
+        WtkMediaJNIKit.getInstance().ConfigStreamBitrate(100*1000,200*1000,500*1000,1000*1000);
 
         WtkMediaJNIKit.getInstance().SetBroadCast(LoginActivity.this);
     }

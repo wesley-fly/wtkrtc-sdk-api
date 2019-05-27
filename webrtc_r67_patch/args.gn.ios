@@ -1,0 +1,17 @@
+target_os = "ios"
+target_cpu = "arm64"
+additional_target_cpus = [ "arm" ]
+rtc_build_json = false
+rtc_include_tests = false
+rtc_build_examples = false
+rtc_build_tools = false
+is_debug = true
+is_clang = true
+use_cxx11 = false
+ios_enable_code_signing = false
+treat_warnings_as_errors = false
+#libyuv_use_neon = false
+use_rtti = true
+#use_xcode_clang = true
+enable_ios_bitcode = true
+is_component_build = false

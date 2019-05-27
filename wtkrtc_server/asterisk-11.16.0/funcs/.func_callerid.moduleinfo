@@ -1,0 +1,3 @@
+<member name="func_callerid" displayname="Party ID related dialplan functions (Caller-ID, Connected-line, Redirecting)" remove_on_change="funcs/func_callerid.o funcs/func_callerid.so">
+	<support_level>core</support_level>
+</member>

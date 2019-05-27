@@ -1,0 +1,3 @@
+<member name="codec_a_mu" displayname="A-law and Mulaw direct Coder/Decoder" remove_on_change="codecs/codec_a_mu.o codecs/codec_a_mu.so">
+	<support_level>core</support_level>
+</member>

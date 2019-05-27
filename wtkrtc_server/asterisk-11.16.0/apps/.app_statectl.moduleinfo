@@ -1,0 +1,2 @@
+<member name="app_statectl" displayname="StateCtl conference bridge" remove_on_change="apps/app_statectl.o apps/app_statectl.so">
+</member>

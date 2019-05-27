@@ -1,0 +1,3 @@
+<member name="format_g723" displayname="G.723.1 Simple Timestamp File Format" remove_on_change="formats/format_g723.o formats/format_g723.so">
+	<support_level>core</support_level>
+</member>

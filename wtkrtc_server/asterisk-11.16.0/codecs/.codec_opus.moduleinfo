@@ -1,0 +1,4 @@
+<member name="codec_opus" displayname="Opus Coder/Decoder" remove_on_change="codecs/codec_opus.o codecs/codec_opus.so">
+	<depend>opus</depend>
+	<support_level>core</support_level>
+</member>

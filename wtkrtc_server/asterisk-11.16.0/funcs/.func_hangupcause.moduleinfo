@@ -1,0 +1,3 @@
+<member name="func_hangupcause" displayname="HANGUPCAUSE related functions and applications" remove_on_change="funcs/func_hangupcause.o funcs/func_hangupcause.so">
+	<support_level>core</support_level>
+</member>

@@ -1,0 +1,4 @@
+<member name="test_jitterbuf" displayname="Jitter Buffer Tests" remove_on_change="tests/test_jitterbuf.o tests/test_jitterbuf.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

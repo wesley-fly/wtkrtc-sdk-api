@@ -1,0 +1,3 @@
+<member name="app_exec" displayname="Executes dialplan applications" remove_on_change="apps/app_exec.o apps/app_exec.so">
+	<support_level>core</support_level>
+</member>

@@ -1,0 +1,3 @@
+<member name="pbx_loopback" displayname="Loopback Switch" remove_on_change="pbx/pbx_loopback.o pbx/pbx_loopback.so">
+	<support_level>core</support_level>
+</member>

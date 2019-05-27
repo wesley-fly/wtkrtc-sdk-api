@@ -1,0 +1,4 @@
+<member name="app_page" displayname="Page Multiple Phones" remove_on_change="apps/app_page.o apps/app_page.so">
+	<depend>app_confbridge</depend>
+	<support_level>core</support_level>
+</member>

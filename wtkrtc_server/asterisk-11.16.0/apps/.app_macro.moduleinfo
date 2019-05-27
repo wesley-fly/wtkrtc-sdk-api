@@ -1,0 +1,4 @@
+<member name="app_macro" displayname="Extension Macros" remove_on_change="apps/app_macro.o apps/app_macro.so">
+	<support_level>core</support_level>
+	<replacement>app_stack (GoSub)</replacement>
+</member>

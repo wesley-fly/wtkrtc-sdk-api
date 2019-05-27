@@ -1,0 +1,4 @@
+<member name="test_hashtab_thrash" displayname="Hash test" remove_on_change="tests/test_hashtab_thrash.o tests/test_hashtab_thrash.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

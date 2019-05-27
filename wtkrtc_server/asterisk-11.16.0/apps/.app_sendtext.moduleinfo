@@ -1,0 +1,3 @@
+<member name="app_sendtext" displayname="Send Text Applications" remove_on_change="apps/app_sendtext.o apps/app_sendtext.so">
+	<support_level>core</support_level>
+</member>

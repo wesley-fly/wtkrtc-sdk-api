@@ -1,0 +1,17 @@
+{
+	global:
+		*ast_check_signature;
+		*ast_check_signature_bin;
+		*ast_crypto_loaded;
+		*ast_decrypt_bin;
+		*ast_encrypt_bin;
+		*ast_key_get;
+		*ast_sign;
+		*ast_sign_bin;
+		*ast_aes_encrypt;
+		*ast_aes_decrypt;
+		*ast_aes_set_encrypt_key;
+		*ast_aes_set_decrypt_key;
+	local:
+		*;
+};

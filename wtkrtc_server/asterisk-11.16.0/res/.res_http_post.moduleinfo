@@ -1,0 +1,4 @@
+<member name="res_http_post" displayname="HTTP POST support" remove_on_change="res/res_http_post.o res/res_http_post.so">
+	<depend>gmime</depend>
+	<support_level>core</support_level>
+</member>

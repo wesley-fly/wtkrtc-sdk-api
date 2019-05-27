@@ -1,0 +1,4 @@
+<member name="test_poll" displayname="Poll test" remove_on_change="tests/test_poll.o tests/test_poll.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

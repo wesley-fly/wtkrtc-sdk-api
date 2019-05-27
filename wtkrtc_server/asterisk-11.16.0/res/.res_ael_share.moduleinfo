@@ -1,0 +1,3 @@
+<member name="res_ael_share" displayname="share-able code for AEL" remove_on_change="res/res_ael_share.o res/res_ael_share.so">
+	<support_level>extended</support_level>
+</member>

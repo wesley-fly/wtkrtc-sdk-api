@@ -1,0 +1,4 @@
+<member name="test_astobj2_thrash" displayname="astobj2 container thrash test" remove_on_change="tests/test_astobj2_thrash.o tests/test_astobj2_thrash.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

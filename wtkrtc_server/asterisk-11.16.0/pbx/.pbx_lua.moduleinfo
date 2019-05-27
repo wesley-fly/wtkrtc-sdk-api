@@ -1,0 +1,4 @@
+<member name="pbx_lua" displayname="Lua PBX Switch" remove_on_change="pbx/pbx_lua.o pbx/pbx_lua.so">
+	<depend>lua</depend>
+	<support_level>extended</support_level>
+</member>

@@ -35,7 +35,7 @@ extern "C" {
   require the inclusion of library internals (or sub-libraries) 
 */
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/*#ifndef DOXYGEN_SHOULD_SKIP_THIS
 #ifdef _MSC_VER
 typedef int socklen_t;
 #endif
@@ -60,7 +60,10 @@ typedef int socklen_t;
 #else
 # define EXPORT
 #endif
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+
+#endif //DOXYGEN_SHOULD_SKIP_THIS
+*/
+#define EXPORT extern
 
 #if defined(WIN32)  ||  defined(_WIN32_WCE)
 #if defined(_MSC_VER)
@@ -120,6 +123,7 @@ typedef int socklen_t;
 #define IAXC_FORMAT_H263_PLUS    (1 << 20)  /*!< H.263+ Video */
 #define IAXC_FORMAT_H264         (1 << 21)  /*!< H264 Video */
 #define IAXC_FORMAT_MPEG4        (1 << 22)  /*!< MPEG4 Video */
+#define IAXC_FORMAT_VP8          (1 << 23)  /*!< MPEG4 Video */
 #define IAXC_FORMAT_THEORA       (1 << 24)  /*!< Theora Video */
 #define IAXC_FORMAT_MAX_VIDEO    (1 << 24)  /*!< Maximum Video format value*/
 #define IAXC_FORMAT_OPUS         (1ULL << 34)
@@ -149,6 +153,17 @@ typedef int socklen_t;
 #define IAXC_CALL_STATE_TRANSFER_P2P	(1<<9)
 #define CALL_STATE_TIMEOUT				(1<<10)  /*!< Indicates the call has been hangup for timeout out */
 
+#define IAXC_MEDIA_STATE_NONE					0  /* None effect*/
+#define IAXC_MEDIA_STATE_MUTEMULTIPARTY			(1<<1)  /* Muted by the presider of a multiparty call*/
+#define IAXC_MEDIA_STATE_MIXED                  (1<<2)  /* multiparty call */
+#define IAXC_MEDIA_STATE_RECAUDIO               (1<<3)  /* audio stream recorded */
+#define IAXC_MEDIA_STATE_RECVIDEO               (1<<4)  /* video stream recorded */
+#define IAXC_MEDIA_STATE_HOLD                   (1<<5)  /* call hold */
+#define IAXC_MEDIA_STATE_MUTE                   (1<<6)  /* call muted */ 
+#define IAXC_MEDIA_STATE_REMOTEVIDEO            (1<<7)  /* receive remote video */
+#define IAXC_MEDIA_STATE_LOCALVIDEO             (1<<8)  /* send local video */
+#define IAXC_MEDIA_STATE_NORTP					(1<<9)  /* send voice data w/o RTP header */
+#define IAXC_MEDIA_STATE_FORWARD				(1<<10) /* forward-dir call */
 
 /*! Indicates that text is for an IAXClient status change */
 #define IAXC_TEXT_TYPE_STATUS     1   
@@ -183,7 +198,7 @@ typedef int socklen_t;
 /*!
 	The maximum size of a string contained within an event
  */
-#define IAXC_EVENT_BUFSIZ 256
+#define IAXC_EVENT_BUFSIZ 256*2
 
 /*!
 	A structure containing information about an audio level event.
@@ -653,7 +668,7 @@ EXPORT void iaxc_set_preferred_source_udp_port(int sourceUdpPort);
 
 	\return The UDP port bound to; -1 if no port or
 */
-EXPORT int iaxc_get_bind_port();
+EXPORT int iaxc_get_bind_port(void);
 
 /*!
 	Initializes the IAXClient library
@@ -671,7 +686,7 @@ EXPORT int iaxc_initialize(int num_calls);
 
 	\note It is unsafe to call most IAXClient API's after calling this!
 */
-EXPORT void iaxc_shutdown();
+EXPORT void iaxc_shutdown(void);
 
 /*!
 	Sets the formats to be used
@@ -703,14 +718,14 @@ EXPORT void iaxc_set_callerid(const char * name, const char * number);
 	\note Should be called after iaxc_initialize, but before any call processing
 	related functions.
 */
-EXPORT int iaxc_start_processing_thread();
+EXPORT int iaxc_start_processing_thread(void);
 
 /*!
 	Stops all the internal processing thread(s).
 
 	\note Should be called before iaxc_shutdown.
 */
-EXPORT int iaxc_stop_processing_thread();
+EXPORT int iaxc_stop_processing_thread(void);
 
 /*!
 	Unregisters IAXClient from a server
@@ -726,7 +741,7 @@ EXPORT int iaxc_unregister( int id );
 
 	\return The registration id number upon success; -1 otherwise.
 */
-EXPORT int iaxc_register(const char * user, const char * pass, const char * host);
+EXPORT int iaxc_register(const char * user, const char * pass, const char * host, int refresh);
 
 /*!
 	Registers the IAXClient instance with an IAX server
@@ -844,12 +859,12 @@ EXPORT int iaxc_select_call(int callNo);
 /*!
 	Returns the first free call number.
 */
-EXPORT int iaxc_first_free_call();
+EXPORT int iaxc_first_free_call(void);
 
 /*!
 	Returns the number of the currently selected call.
 */
-EXPORT int iaxc_selected_call();
+EXPORT int iaxc_selected_call(void);
 
 /*!
 	Causes the audio channel for \a callNo to QUELCH (be squelched).
@@ -1210,7 +1225,7 @@ EXPORT int iaxc_set_holding_frame(char *);
 /*!
   Returns 1 if the default camera is working; 0 otherwise
  */
-EXPORT int iaxc_is_camera_working();
+EXPORT int iaxc_is_camera_working(void);
 
 /*!
 	Converts a YUV420 image to RGB32
@@ -1233,7 +1248,6 @@ EXPORT void iaxc_YUV420_to_RGB32(int width, int height, const char *src, char *d
 	\note Data must be in the audio format that was negotiated for the current call
 	otherwise bad magic may occur on the recieving side.
 */
-EXPORT int iaxc_push_audio(void *data, unsigned int size, unsigned int samples);
 
 /*!
 	\brief Sends compressed video data to the currently selected call.
@@ -1244,16 +1258,14 @@ EXPORT int iaxc_push_audio(void *data, unsigned int size, unsigned int samples);
 	\note Data must be in the video format that was negotiated for the current call
 	otherwise bad magic may occur on the recieving side.
 */
-EXPORT int iaxc_push_video(void *data, unsigned int size, int fragment);
+EXPORT int iaxc_push_video(void *data, unsigned int size,int fragment);
 
 /*!
 	Sets the IAX debug set to \a enable.
 	\param enable If non-zero enable iax protocol debugging
 */
 EXPORT void iaxc_debug_iax_set(int enable);
-EXPORT void get_iaxc_lock();
-
-
+EXPORT void get_iaxc_lock(void);
 
 #ifdef __cplusplus
 }

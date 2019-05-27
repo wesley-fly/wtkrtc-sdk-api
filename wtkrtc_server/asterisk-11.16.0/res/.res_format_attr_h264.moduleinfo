@@ -1,0 +1,3 @@
+<member name="res_format_attr_h264" displayname="H.264 Format Attribute Module" remove_on_change="res/res_format_attr_h264.o res/res_format_attr_h264.so">
+	<support_level>core</support_level>
+</member>

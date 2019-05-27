@@ -1,0 +1,3 @@
+<member name="cel_custom" displayname="Customizable Comma Separated Values CEL Backend" remove_on_change="cel/cel_custom.o cel/cel_custom.so">
+	<support_level>core</support_level>
+</member>

@@ -1,0 +1,4 @@
+<member name="app_dahdiras" displayname="DAHDI ISDN Remote Access Server" remove_on_change="apps/app_dahdiras.o apps/app_dahdiras.so">
+	<depend>dahdi</depend>
+	<support_level>extended</support_level>
+</member>

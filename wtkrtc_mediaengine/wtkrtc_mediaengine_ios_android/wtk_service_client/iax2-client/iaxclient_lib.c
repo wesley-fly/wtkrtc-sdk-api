@@ -26,10 +26,13 @@
 #endif
 
 /* Win32 has _vsnprintf instead of vsnprintf */
-#if ! HAVE_VSNPRINTF
+/*#if ! HAVE_VSNPRINTF
 # if HAVE__VSNPRINTF
 #  define vsnprintf _vsnprintf
 # endif
+#endif*/
+#if defined(WIN32)
+#define vsnprintf _vsnprintf
 #endif
 
 #include "iaxclient_lib.h"
@@ -68,8 +71,8 @@ static int iaxci_bound_port = -1;
 // default to use port 4569 unless set by iaxc_set_preferred_source_udp_port
 static int source_udp_port = IAX_DEFAULT_PORTNO;
 
-static void service_network();
-static int service_audio();
+static void service_network(void);
+static int service_audio(void);
 
 /* external global networking replacements */
 static iaxc_sendto_t iaxc_sendto = (iaxc_sendto_t)sendto;
@@ -165,7 +168,7 @@ static struct string_array* parse_string_array(const char*str, char delim)
 }
 
 // Lock the library
-EXPORT void get_iaxc_lock()
+EXPORT void get_iaxc_lock(void)
 {
 	MUTEXLOCK(&iaxc_lock);
 }
@@ -176,7 +179,7 @@ int try_iaxc_lock()
 }
 
 // Unlock the library and post any events that were queued in the meantime
-void put_iaxc_lock()
+EXPORT void put_iaxc_lock(void)
 {
 	iaxc_event *prev, *event;
 
@@ -234,7 +237,7 @@ EXPORT struct iaxc_ev_call_state *iaxc_get_event_state(iaxc_event *e)
 // Messaging functions
 static void default_message_callback(const char * message)
 {
-	fprintf(stderr, "IAXCLIENT: %s\n", message);
+	fprintf(stderr, "WTK-IAXCLIENT: %s\n", message);
 }
 
 // Post Events back to clients
@@ -272,9 +275,6 @@ void iaxci_post_event(iaxc_event e)
 
 		if ( e.type == IAXC_EVENT_VIDEO )
 		{
-			/* We can free the frame data once it is off the
-			 * event queue and has been processed by the client.
-			 */
 			free(e.ev.video.data);
 		}
 		else if ( e.type == IAXC_EVENT_AUDIO )
@@ -283,21 +283,24 @@ void iaxci_post_event(iaxc_event e)
 		}
 
 		if ( rv < 0 )
-			default_message_callback(
-				"IAXCLIENT: BIG PROBLEM, event callback returned failure!");
+			default_message_callback("BIG PROBLEM, event callback returned failure!");
 		// > 0 means processed
 		if ( rv > 0 )
 			return;
 
 		// else, fall through to "defaults"
 	}
-
+	else
+	{
+		default_message_callback("BIG PROBLEM, event callback is null!");
+	}
 	switch ( e.type )
 	{
 		case IAXC_EVENT_TEXT:
 			default_message_callback(e.ev.text.message);
 			// others we just ignore too
-			return;
+			
+		return;
 	}
 }
 
@@ -391,7 +394,7 @@ void iaxci_do_dtmf_callback(int callNo, char digit)
 	iaxci_post_event(e);
 }
 
-EXPORT int iaxc_remove_registration_by_id(int id)
+int iaxc_remove_registration_by_id(int id)
 {
 	struct iaxc_registration *curr, *prev;
 	int count = 0;
@@ -430,6 +433,11 @@ EXPORT void iaxc_clear_call(int toDump)
 	calls[toDump].state = IAXC_CALL_STATE_FREE;
 	calls[toDump].format = 0;
 	calls[toDump].vformat = 0;
+	calls[toDump].mstate = IAXC_MEDIA_STATE_NONE;
+	calls[toDump].rtp_seqno = 0;
+	calls[toDump].rtp_ts = 0;
+	calls[toDump].vrtp_seqno = 0;
+	calls[toDump].vrtp_ts = 0;
 	if (calls[toDump].session)
 	{
 		iax_destroy(calls[toDump].session);
@@ -671,7 +679,7 @@ static THREADFUNCDECL(main_proc_thread_func)
 		get_iaxc_lock();
 
 		service_network();
-		service_audio();
+		//service_audio();
 
 		// Check registration refresh once a second
 		if ( refresh_registration_count++ > 1000/LOOP_SLEEP )
@@ -715,7 +723,7 @@ EXPORT int iaxc_stop_processing_thread()
 	return 0;
 }
 
-static int service_audio()
+static int service_audio(void)
 {
 	/* TODO: maybe we shouldn't allocate 8kB on the stack here. */
 
@@ -818,41 +826,64 @@ static void generate_netstat_event(int callNo)
 				&ev.ev.netstats.local, &ev.ev.netstats.remote))
 		iaxci_post_event(ev);
 }
-static __inline int has_rtp_header(unsigned char *buf, int len, int*format)
+#define RTP_HEADER_LEN	12
+#define RTP_HEADER_VER	2
+uint32_t wtk_audio_ssrc = 10000000;
+uint32_t wtk_video_ssrc = 10000001;
+
+static __inline void generate_rtp_header( struct iaxc_call *call, struct iax_event *e, unsigned char* buf , int is_video)
 {
-    int version = -1;
-    
-    // RTP Version
-    version = (buf[0]>>6);
-	if(version!=RTP_HEADER_VERSION)
-		return 0;
-	// 0xa0 -> V=2, P=1, X=0, CC=0
-	// 0x80 -> V=2, P=0, X=0, CC=0
-	if((buf[0] != 0x80) && (buf[0] !=0xa0))  
-		return 0;                                         
-    
-    // RTP Format
-    switch((buf[1] & 0x7F))
+	 // sampling duration, in milisecond
+	int ts, seqno;
+	
+	buf[0] = (RTP_HEADER_VER<<6) & 0xFF;
+	
+	if(is_video)
 	{
-        case FORMAT_G729A_PT:  /* G729a*/
-            *format = RTP_FORMAT_G729A;
-            break;
-        case FORMAT_OPUS_PT: /* Opus Audio */
-            *format = RTP_FORMAT_OPUS;
-			break;
-		case FORMAT_ILBC_PT: /* iLBC Audio */
-            *format = RTP_FORMAT_ILBC;
-            break;
-        default:
-            return 0; /* unsupported RTP Payload */
+		int rtp_sample = 20;
+		ts = ( e->ts / rtp_sample ) * rtp_sample;
+		seqno = (int)call->vrtp_seqno + ( ts - (int)call->vrtp_ts ) / rtp_sample;
+		if(seqno < 0)	 
+			seqno = MAX_SHORT + seqno;
+		else if(seqno > MAX_SHORT)	
+			seqno -= MAX_SHORT;
+		call->vrtp_seqno = (unsigned short)seqno + 1;	
+		call->vrtp_ts = ts + rtp_sample;
+		buf[1] = kWtkPayloadTypeVP8;
+		*(unsigned short *)&buf[2] = htons( call->vrtp_seqno );
+		*(unsigned long *)&buf[4] = htonl( ts * 48 );
+		*((unsigned long *)&buf[8]) = htonl(wtk_video_ssrc);
+
+		/*iaxci_usermsg(IAXC_STATUS, "WatterTek Lib -> IAX-TS=%d; ts = %u, RTP-SeqNo=%d; RTP-TS=%u;  RTP->SSRC=%u",
+				  e->ts,  // millisecond
+				  ts,
+				  ntohs(*((unsigned short *)&buf[2])),
+				  ntohl(*((unsigned long *)&buf[4])),
+                  ntohl(*((unsigned long *)&buf[8])));*/
 	}
-	return 1;
+	else
+	{
+		int rtp_sample = 20;
+		ts = ( e->ts / rtp_sample ) * rtp_sample;
+		seqno = (int)call->rtp_seqno + ( ts - (int)call->rtp_ts ) / rtp_sample;
+		if(seqno < 0)	 
+			seqno = MAX_SHORT + seqno;
+		else if(seqno > MAX_SHORT)	
+			seqno -= MAX_SHORT;
+		call->rtp_seqno = (unsigned short)seqno + 1;	
+		call->rtp_ts = ts + rtp_sample;
+		buf[1] = kWtkPayloadTypeOpus;
+		*(unsigned short *)&buf[2] = htons( call->rtp_seqno );
+		*(unsigned long *)&buf[4] = htonl( ts * 48 );
+		*((unsigned long *)&buf[8]) = htonl(wtk_audio_ssrc);
+	}
 }
 
 static int wtkcall_recv_audio_event(struct iaxc_call *call, struct iax_event *e, int offset)
 {
 	unsigned char *outbuf;
 	int outlen = 0;
+	unsigned char buf[512];
 	
 	unsigned char *raw;
 	int  rawlen;
@@ -865,11 +896,64 @@ static int wtkcall_recv_audio_event(struct iaxc_call *call, struct iax_event *e,
 	raw = e->data + offset;
     retlen = rawlen;
 	
-	outbuf = raw;
-	outlen = rawlen;
-	//iaxci_usermsg(IAXC_ERROR, "Audio Frame libwtk_decode_audio\n");
-	// decode audio packet and play
+	if(call->mstate & IAXC_MEDIA_STATE_NORTP)
+	{
+		memset(buf,0,sizeof(buf)/sizeof(buf[0]));
+		generate_rtp_header( call, e, buf, 0 );
+
+		outbuf = buf + RTP_HEADER_LEN;
+		memcpy(outbuf, raw, rawlen);
+
+		outbuf = buf; 
+		outlen = rawlen + RTP_HEADER_LEN;
+	}
+	else
+    {
+		outbuf = raw;
+		outlen = rawlen;
+	}
+
 	libwtk_decode_audio(outbuf, outlen);
+	
+	return retlen;
+}
+
+static int wtkcall_recv_video_event(struct iaxc_call *call, struct iax_event *e, int offset)
+{
+	unsigned char *outbuf;
+	int outlen = 0;
+	unsigned char buf[512*4];
+	
+	unsigned char *raw;
+	int  rawlen;
+	int  retlen = 0;  // return length
+
+	rawlen = e->datalen - offset;
+	if(rawlen <= 0) 
+		return -1;
+
+	raw = e->data + offset;
+    retlen = rawlen;
+
+	if(call->mstate & IAXC_MEDIA_STATE_NORTP)
+	{
+		memset(buf,0,sizeof(buf)/sizeof(buf[0]));
+		generate_rtp_header( call, e, buf, 1 );
+		//iaxci_usermsg(IAXC_STATUS, "wtkcall_recv_video_event outbuf[16] = %x",raw[3]);
+
+		outbuf = buf + RTP_HEADER_LEN;
+		memcpy(outbuf, raw, rawlen);
+		
+		outbuf = buf; 
+		outlen = rawlen + RTP_HEADER_LEN;
+	}
+	else
+    {
+		outbuf = raw;
+		outlen = rawlen;
+	}
+
+	libwtk_decode_video(outbuf, outlen);
 	
 	return retlen;
 }
@@ -884,10 +968,10 @@ static void handle_audio_event(struct iax_event *e, int callNo)
 	
 	if( callNo != selected_call )
 	{	
+		/*if( !((calls[selected_call].mstate & IAXC_MEDIA_STATE_MIXED) && 
+			 (calls[callNo].mstate & IAXC_MEDIA_STATE_MIXED)) )*/
 		return; 
 	}
-
-	//iaxci_usermsg(IAXC_ERROR, "Audio Frame (%d) received: length=%d \n", e->ts, e->datalen);
 
 	for( ofs = 0; ofs < e->datalen; ofs += cur )
 	{
@@ -902,35 +986,24 @@ static void handle_audio_event(struct iax_event *e, int callNo)
 
 static void handle_video_event(struct iax_event *e, int callNo)
 {
-	struct iaxc_call *call;
+	int cur=0;
+	int ofs=0;
 
 	if ( callNo < 0 )
 		return;
 
-	if ( e->datalen == 0 )
-	{
-		iaxci_usermsg(IAXC_STATUS, "Received 0-size packet. Unable to decode.");
-		return;
-	}
-
-	call = &calls[callNo];
-
 	if ( callNo != selected_call )
 	{
-		/* drop video for unselected call? */
 		return;
 	}
 
-	if ( call->vformat )
+	for( ofs = 0; ofs < e->datalen; ofs += cur )
 	{
-		/*if ( video_recv_video(call, selected_call, e->data,
-					e->datalen, e->ts, call->vformat) < 0 )
+		if( ( cur = wtkcall_recv_video_event( &calls[callNo], e, ofs ) ) < 0 ) 
 		{
-			iaxci_usermsg(IAXC_STATUS,
-				"Bad or incomplete video packet. Unable to decode.");
-			return;
-		}*/
-		return;
+			iaxci_usermsg(IAXC_STATUS, "Bad or incomplete voice packet.  Unable to decode. dropping\n");
+			break;
+		}
 	}
 }
 
@@ -1066,9 +1139,9 @@ EXPORT int iaxc_unregister( int id )
 	return count;
 }
 
-EXPORT int iaxc_register(const char * user, const char * pass, const char * host)
+EXPORT int iaxc_register(const char * user, const char * pass, const char * host, int refresh)
 {
-	return iaxc_register_ex(user, pass, host, 60);
+	return iaxc_register_ex(user, pass, host, refresh);
 }
 
 EXPORT int iaxc_register_ex(const char * user, const char * pass, const char * host, int refresh)
@@ -1221,7 +1294,7 @@ EXPORT void iaxc_send_dtmf(char digit)
 
 EXPORT void iaxc_send_text(const char * text)
 {
-	if ( selected_call >= 0 )
+	if ( selected_call >= 0 && (calls != NULL))
 	{
 		get_iaxc_lock();
 		if ( calls[selected_call].state & IAXC_CALL_STATE_ACTIVE )
@@ -1289,10 +1362,10 @@ static void iaxc_handle_regreply(struct iax_event *e, struct iaxc_registration *
 }
 
 /* this is what asterisk does */
-static int iaxc_choose_codec(int formats)
+static int iaxc_choose_codec(uint64_t formats)
 {
 	int i;
-	static int codecs[] =
+	static uint64_t codecs[] =
 	{
 		IAXC_FORMAT_ULAW,
 		IAXC_FORMAT_ALAW,
@@ -1305,6 +1378,7 @@ static int iaxc_choose_codec(int formats)
 		IAXC_FORMAT_LPC10,
 		IAXC_FORMAT_G729A,
 		IAXC_FORMAT_G723_1,
+		IAXC_FORMAT_OPUS,
 
 		/* To negotiate video codec */
 		IAXC_FORMAT_JPEG,
@@ -1314,6 +1388,7 @@ static int iaxc_choose_codec(int formats)
 		IAXC_FORMAT_H263_PLUS,
 		IAXC_FORMAT_MPEG4,
 		IAXC_FORMAT_H264,
+		IAXC_FORMAT_VP8,
 		IAXC_FORMAT_THEORA,
 	};
 	for ( i = 0; i < (int)(sizeof(codecs) / sizeof(int)); i++ )
@@ -1462,7 +1537,7 @@ static void iaxc_handle_connect(struct iax_event * e)
 	iaxci_usermsg(IAXC_STATUS, "Incoming call on line %d", callno);
 }
 
-static void service_network()
+static void service_network(void)
 {
 	struct iax_event *e = 0;
 	int callNo;
@@ -1536,13 +1611,24 @@ EXPORT char* iaxc_version(char * ver)
 EXPORT int iaxc_push_audio(void *data, unsigned int size, unsigned int samples)
 {
 	struct iaxc_call *call;
+	unsigned char *outbuf = NULL;
+	int  outlen;
 
 	if ( selected_call < 0 )
 		return -1;
 
 	call = &calls[selected_call];
+	
+	if(call->mstate & IAXC_MEDIA_STATE_NORTP) {
+		outbuf = data + RTP_HEADER_LEN;
+		outlen = size - RTP_HEADER_LEN;
+	}
+	else {
+		outbuf = data;
+		outlen = size;
+	}
 
-	if ( iax_send_voice(call->session, call->format, data, size, samples) == -1 )
+	if ( iax_send_voice(call->session, call->format, outbuf, outlen, samples) == -1 )
 	{
 		//iaxci_usermsg(IAXC_STATUS, "iaxc_push_audio: failed to send audio frame of size %d on call %d\n", size, selected_call);
 		return -1;
@@ -1551,10 +1637,44 @@ EXPORT int iaxc_push_audio(void *data, unsigned int size, unsigned int samples)
 	return 0;
 }
 
-wtkcall_jni_event_callback_t wtkcall_send_jni_event = NULL;
-EXPORT void wtkcall_set_jni_event_callback( wtkcall_jni_event_callback_t func )  
+EXPORT int iaxc_push_video(void *data, unsigned int size, int fullframe)
 {
-	wtkcall_send_jni_event = func;
+	struct iaxc_call *call;
+	unsigned char *outbuf = NULL;
+	int  outlen;
+
+	if ( selected_call < 0 )
+		return -1;
+
+	call = &calls[selected_call];
+	
+	if((call->mstate & IAXC_MEDIA_STATE_NORTP)&&size > RTP_HEADER_LEN)
+	{
+		//outbuf = data + RTP_HEADER_LEN;
+		//outlen = size - RTP_HEADER_LEN;
+		outbuf = data;
+		outlen = size;
+	}
+	else 
+	{
+		outbuf = data;
+		outlen = size;
+	}
+
+	if ( iax_send_video(call->session, call->vformat, outbuf, outlen, fullframe) == -1 )
+	{
+		//iaxci_usermsg(IAXC_STATUS, "iaxc_push_video: failed to send video frame of size %d on call %d\n", size, selected_call);
+		return -1;
+	}
+
+	return 0;
+}
+
+
+wtkcall_iax_event_callback_t wtkcall_send_iax_event = NULL;
+EXPORT void wtkcall_set_iax_event_callback( wtkcall_iax_event_callback_t func )  
+{
+	wtkcall_send_iax_event = func;
 }
 
 EXPORT void  wtkcall_perform_registration_callback(int id, int reply)
@@ -1577,10 +1697,9 @@ EXPORT void  wtkcall_perform_registration_callback(int id, int reply)
 			break;
 	}
 	info.id = id;
-	//iaxci_usermsg(IAXC_STATUS, "wtkcall_send_jni_event(EVENT_REGISTRATION, regid=%d, reply=%d)", info.id, info.reply);
 
-	if(wtkcall_send_jni_event)
-		wtkcall_send_jni_event(EVENT_REGISTRATION, (void*)&info);
+	if(wtkcall_send_iax_event)
+		wtkcall_send_iax_event(EVENT_REGISTRATION, (void*)&info);
 }
 EXPORT void  wtkcall_perform_state_callback(struct wtkState* call, int callNo, int state, char* name, char* number)
 {
@@ -1646,7 +1765,7 @@ EXPORT void  wtkcall_perform_state_callback(struct wtkState* call, int callNo, i
 	if(new_activity != -1)  
 	{
 		call->activity = new_activity;
-		if(wtkcall_send_jni_event!=NULL)
+		if(wtkcall_send_iax_event!=NULL)
 		{
 			CallInfo info;
 			memset((CallInfo*)&info, 0, sizeof(CallInfo));
@@ -1666,10 +1785,10 @@ EXPORT void  wtkcall_perform_state_callback(struct wtkState* call, int callNo, i
 			{
 			}
 			
-			iaxci_usermsg(IAXC_STATUS, "wtkcall_send_jni_event(EVENT_STATE):peerName=%s,peerNumber=%s,activity=%d,reason=%d(H:%d),duration=%d,type_jni=%d",
+			iaxci_usermsg(IAXC_STATUS, "wtkcall_send_iax_event:peerName=%s,peerNumber=%s,activity=%d,reason=%d(H:%d),duration=%d,type_sdk(jni)=%d",
 					info.peer_name,info.peer_number,info.activity,
 					info.reason,call->hangup,info.duration,info.type);
-			wtkcall_send_jni_event(EVENT_STATE, (void*)&info);
+			wtkcall_send_iax_event(EVENT_STATE, (void*)&info);
 
 			if(new_activity == CALL_FREE)
 				wtkState_clear_state(&calls[callNo].sm);
@@ -1677,19 +1796,24 @@ EXPORT void  wtkcall_perform_state_callback(struct wtkState* call, int callNo, i
 	}
 }
 
-EXPORT void  wtkcall_perform_message_callback(struct wtkState* call, char *message)
+EXPORT void  wtkcall_perform_message_callback(int callNo,char *message)
 {
-    ControlInfo ci;
-	struct string_array* strcmds = NULL;
-	int seqno, reason, i=0;
-
-	strcmds = parse_string_array(message, ' ');    
-	release_string_array(strcmds);
-	if(wtkcall_send_jni_event)
-		wtkcall_send_jni_event(EVENT_MESSAGE, (void*)&message);
+	MessageInfo info;
+	memset((MessageInfo*)&info, 0, sizeof(MessageInfo));
+			
+	info.callNo = callNo;
+	strcpy(info.message, message);
+	if(wtkcall_send_iax_event)
+		wtkcall_send_iax_event(EVENT_MESSAGE, (void*)&info);
 }
 EXPORT void  wtkcall_perform_text_callback(char* text)
 {
-	if(wtkcall_send_jni_event!=NULL)
-		wtkcall_send_jni_event(EVENT_LOG, text);
+	if(wtkcall_send_iax_event)
+		wtkcall_send_iax_event(EVENT_LOG, text);
 }
+EXPORT void  wtkcall_perform_control_callback(char* text)
+{
+	if(wtkcall_send_iax_event)
+		wtkcall_send_iax_event(EVENT_LOG, text);
+}
+

@@ -19,8 +19,8 @@ public class WtkMediaJNI {
     public native void      IaxAnswer(int callNo);
     public native int       IaxHangup(int callNo);
     public native void      IaxSetHold(int callNo, int hold);
-    public native void      SetVideoView(Object RemoteSurface);
-    public native void      SwitchCamera(int callNo, int devideId);
+    public native void      SetVideoView(Object LocalSurface, Object RemoteSurface);
+    public native void      SwitchCamera(int devideId);
     public native void      StartCapturer();
     public native void      StopCapturer();
     public native void      SetCapturerRotation(int rotation);

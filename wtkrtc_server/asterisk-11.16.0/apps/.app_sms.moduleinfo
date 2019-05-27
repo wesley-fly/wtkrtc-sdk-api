@@ -1,0 +1,3 @@
+<member name="app_sms" displayname="SMS/PSTN handler" remove_on_change="apps/app_sms.o apps/app_sms.so">
+	<support_level>extended</support_level>
+</member>

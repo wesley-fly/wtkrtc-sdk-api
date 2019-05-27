@@ -1,0 +1,3 @@
+<member name="app_system" displayname="Generic System() application" remove_on_change="apps/app_system.o apps/app_system.so">
+	<support_level>core</support_level>
+</member>

@@ -1,0 +1,4 @@
+<member name="test_xml_escape" displayname="Skeleton (sample) Test" remove_on_change="tests/test_xml_escape.o tests/test_xml_escape.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

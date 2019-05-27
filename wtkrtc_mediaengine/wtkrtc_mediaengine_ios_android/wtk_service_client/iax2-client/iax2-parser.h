@@ -74,6 +74,9 @@ struct iax_ies {
 	unsigned char txreason;
 	unsigned char txstatus;
 	struct sockaddr_in *local_addr;
+	struct SOCKADDR_ST *mixer_addr;
+	struct SOCKADDR_ST *ptt_addr;
+	char * ptt_token;
 };
 
 #define DIRECTION_INGRESS 1

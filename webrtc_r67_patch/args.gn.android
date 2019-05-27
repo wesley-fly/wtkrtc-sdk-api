@@ -1,0 +1,16 @@
+target_os = "android"
+target_cpu = "arm"
+current_cpu = "arm"
+rtc_use_h264 = true
+proprietary_codecs = true
+ffmpeg_branding = "Chrome"
+arm_use_neon = true
+rtc_build_json = false
+rtc_include_tests = false
+rtc_build_examples = false
+rtc_build_tools = false
+is_debug = true
+is_clang = true
+use_cxx11 = false
+treat_warnings_as_errors = false
+is_component_build = false

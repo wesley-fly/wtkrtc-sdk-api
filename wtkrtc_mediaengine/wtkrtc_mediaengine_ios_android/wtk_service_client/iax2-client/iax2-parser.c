@@ -188,7 +188,10 @@ static void dump_versioned_codec(char *output, int maxlen, void *value, int len)
 			codec = (uint64_t)ntohll(get_uint64((unsigned char *)value + 1));
 			snprintf(output, maxlen, "%llx", codec);
 		} else {
-			snprintf(output, maxlen, "Invalid length!");
+			if (len == (int)sizeof(unsigned int))
+				snprintf(output, maxlen, "%lx", (unsigned long)ntohl(get_uint32(value)));
+			else
+				snprintf(output, maxlen, "Invalid length!");
 		}
 	} else {
 		snprintf(output, maxlen, "Unknown version!");
@@ -318,9 +321,9 @@ static struct iax2_ie ies[] = {
 	{ IAX_IE_USERNAME, "USERNAME", dump_string },
 	{ IAX_IE_PASSWORD, "PASSWORD", dump_string },
 	{ IAX_IE_CALLTOKEN, "CALL TOKEN", dump_string },
-	{ IAX_IE_CAPABILITY, "CAPABILITY", dump_int },
+	{ IAX_IE_CAPABILITY, "CAPABILITY", dump_versioned_codec },
 	{ IAX_IE_CAPABILITY2, "CAPABILITY2", dump_versioned_codec },
-	{ IAX_IE_FORMAT, "FORMAT", dump_int },
+	{ IAX_IE_FORMAT, "FORMAT", dump_versioned_codec },
 	{ IAX_IE_FORMAT2, "FORMAT2", dump_versioned_codec },
 	{ IAX_IE_LANGUAGE, "LANGUAGE", dump_string },
 	{ IAX_IE_VERSION, "VERSION", dump_short },
@@ -362,10 +365,14 @@ static struct iax2_ie ies[] = {
 	{ IAX_IE_RR_DROPPED, "RR_DROPPED", dump_int },
 	{ IAX_IE_RR_OOO, "RR_OOO", dump_int },
 	//Xiaofan
+	{ IAX_IE_CALLCENTER_TICKET, "CALLCENTER TICKET", dump_string },
 	{ IAX_IE_RELAY_TOKEN, "RELAY TOKEN", dump_string },
 	{ IAX_IE_TXREASON, "TXREASON", dump_byte },
 	{ IAX_IE_TXSTATUS, "TXSTATUS", dump_byte },
 	{ IAX_IE_LOCAL_ADDR, "LOCAL IPV4", dump_addr },
+	{ IAX_IE_PTTSERVER, "PTT SERVER ADDR", dump_addr},
+	{ IAX_IE_PTTSESSION, "PTT SESSION", dump_string},
+	{ IAX_IE_MIXSERVER, "MIXER SERVER ADDR", dump_addr},
 
     { 0, NULL, NULL },
 };
@@ -634,74 +641,7 @@ void iax_set_error(void (*func)(const char *))
 {
 	errorf = func;
 }
-/*static int parse_prov( struct iax_ies *ies, char* prov, int provlen )
-{
-	int ie, len;
 
-	while(provlen >= 2) {
-		ie = prov[0];
-		len = prov[1];
-		if (len > provlen - 2) {
-			errorf("Information element length exceeds message size\n");
-			return -1;
-		}
-		switch(ie) {
-		case PROV_IE_USER:
-			ies->prov_user = (char *)prov + 2;
-			break;
-		case PROV_IE_PASS:
-			ies->prov_pass = (char *)prov + 2;
-			break;
-		case PROV_IE_LANG:
-			ies->prov_lang = (char *)prov + 2;
-			break;
-		case PROV_IE_PORTNO :
-			if( len == (int)sizeof(unsigned short) )
-				ies->prov_portno = ntohs(get_uint16((unsigned char *)(prov+2)));
-			break;
-		case PROV_IE_SERVERIP:
-			if( len == (int)sizeof(unsigned int) )
-				ies->prov_serverip = ntohl(get_uint32((unsigned char *)(prov+2)));
-			break;
-		case PROV_IE_ALTSERVER:
-			if( len == (int)sizeof(unsigned int) )
-				ies->prov_altserver = ntohl(get_uint32((unsigned char *)(prov+2)));
-			break;
-		case PROV_IE_SERVERPORT:
-			if( len == (int)sizeof(unsigned short) )
-				ies->prov_serverport = ntohs(get_uint16((unsigned char *)(prov+2)));
-			break;
-		case PROV_IE_FLAGS:
-			if( len == (int)sizeof(unsigned int) )
-				ies->prov_flags = ntohl(get_uint32(prov+2));
-			break;
-		case PROV_IE_FORMAT:
-			if( len == (int)sizeof(unsigned int) )
-				ies->prov_format = ntohl(get_uint32(prov+2));
-			break;
-		case PROV_IE_TOS:
-			ies->prov_tos = prov[2];
-			break;
-#if 0
-		case PROV_IE_PROVVER:
-			if( len == (int)sizeof(unsigned int) ) {
-				ies->prov_provver = ntohl(get_uint32(prov+2));
-				ies->prov_provverpres = 1;
-			}
-			break;
-#endif
-		default:
-			//			snprintf(tmp, (int)sizeof(tmp), "Ignoring unknown information element(%d) of length %d\n", ie, len);
-			//			outputf(tmp);
-			break;
-		}
-		prov[0] = 0;
-		provlen -= (len + 2);
-		prov += (len + 2);
-	}
-	return 0;
-}
-*/
 int iax_parse_ies(struct iax_ies *ies, unsigned char *data, int datalen)
 {
 	/* Parse data into information elements */
@@ -1037,6 +977,15 @@ int iax_parse_ies(struct iax_ies *ies, unsigned char *data, int datalen)
 				ies->rr_ooo = ntohl(get_uint32(data + 2));
 			}
 			break;
+		case IAX_IE_MIXSERVER:
+            ies->mixer_addr = ((struct SOCKADDR_ST *)(data + 2));
+            break;
+		case IAX_IE_PTTSERVER: /* Push To Talk Media Server */
+            ies->ptt_addr = ((struct SOCKADDR_ST *)(data + 2));
+            break;
+        case IAX_IE_PTTSESSION: /* Push To Talk Token */
+            ies->ptt_token = (char *) data + 2;
+            break;
 		case IAX_IE_PROVISIONING:
 			snprintf(tmp, (int)sizeof(tmp), "ToDo IAX_IE_PROVISIONING\n");
 			errorf(tmp);

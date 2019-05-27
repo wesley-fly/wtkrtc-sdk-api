@@ -1,0 +1,3 @@
+<member name="app_while" displayname="While Loops and Conditional Execution" remove_on_change="apps/app_while.o apps/app_while.so">
+	<support_level>core</support_level>
+</member>

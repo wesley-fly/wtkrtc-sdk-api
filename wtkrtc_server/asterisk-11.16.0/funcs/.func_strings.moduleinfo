@@ -1,0 +1,3 @@
+<member name="func_strings" displayname="String handling dialplan functions" remove_on_change="funcs/func_strings.o funcs/func_strings.so">
+	<support_level>core</support_level>
+</member>

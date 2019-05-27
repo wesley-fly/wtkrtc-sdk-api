@@ -1,0 +1,3 @@
+<member name="app_speech_utils" displayname="Dialplan Speech Applications" remove_on_change="apps/app_speech_utils.o apps/app_speech_utils.so">
+	<support_level>core</support_level>
+</member>

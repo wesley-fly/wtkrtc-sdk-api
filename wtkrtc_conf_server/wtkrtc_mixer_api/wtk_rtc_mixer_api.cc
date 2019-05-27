@@ -54,20 +54,20 @@ void start_mix_and_send(int channel);
 class AudioMixerTransport:public webrtc::Transport{
 public:
 	explicit AudioMixerTransport(int channel):channel_(channel){}
-    bool SendRtp(const uint8_t* packet,size_t length,const webrtc::PacketOptions& options) override
-    {		
-        int64_t send_time = webrtc::Clock::GetRealTimeClock()->TimeInMicroseconds();
+	bool SendRtp(const uint8_t* packet,size_t length,const webrtc::PacketOptions& options) override
+	{		
+		int64_t send_time = webrtc::Clock::GetRealTimeClock()->TimeInMicroseconds();
 		rtc::SentPacket sent_packet(options.packet_id,send_time);
-    	g_mixer_call[channel_]->OnSentPacket(sent_packet);
+		g_mixer_call[channel_]->OnSentPacket(sent_packet);
 		send_mixer_audio_packet(packet, length, channel_);
-        return true;
-    }
+		return true;
+	}
 
-    bool SendRtcp(const uint8_t* packet, size_t length) override
-    {
-        send_mixer_audio_packet(packet, length, channel_);
-        return true;
-    }
+	bool SendRtcp(const uint8_t* packet, size_t length) override
+	{
+		send_mixer_audio_packet(packet, length, channel_);
+		return true;
+	}
 private:
 	int channel_;
 };
@@ -79,12 +79,12 @@ public:
 		memcpy(audio_data, audio.data, sizeof(int16_t) * OPUS_SAMPLES_PER_CHAN);
 		start_mix_and_send(channel_);
 	}
-	AudioFrameInfo GetAudioFrameWithInfo(int target_rate_hz,webrtc::AudioFrame* frame) override {
+		AudioFrameInfo GetAudioFrameWithInfo(int target_rate_hz,webrtc::AudioFrame* frame) override {
 		frame->samples_per_channel_ = OPUS_SAMPLES_PER_CHAN;
 		frame->num_channels_ = OPUS_NUMBER_OF_CHAN;
 		frame->sample_rate_hz_ = target_rate_hz;
 		memcpy(frame->mutable_data(), audio_data, sizeof(int16_t) * OPUS_SAMPLES_PER_CHAN);
-		
+
 		return AudioFrameInfo::kNormal;
 	}
 	int Ssrc() const override { return 0; }
@@ -190,14 +190,14 @@ void libwtk_mixer_setup_mixer(int channel)
 	//audio receive
 	webrtc::AudioReceiveStream::Config audio_rev_config;
 	audio_rev_config.rtcp_send_transport = new AudioMixerTransport(channel);
-    audio_rev_config.decoder_factory = webrtc::CreateAudioDecoderFactory<webrtc::AudioDecoderOpus>();
-    audio_rev_config.sync_group = "wtk_av_sync";
+	audio_rev_config.decoder_factory = webrtc::CreateAudioDecoderFactory<webrtc::AudioDecoderOpus>();
+	audio_rev_config.sync_group = "wtk_av_sync";
 	audio_rev_config.decoder_map = {{kWtkPayloadTypeOpus, {"OPUS", 48000, 2}}};
 	audio_rev_config.rtp.remote_ssrc = wtk_audio_ssrc;
 	audio_rev_config.rtp.local_ssrc = wtk_audio_ssrc;
 	audio_rev_config.rtp.transport_cc = true;
 	audio_rev_config.rtp.extensions.clear();
-    mixer_audio_receive_stream[channel] = g_mixer_call[channel]->CreateAudioReceiveStream(audio_rev_config);
+	mixer_audio_receive_stream[channel] = g_mixer_call[channel]->CreateAudioReceiveStream(audio_rev_config);
 
 	//Add source and mix	
 	audio_sink_source[channel] = new ParticipantSinkSource(channel);
@@ -206,7 +206,7 @@ void libwtk_mixer_setup_mixer(int channel)
 	
 	//start audio send/recive
 	mixer_audio_send_stream[channel]->Start();
-    mixer_audio_receive_stream[channel]->Start();
+	mixer_audio_receive_stream[channel]->Start();
 
 	g_mixer_call[channel]->SignalChannelNetworkState(webrtc::MediaType::AUDIO, webrtc::kNetworkUp);
 }
@@ -219,6 +219,7 @@ void start_mix_and_send(int channel)
 		g_mixer_audio_mixer->Mix(OPUS_NUMBER_OF_CHAN, &mixed_audio_frame);
 		g_mixer_audio_mixer->AddSource(audio_sink_source[channel]);
 	}
+	//Use this us-sued api to send mixed audio frame
 	g_mixer_adm[channel]->SpeakerVolume((uint32_t*)mixed_audio_frame.data());
 }
 

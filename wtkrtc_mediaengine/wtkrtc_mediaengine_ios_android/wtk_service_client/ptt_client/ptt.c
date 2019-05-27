@@ -1,21 +1,13 @@
-/*
-    Internal Engine of Push-to-Talk Client
-    Created by Swenson.Liu
-    @copyright BROWAN
- */
 #include "ptt.h"
 
-/* Create a new Push-to-Talk Client Object 
-   return: Pointer of PTT Object
- */
 PTT* PTT_create()
 {
 	PTT * ptt = (PTT *)malloc (sizeof (PTT));
-	 
+
 	if (ptt)
 		memset(ptt, 0 , sizeof (PTT)); 
 
-    MUTEXINIT(&(ptt->ptt_lock));
+	MUTEXINIT(&(ptt->ptt_lock));
 	ptt->tbcp_send_queue=NULL; 
 	ptt->TB_Status = TB_Disconnect; 
 	ptt->connectStatue = PTT_DISCONNECT;
@@ -29,36 +21,26 @@ PTT* PTT_create()
 	return ptt; 
 }
 
-/*
-	reset ptt obj . 
-	ptt : a ptt obj; 
-   
-*/
-
 int PTT_reset(PTT * ptt){
 	tbcp_event * temp = NULL;
 
 	if (ptt){
-		if(ptt->tbcp_send_queue)
-			RELEASE_QUEUE(ptt->tbcp_send_queue,ptt->ptt_lock,temp); 
+	if(ptt->tbcp_send_queue)
+	RELEASE_QUEUE(ptt->tbcp_send_queue,ptt->ptt_lock,temp); 
 
 
-		ptt->TB_Status = TB_Disconnect; 
-		ptt->connectStatue = PTT_DISCONNECT;
-		ptt->ptt_proc_flag = -1; 
-		ptt->ptt_proc_thread = NULL; 
+	ptt->TB_Status = TB_Disconnect; 
+	ptt->connectStatue = PTT_DISCONNECT;
+	ptt->ptt_proc_flag = -1; 
+	ptt->ptt_proc_thread = NULL; 
 	}
 	else 
-		return -1; 
+	return -1; 
 
 	return 0; 
 }
 
-/*
-	Analysis of received data, called by ptt pthread.  
-*/
 static int PTT_recv_parse(PTT * ptt ){
-
 	char pttData[1024]={0,}; 
 	//char dataLen[6]; 
 	unsigned short dataLen =0; 
@@ -159,13 +141,6 @@ static int PTT_recv_parse(PTT * ptt ){
 		ptt->post_ptt_event(ptt->connection, AUDIO_TYPE, pttData, recvLen);
     return 0;
 }
-
-
-/*
-	Send ptt data to ptt server , called by ptt pthread. 
-*/
-
-
 static int PTT_send_data(PTT * ptt ){
 
 	TBCP_Data tbcpData;
@@ -222,39 +197,6 @@ static int PTT_send_data(PTT * ptt ){
 	return (int)ret;
 }
 
-
-/*
-static unsigned long WINAPI proc_func(void * context){
-	TBCP_Data tbcpData;
-	PTT * ptt = NULL;
-	ptt = (PTT *)context;
-	if (!ptt)
-		return -1;
-
-	//SetEvent(ptt->ptt_proc_event);
-
-	while (!ptt->ptt_proc_flag){
-		unsigned long waitResult = WaitForSingleObject(ptt->ptt_proc_event, 500);
-		
-		if (waitResult == WAIT_OBJECT_0)
-			ptt->ptt_proc_flag = 1; 
-		
-			//PTT_recv_parse(ptt);
-			//PTT_send_data(ptt);
-			Sleep(10); 
-	}
-
-	ptt->logOutput(3,"<----- ptt thread is stoped----->"); 
-}
-*/
-
-
-
-/*
-   pthread func. 
-   
-*/
-
 static THREADFUNCDECL(ptt_proc_thread_func, args){
 	PTT * ptt = NULL; 
 	TBCP_Data tbcpData;
@@ -294,11 +236,6 @@ static THREADFUNCDECL(ptt_proc_thread_func, args){
 	return ret; 
 }
 
-
-/*
-	Start ptt pthread.
-*/
-
 static int PTT_start_proc_thread(PTT * ptt){
 
 	void * _thread_handle = NULL;
@@ -306,27 +243,6 @@ static int PTT_start_proc_thread(PTT * ptt){
 	unsigned long ret = -1; 
 
 	ptt->ptt_proc_flag = 0;
-	
-	/*
-     void * _thread_handle = NULL;
-     int _id = 0;
-     unsigned long ret = -1;
-
-    _thread_handle = CreateThread(NULL, 0, proc_func,ptt,NULL,_id);
-
-	if (_thread_handle == NULL){
-	
-		ptt->logOutput(3 ,"Error: create thread failed ."); 
-		return -1; 
-	}
-
-	SetThreadPriority(_thread_handle, THREAD_PRIORITY_TIME_CRITICAL);
-
-	ret = WaitForSingleObject(ptt->ptt_proc_event,1000); 
-
-	if (ret != WAIT_OBJECT_0)
-		ptt->logOutput(3,"error: ptt thread did not start up.");
-    */
 	
 	if ( THREADCREATE(ptt_proc_thread_func, ptt, ptt->ptt_proc_thread,
 			ptt ->ptt_thread_id ) == THREADCREATE_ERROR)
@@ -356,11 +272,6 @@ int PTT_stop_proc_thread(PTT  * ptt){
 	return 0;
 }
 
-/*
-   Set the ptt add to ptt obj. 
-*/
-
-
 int  PTT_set_server_addr(PTT * ptt, struct sockaddr_in * server_addr){
 
 	if (!ptt || ! server_addr)
@@ -369,12 +280,6 @@ int  PTT_set_server_addr(PTT * ptt, struct sockaddr_in * server_addr){
 	memcpy(& ptt->sin, server_addr, sizeof(struct sockaddr_in)); 
 	return 0; 	
 }
-/*
-    To connect to the PTT sever. 
-    ptt : ptt obj . 
-    server_addr : ptt server. 
-    
-*/
 
 int PTT_connect_to_server(PTT * ptt, struct sockaddr_in *server_addr){
 	
@@ -383,19 +288,8 @@ int PTT_connect_to_server(PTT * ptt, struct sockaddr_in *server_addr){
 	struct sockaddr_in sin; 
 	int iMode = 1;
 	
-
-	// start  PTT pthread . 
-
-	// if (PTT_start_proc_thread(ptt)<0)
-	// return -1; 
-
-	// try to connect to PTT server. 
-	
 	if (!ptt || ! server_addr)
 	return -1; 
-
-	//ptt->sin = server_addr; 
-	//memcpy(& ptt->sin, server_addr, sizeof(struct sockaddr_in));
 
 	sin.sin_family = AF_INET;
 	sin.sin_port = server_addr->sin_port; 
@@ -445,13 +339,6 @@ int PTT_connect_to_server(PTT * ptt, struct sockaddr_in *server_addr){
 	return 0; 
 }
 
-
-
-/*
-   Disconnect from the PTT server. 
-
-*/
-
 int PTT_disconnected(PTT * ptt)
 {
 	TBCP_Data tbcpData;
@@ -467,7 +354,6 @@ int PTT_disconnected(PTT * ptt)
 		Sleep(10);
 	#else
 		iaxc_millisleep(10);
-	//usleep(10000);
 	#endif
 
 
@@ -483,17 +369,9 @@ int PTT_disconnected(PTT * ptt)
 	return 0; 
 }
 
-/*
-    Sets the callback function of log information. 
-*/
-
 void PTT_set_event_observer(PTT * ptt,ptt_event_callback_t func){
 	ptt->post_ptt_event = func; 	
 }
-
-/*
-    Request to speak . 
-*/
 
 int PTT_request(PTT * ptt){
 
@@ -512,11 +390,6 @@ int PTT_request(PTT * ptt){
     return 0;
 
 }
-
-/*
-	Send audio data to PTT server. 
-	audioData: RTP voice data packets. 
-*/
 
 int PTT_send_audio(PTT * ptt , unsigned char * audioData , int length ){
 	tbcp_event * event = NULL;
@@ -538,9 +411,6 @@ int PTT_send_audio(PTT * ptt , unsigned char * audioData , int length ){
 	
 }
 
-/* Release a Push-to-Talk Object 
-Input : Push-to-Talk Object
- */
 int PTT_release(PTT * ptt)
 {
 	tbcp_event * event = NULL;
@@ -559,5 +429,3 @@ int PTT_release(PTT * ptt)
      PUSH_QUEUE_TAIL(event, ptt->tbcp_send_queue,ptt->ptt_lock);
     return 0;
 }
-
-

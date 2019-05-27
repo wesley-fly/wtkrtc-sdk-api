@@ -132,6 +132,10 @@
 #define IAX_IE_CALLCENTER_TICKET    			195    			/*!< 0xc3 ticket for call center auth */
 #define IAX_IE_SECRET_INDEX						203  			/* Index of current secret */
 
+#define IAX_IE_PTTSERVER            			208   			/*For Push-To-Talk server ip*/
+#define IAX_IE_PTTSESSION           			207   			/*For Push-To-Talk server session*/
+#define IAX_IE_MIXSERVER   						211  			/*For Address of Conference Gateway*/
+
 #define IAX_IE_TXSTATUS							216
 #define IAX_IE_TXREASON							217
 #define IAX_IE_TX_NAT_ADDR						218

@@ -34,7 +34,7 @@
 
 extern char iax_errstr[];
 
-struct iax_session;
+//struct iax_session;
 
 
 #define IAX_EVENT_CONNECT       0      /* Connect a new call */
@@ -150,6 +150,7 @@ extern int iax_get_fd(void);
 extern int iax_time_to_next_event(void);
 
 /* Generate a new IAX session */
+//extern struct iax_session *iax_session_new(void);
 extern struct iax_session *iax_session_new(void);
 
 /* Return exactly one iax event (if there is one pending).  If blocking is

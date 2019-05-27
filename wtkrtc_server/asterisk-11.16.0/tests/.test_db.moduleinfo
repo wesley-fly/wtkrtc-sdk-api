@@ -1,0 +1,4 @@
+<member name="test_db" displayname="AstDB test module" remove_on_change="tests/test_db.o tests/test_db.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

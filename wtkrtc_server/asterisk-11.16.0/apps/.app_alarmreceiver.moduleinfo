@@ -1,0 +1,3 @@
+<member name="app_alarmreceiver" displayname="Alarm Receiver for Asterisk" remove_on_change="apps/app_alarmreceiver.o apps/app_alarmreceiver.so">
+	<support_level>extended</support_level>
+</member>

@@ -1,0 +1,3 @@
+<member name="app_test" displayname="Interface Test Application" remove_on_change="apps/app_test.o apps/app_test.so">
+	<support_level>extended</support_level>
+</member>

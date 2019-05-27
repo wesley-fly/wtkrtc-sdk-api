@@ -1,0 +1,4 @@
+<member name="test_config" displayname="Config test module" remove_on_change="tests/test_config.o tests/test_config.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

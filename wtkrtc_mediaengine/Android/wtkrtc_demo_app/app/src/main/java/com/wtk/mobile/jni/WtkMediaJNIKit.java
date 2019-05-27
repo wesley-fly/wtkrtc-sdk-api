@@ -61,9 +61,9 @@ public class WtkMediaJNIKit implements StatusListener {
     {
         wtkMediaJNI.StopVideoPlayout();
     }
-    public void SetVideoView(SurfaceView remote)
+    public void SetVideoView(SurfaceView local, SurfaceView remote)
     {
-        wtkMediaJNI.SetVideoView(remote);
+        wtkMediaJNI.SetVideoView(local, remote);
     }
     public void SetVideoConfView(SurfaceView remote0,SurfaceView remote1,SurfaceView remote2,SurfaceView remote3)
     {
@@ -111,7 +111,7 @@ public class WtkMediaJNIKit implements StatusListener {
     }
     public void SwitchCamera(int devideId)
     {
-        wtkMediaJNI.SwitchCamera(callNo, devideId);
+        wtkMediaJNI.SwitchCamera(devideId);
     }
     public void StartCapturer()
     {

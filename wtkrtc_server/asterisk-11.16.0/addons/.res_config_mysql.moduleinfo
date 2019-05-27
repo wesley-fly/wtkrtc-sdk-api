@@ -1,0 +1,5 @@
+<member name="res_config_mysql" displayname="MySQL RealTime Configuration Driver" remove_on_change="addons/res_config_mysql.o addons/res_config_mysql.so">
+	<depend>mysqlclient</depend>
+	<defaultenabled>no</defaultenabled>
+	<support_level>extended</support_level>
+</member>

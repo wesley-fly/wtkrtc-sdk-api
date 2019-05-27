@@ -1,0 +1,3 @@
+<member name="func_srv" displayname="SRV related dialplan functions" remove_on_change="funcs/func_srv.o funcs/func_srv.so">
+	<support_level>core</support_level>
+</member>

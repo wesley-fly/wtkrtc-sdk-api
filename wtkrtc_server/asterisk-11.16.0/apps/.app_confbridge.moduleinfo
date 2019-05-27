@@ -1,0 +1,3 @@
+<member name="app_confbridge" displayname="Conference Bridge Application" remove_on_change="apps/app_confbridge.o apps/app_confbridge.so">
+	<support_level>core</support_level>
+</member>

@@ -1,0 +1,4 @@
+<member name="test_expr" displayname="Expression evaluation tests" remove_on_change="tests/test_expr.o tests/test_expr.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>

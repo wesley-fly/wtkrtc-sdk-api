@@ -1,0 +1,4 @@
+<member name="test_voicemail_api" displayname="Core Voicemail API Tests" remove_on_change="tests/test_voicemail_api.o tests/test_voicemail_api.so">
+	<depend>TEST_FRAMEWORK</depend>
+	<support_level>core</support_level>
+</member>
