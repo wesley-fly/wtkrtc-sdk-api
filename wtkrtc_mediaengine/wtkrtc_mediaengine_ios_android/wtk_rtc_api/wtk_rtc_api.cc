@@ -36,7 +36,7 @@
 #include "sdk/android/src/jni/androidmediadecoder_jni.h"
 #include "sdk/android/src/jni/androidmediaencoder_jni.h"
 #elif defined(WEBRTC_IOS)
-
+#include "modules/video_coding/codecs/test/objc_codec_factory_helper.h"
 #endif
 #include "modules/bitrate_controller/include/bitrate_controller.h"
 
@@ -622,7 +622,9 @@ int libwtk_create_video_send_stream(uint32_t local_video_ssrc)
 				RTC_LOG(LS_INFO) << __FUNCTION__ << " , HW H264 Not Supported, roll back to SW H264!";
 			}
 #elif defined(WEBRTC_IOS)
-			//if use ios, sw h264 not support, but hw h264 always support, so need todo use hw h264
+			video_send_config.rtp.payload_name = "H264";
+			video_send_config.rtp.payload_type = kWtkPayloadTypeH264;
+			video_send_config.encoder_settings.encoder = webrtc::test::CreateObjCEncoderFactory()->CreateVideoEncoder(webrtc::SdpVideoFormat("H264"));
 #endif
 		}
 		
@@ -762,7 +764,10 @@ int libwtk_create_video_receive_stream(uint32_t remote_video_ssrc)
 				RTC_LOG(LS_INFO) << __FUNCTION__ << " ,No HW H264 Supporte, Use SW H264 it!";
 			}
 #elif defined(WEBRTC_IOS)
-			//if use ios, sw h264 not support, but hw h264 always support, so need todo use hw h264
+			decoder_config.payload_name = "H264";
+			decoder_config.payload_type = kWtkPayloadTypeH264;
+			decoder_config.decoder = webrtc::test::CreateObjCDecoderFactory()->CreateVideoDecoder(webrtc::SdpVideoFormat("H264"));
+			video_rev_config.decoders.push_back(decoder_config);
 #endif
 		}
 		
@@ -1030,7 +1035,9 @@ int libwtk_create_video_conf_send_stream(uint32_t local_video_ssrc)
 				video_send_config.encoder_settings.encoder = webrtc::H264Encoder::Create(codec).release();
 			}
 #elif defined(WEBRTC_IOS)
-
+			video_send_config.rtp.payload_name = "H264";
+			video_send_config.rtp.payload_type = kWtkPayloadTypeH264;
+			video_send_config.encoder_settings.encoder = webrtc::test::CreateObjCEncoderFactory()->CreateVideoEncoder(webrtc::SdpVideoFormat("H264"));
 #endif
 		}
 
@@ -1146,10 +1153,13 @@ int libwtk_create_video_conf_receive_stream(uint32_t remote_video_ssrc)
 					RTC_LOG(LS_INFO) << __FUNCTION__ << " ,No HW H264 Supporte, Use SW H264 it!";
 				}
 #elif defined(WEBRTC_IOS)
-
+			decoder_config.payload_name = "H264";
+			decoder_config.payload_type = kWtkPayloadTypeH264;
+			decoder_config.decoder = webrtc::test::CreateObjCDecoderFactory()->CreateVideoDecoder(webrtc::SdpVideoFormat("H264"));
+			video_rev_config.decoders.push_back(decoder_config);
 #endif
 			}
-		    g_conf_receive_stream[i] = g_call->CreateVideoReceiveStream(std::move(video_rev_config));
+			g_conf_receive_stream[i] = g_call->CreateVideoReceiveStream(std::move(video_rev_config));
 			if (g_conf_receive_stream[i] != nullptr)
 			{
 				RTC_LOG(LS_INFO) << __FUNCTION__ << " , Success!";
