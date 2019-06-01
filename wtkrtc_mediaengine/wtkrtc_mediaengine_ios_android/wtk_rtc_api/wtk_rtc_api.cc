@@ -36,7 +36,7 @@
 #include "sdk/android/src/jni/androidmediadecoder_jni.h"
 #include "sdk/android/src/jni/androidmediaencoder_jni.h"
 #elif defined(WEBRTC_IOS)
-#include "modules/video_coding/codecs/test/objc_codec_factory_helper.h"
+#include "wtk_hw_video_codec_objc/objc_codec_factory_helper.h"
 #endif
 #include "modules/bitrate_controller/include/bitrate_controller.h"
 
@@ -624,7 +624,8 @@ int libwtk_create_video_send_stream(uint32_t local_video_ssrc)
 #elif defined(WEBRTC_IOS)
 			video_send_config.rtp.payload_name = "H264";
 			video_send_config.rtp.payload_type = kWtkPayloadTypeH264;
-			video_send_config.encoder_settings.encoder = webrtc::test::CreateObjCEncoderFactory()->CreateVideoEncoder(webrtc::SdpVideoFormat("H264"));
+			video_send_config.encoder_settings.encoder = 
+				webrtc::CreateObjCEncoderFactory()->CreateVideoEncoder(webrtc::SdpVideoFormat("H264")).release();
 #endif
 		}
 		
@@ -766,7 +767,8 @@ int libwtk_create_video_receive_stream(uint32_t remote_video_ssrc)
 #elif defined(WEBRTC_IOS)
 			decoder_config.payload_name = "H264";
 			decoder_config.payload_type = kWtkPayloadTypeH264;
-			decoder_config.decoder = webrtc::test::CreateObjCDecoderFactory()->CreateVideoDecoder(webrtc::SdpVideoFormat("H264"));
+			decoder_config.decoder = 
+				webrtc::CreateObjCDecoderFactory()->CreateVideoDecoder(webrtc::SdpVideoFormat("H264")).release();
 			video_rev_config.decoders.push_back(decoder_config);
 #endif
 		}
@@ -1037,7 +1039,8 @@ int libwtk_create_video_conf_send_stream(uint32_t local_video_ssrc)
 #elif defined(WEBRTC_IOS)
 			video_send_config.rtp.payload_name = "H264";
 			video_send_config.rtp.payload_type = kWtkPayloadTypeH264;
-			video_send_config.encoder_settings.encoder = webrtc::test::CreateObjCEncoderFactory()->CreateVideoEncoder(webrtc::SdpVideoFormat("H264"));
+			video_send_config.encoder_settings.encoder = 
+				webrtc::CreateObjCEncoderFactory()->CreateVideoEncoder(webrtc::SdpVideoFormat("H264")).release();
 #endif
 		}
 
@@ -1155,7 +1158,8 @@ int libwtk_create_video_conf_receive_stream(uint32_t remote_video_ssrc)
 #elif defined(WEBRTC_IOS)
 			decoder_config.payload_name = "H264";
 			decoder_config.payload_type = kWtkPayloadTypeH264;
-			decoder_config.decoder = webrtc::test::CreateObjCDecoderFactory()->CreateVideoDecoder(webrtc::SdpVideoFormat("H264"));
+			decoder_config.decoder = 
+				webrtc::CreateObjCDecoderFactory()->CreateVideoDecoder(webrtc::SdpVideoFormat("H264")).release();
 			video_rev_config.decoders.push_back(decoder_config);
 #endif
 			}

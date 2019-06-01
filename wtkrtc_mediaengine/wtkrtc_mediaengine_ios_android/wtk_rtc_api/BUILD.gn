@@ -17,6 +17,31 @@ rtc_source_set("wtk_video_capturer") {
     suppressed_configs += [ "//build/config/clang:find_bad_constructs" ]
   }
 }
+if (is_ios) {
+  rtc_source_set("wtk_hw_objc_video_codec") {
+    sources = [
+      "wtk_hw_video_codec_objc/objc_codec_factory_helper.mm",
+      "wtk_hw_video_codec_objc/objc_codec_factory_helper.h",
+    ]
+    deps = [
+        "//api:video_frame_api",
+        "//api/video_codecs:video_codecs_api",
+        "//media:rtc_audio_video",
+        "//media:rtc_media_base",
+        "//modules:module_api",
+        "//rtc_base:rtc_base_approved",
+        "//sdk:common_objc",
+        "//sdk:native_api",
+        "//sdk:peerconnectionfactory_base_objc",
+        "//sdk:videocodec_objc",
+        "//sdk:videosource_objc",
+        "//sdk:videotoolbox_objc",
+    ]
+    if (!build_with_chromium && is_clang) {
+      suppressed_configs += [ "//build/config/clang:find_bad_constructs" ]
+    }
+  }
+}
 rtc_source_set("wtk_rtc_api") {
   sources = [
     "wtk_rtc_api.cc",
@@ -49,7 +74,10 @@ rtc_source_set("wtk_rtc_api") {
     deps += [
       "//sdk/android:video_jni",
       "//sdk/android:native_api_base",
-      #"//modules/video_coding:android_codec_factory_helper",
+    ]
+  } else if (is_ios) {
+    deps += [
+      ":wtk_hw_objc_video_codec",
     ]
   }
   if (is_clang) {

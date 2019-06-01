@@ -85,7 +85,7 @@ if(is_ios) {
       ":wtkmediaengineobjc",
     ]
 
-    configs += [ "..:common_objc" ]
+    configs += [ "//:common_objc" ]
     public_configs = [ ":common_config_objc" ]
 
     if (!build_with_chromium && is_clang) {
