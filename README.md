@@ -22,3 +22,5 @@ VoIP Media Engine proxy server intend to do proxy/nat/p2p, for reduce VoIP Media
 VoIP Media Engine conference server for Android/iOS app engine client, both SFU and MCU.
 
 More info please refer to every directory's readme files.
+
+FYI: https://blog.csdn.net/bingdele/article/details/89329191
